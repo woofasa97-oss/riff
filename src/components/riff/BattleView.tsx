@@ -5,23 +5,22 @@ import Link from 'next/link'
 import { SendHorizontal, Share2, Users } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { TopBar } from '@/components/riff/TopBar'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { iconButtonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
+import { compactCount } from '@/lib/labels'
 import { useRiffStore } from '@/lib/store'
 import { getBand, getBattle, voteShare } from '@/mocks'
 import type { Band, Battle } from '@/types'
 
-function compactCount(n: number) {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
+/** Handle colours cycle through the chart tokens, keyed by handle so they stay stable. */
+const HANDLE_TONES = ['text-accent', 'text-primary', 'text-[#facc15]', 'text-chart-3']
+function toneFor(handle: string): string {
+  let h = 0
+  for (let i = 0; i < handle.length; i++) h = (h * 31 + handle.charCodeAt(i)) % 997
+  return HANDLE_TONES[h % HANDLE_TONES.length]
 }
-
-const SEED_CHAT = [
-  { handle: 'sarah_j', tone: 'text-accent', body: 'They are absolutely killing this set' },
-  { handle: 'mike_r', tone: 'text-primary', body: 'Need them to win this one' },
-  { handle: 'jax_m', tone: 'text-[#facc15]', body: 'warehouse 7 is going crazy right now' },
-]
 
 function ChallengerCard({
   band,
@@ -78,9 +77,10 @@ function ChallengerCard({
 
 export function BattleView({ battleId }: { battleId: string }) {
   const [draft, setDraft] = useState('')
-  const [chat, setChat] = useState(SEED_CHAT)
   const votes = useRiffStore((s) => s.battleVotes)
   const vote = useRiffStore((s) => s.voteInBattle)
+  const battleChat = useRiffStore((s) => s.battleChat)
+  const sendBattleComment = useRiffStore((s) => s.sendBattleComment)
 
   const battle: Battle | undefined = getBattle(battleId)
   const bandA = battle ? getBand(battle.bandAId) : undefined
@@ -95,10 +95,11 @@ export function BattleView({ battleId }: { battleId: string }) {
           title="This battle is over"
           body="Nothing is running on this link any more."
           action={
-            <Link href="/battles/bracket">
-              <Button size="sm" variant="secondary">
-                See the bracket
-              </Button>
+            <Link
+              href="/battles/bracket"
+              className={buttonClass({ variant: 'secondary', size: 'sm' })}
+            >
+              See the bracket
             </Link>
           }
         />
@@ -112,8 +113,8 @@ export function BattleView({ battleId }: { battleId: string }) {
   function handleSend(e: React.FormEvent) {
     e.preventDefault()
     const body = draft.trim()
-    if (!body) return
-    setChat((c) => [...c, { handle: 'marcus_c', tone: 'text-primary', body }])
+    if (!body || !battle) return
+    sendBattleComment(battle.id, body)
     setDraft('')
   }
 
@@ -201,12 +202,12 @@ export function BattleView({ battleId }: { battleId: string }) {
         <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#3a1f3f] to-[#141019]" />
         <div className="relative z-10 flex h-full flex-col justify-end gap-3 p-4 pt-12">
           <div className="flex flex-col gap-3">
-            {chat.map((line, i) => (
+            {(battleChat[battle.id] ?? []).map((line) => (
               <div
-                key={`${line.handle}-${i}`}
+                key={line.id}
                 className="max-w-[85%] self-start rounded-[14px] bg-black/40 px-3 py-2 backdrop-blur-md"
               >
-                <span className={cn('mr-1 text-[11px] font-semibold', line.tone)}>
+                <span className={cn('mr-1 text-[11px] font-semibold', toneFor(line.handle))}>
                   {line.handle}
                 </span>
                 <span className="text-[13px] text-white/90">{line.body}</span>

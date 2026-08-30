@@ -16,6 +16,29 @@ const SIZE: Record<Size, string> = {
   sm: 'h-[44px] rounded-[12px] text-[14px]',
 }
 
+/**
+ * The Button's classes without the element — for <Link>s that should look like buttons.
+ * Wrapping a <Button> in a <Link> nests <button> inside <a>, which is invalid HTML.
+ */
+export function buttonClass({
+  variant = 'primary',
+  size = 'md',
+  fullWidth = false,
+}: {
+  variant?: Variant
+  size?: Size
+  fullWidth?: boolean
+} = {}) {
+  return cn(
+    'inline-flex select-none items-center justify-center gap-2 font-medium transition-transform',
+    'active:scale-95',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+    VARIANT[variant],
+    SIZE[size],
+    fullWidth && 'w-full',
+  )
+}
+
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
   size?: Size

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 
 /**
@@ -36,6 +36,11 @@ const SECTIONS: Record<string, { title: string; body: string }> = {
   },
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ section: string }> }) {
+  const { section } = await params
+  return { title: `${SECTIONS[section]?.title ?? 'Profile'} · Riff` }
+}
+
 export function generateStaticParams() {
   return Object.keys(SECTIONS).map((section) => ({ section }))
 }
@@ -57,10 +62,8 @@ export default async function MeSectionPage({ params }: { params: Promise<{ sect
         title="Not built yet"
         body={content.body}
         action={
-          <Link href="/me">
-            <Button size="sm" variant="secondary">
-              Back to your profile
-            </Button>
+          <Link href="/me" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+            Back to your profile
           </Link>
         }
       />

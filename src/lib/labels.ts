@@ -84,3 +84,8 @@ export const shortNeighborhood = (neighborhood: string) => neighborhood.split(',
 /** A maps deep link. Only ever called with an address the viewer is allowed to see. */
 export const directionsHref = (query: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+
+/** 8400 → "8.4k". Viewer and follower counts. */
+export function compactCount(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
+}

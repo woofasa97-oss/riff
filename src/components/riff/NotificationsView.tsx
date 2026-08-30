@@ -18,6 +18,7 @@ import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { SectionHeader } from '@/components/ui/SectionHeader'
 import { IconButton } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
 import { dayDelta, formatRelativeShort, formatShortDateTime } from '@/lib/datetime'
@@ -170,7 +171,7 @@ export function NotificationsView() {
               </IconButton>
             }
           />
-          <div className="flex shrink-0 border-b border-border-subtle px-4">
+          <div role="tablist" className="flex shrink-0 border-b border-border-subtle px-4">
             {(
               [
                 { id: 'all', label: 'All' },
@@ -185,6 +186,7 @@ export function NotificationsView() {
                 onClick={() => setFilter(tab.id)}
                 className={cn(
                   'flex-1 border-b-2 py-3 text-[14px] transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   filter === tab.id
                     ? 'border-primary font-semibold text-primary'
                     : 'border-transparent font-medium text-foreground-dim',
@@ -214,9 +216,7 @@ export function NotificationsView() {
         <>
           {today.length > 0 && (
             <section className="px-4 py-3">
-              <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-primary">
-                Today
-              </h2>
+              <SectionHeader>Today</SectionHeader>
               <div className="flex flex-col gap-2">
                 {today.map((n) => (
                   <NotificationRow key={n.id} n={n} unread={!read[n.id]} />
@@ -226,9 +226,7 @@ export function NotificationsView() {
           )}
           {earlier.length > 0 && (
             <section className="px-4 py-3">
-              <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-primary">
-                Earlier
-              </h2>
+              <SectionHeader>Earlier</SectionHeader>
               <div className="flex flex-col gap-2">
                 {earlier.map((n) => (
                   <NotificationRow key={n.id} n={n} unread={!read[n.id]} />

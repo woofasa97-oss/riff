@@ -8,7 +8,7 @@ import { AttendeeRow } from '@/components/riff/AttendeeRow'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
@@ -35,6 +35,7 @@ function isLiveWindow(jam: Jam, now: string): boolean {
 
 export function JamDetailsView({ jamId }: { jamId: string }) {
   const jams = useRiffStore((s) => s.jams)
+  const threads = useRiffStore((s) => s.threads)
   const messages = useRiffStore((s) => s.messages)
   const withdrawFromJam = useRiffStore((s) => s.withdrawFromJam)
   const ctx = useReputationContext()
@@ -60,10 +61,8 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
           title="This jam is gone"
           body="It may have been cancelled, or the link is out of date."
           action={
-            <Link href="/jams">
-              <Button size="sm" variant="secondary">
-                Back to your jams
-              </Button>
+            <Link href="/jams" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+              Back to your jams
             </Link>
           }
         />
@@ -72,6 +71,12 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
   }
 
   const location = jamLocationLines(jam, venue, CURRENT_USER_ID)
+  // The group conversation belongs to the people on the jam. A viewer browsing someone
+  // else's open call is not in it, and a draft has no thread yet.
+  const threadExists = threads.some((t) => t.id === jam.threadId)
+  const inConversation =
+    threadExists &&
+    jam.attendees.some((a) => a.musicianId === CURRENT_USER_ID && a.rsvp !== 'declined')
   const me = jam.attendees.find((a) => a.musicianId === CURRENT_USER_ID)
   const attending = me?.rsvp === 'confirmed'
   // "Go live" opens the broadcast only when one actually exists. Starting a stream is out of
@@ -89,12 +94,23 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
       mainClassName="px-4 py-6"
       footer={
         <StickyActionBar>
-          <Link
-            href={`/messages/${jam.threadId}`}
-            className="flex h-[48px] flex-1 items-center justify-center rounded-[12px] bg-surface-muted text-[15px] font-medium text-foreground transition-transform active:scale-95"
-          >
-            Message group
-          </Link>
+          {inConversation ? (
+            <Link
+              href={`/messages/${jam.threadId}`}
+              className="flex h-[48px] flex-1 items-center justify-center rounded-[12px] bg-surface-muted text-[15px] font-medium text-foreground transition-transform active:scale-95"
+            >
+              Message group
+            </Link>
+          ) : (
+            <Button
+              variant="secondary"
+              className="flex-1"
+              disabled
+              title="You are not on this jam yet"
+            >
+              Message group
+            </Button>
+          )}
           {liveNow && session ? (
             <Link
               href={`/live/${session.id}`}
@@ -156,17 +172,23 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
             .map((attendee, index, list) => {
               const musician = getMusician(attendee.musicianId)
               if (!musician) return null
+              const isYou = attendee.musicianId === CURRENT_USER_ID
               return (
-                <AttendeeRow
+                <Link
                   key={attendee.musicianId}
-                  name={musician.name}
-                  avatarUrl={musician.avatarUrl}
-                  instrument={attendee.instrument}
-                  rsvp={attendee.rsvp}
-                  stats={statsFor(attendee.musicianId, ctx)}
-                  isYou={attendee.musicianId === CURRENT_USER_ID}
-                  className={index < list.length - 1 ? 'border-b border-border-hairline' : ''}
-                />
+                  href={isYou ? '/me' : `/musicians/${attendee.musicianId}`}
+                  className="block"
+                >
+                  <AttendeeRow
+                    name={musician.name}
+                    avatarUrl={musician.avatarUrl}
+                    instrument={attendee.instrument}
+                    rsvp={attendee.rsvp}
+                    stats={statsFor(attendee.musicianId, ctx)}
+                    isYou={isYou}
+                    className={index < list.length - 1 ? 'border-b border-border-hairline' : ''}
+                  />
+                </Link>
               )
             })}
         </Card>
@@ -209,12 +231,14 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
       <section className="mb-8">
         <SectionHeader
           action={
-            <Link
-              href={`/messages/${jam.threadId}`}
-              className="text-[13px] font-medium text-primary"
-            >
-              View all
-            </Link>
+            inConversation ? (
+              <Link
+                href={`/messages/${jam.threadId}`}
+                className="text-[13px] font-medium text-primary"
+              >
+                View all
+              </Link>
+            ) : undefined
           }
         >
           Thread

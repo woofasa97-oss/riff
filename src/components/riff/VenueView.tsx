@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ChevronLeft, Mic, Share2, Star } from 'lucide-react'
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button, iconButtonClass } from '@/components/ui/Button'
+import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
@@ -35,10 +35,8 @@ export function VenueView({ venueId }: { venueId: string }) {
           title="This venue is gone"
           body="It may have closed, or the link is out of date."
           action={
-            <Link href="/discover">
-              <Button size="sm" variant="secondary">
-                Back to Discover
-              </Button>
+            <Link href="/discover" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+              Back to Discover
             </Link>
           }
         />

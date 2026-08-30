@@ -158,6 +158,8 @@ export interface Jam {
   /** Roles still wanted. */
   openSeats: Instrument[]
   isOpenCall: boolean
+  /** When an open call went up — drives "Posted 2h ago" on Discover. */
+  postedAt?: string
   /** The pitch text on an open call. */
   message?: string
   threadId: string
@@ -177,6 +179,8 @@ export interface JamRequest {
   message: string
   status: RequestStatus
   createdAt: string
+  /** Set when the recipient counter-proposes instead of accepting. */
+  counterTimes?: string[]
   /** Set once accepted. */
   jamId?: string
 }
@@ -318,6 +322,8 @@ export interface Season {
 export interface LeaderboardEntry {
   rank: number
   musicianId: string
+  // docs/DATA-MODEL.md also lists isCurrentUser — deliberately dropped: it is derivable from
+  // CURRENT_USER_ID at render time, and storing it would be one more thing to keep in sync.
   points: number
   /** +3 / -2 / 0 — rendered as an up, down or neutral chip. */
   delta: number

@@ -10,7 +10,7 @@ import { SubScreenHeader } from '@/components/riff/TopBar'
 import { VouchTagPicker } from '@/components/riff/VouchTagPicker'
 import { WaveformPlayer } from '@/components/riff/WaveformPlayer'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
@@ -67,10 +67,8 @@ export function RecapView({ jamId }: { jamId: string }) {
           title="Nothing to recap"
           body="This session is not on your list, or the link is out of date."
           action={
-            <Link href="/jams">
-              <Button size="sm" variant="secondary">
-                Back to your jams
-              </Button>
+            <Link href="/jams" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+              Back to your jams
             </Link>
           }
         />
@@ -90,10 +88,11 @@ export function RecapView({ jamId }: { jamId: string }) {
           title="This session has not happened yet"
           body="Recaps open once the jam is over. That is what keeps reliability meaningful."
           action={
-            <Link href={`/jams/${jam.id}`}>
-              <Button size="sm" variant="secondary">
-                Back to the jam
-              </Button>
+            <Link
+              href={`/jams/${jam.id}`}
+              className={buttonClass({ variant: 'secondary', size: 'sm' })}
+            >
+              Back to the jam
             </Link>
           }
         />

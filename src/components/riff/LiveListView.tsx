@@ -4,15 +4,12 @@ import Link from 'next/link'
 import { Eye, RadioTower, Swords, Trophy } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { TopBar } from '@/components/riff/TopBar'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
-import { formatDurationMinutes } from '@/lib/datetime'
+import { formatDurationMinutes, minutesSince } from '@/lib/datetime'
+import { compactCount } from '@/lib/labels'
 import { NOW, getBand, getLiveBattle, getVenue, listLiveSessions, voteShare } from '@/mocks'
-
-function compactCount(n: number) {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
-}
 
 /** What is broadcasting now: jam sessions first, then the season's live battle. */
 export function LiveListView() {
@@ -37,10 +34,8 @@ export function LiveListView() {
           title="Nothing live right now"
           body="When a jam goes live, or a battle starts, it shows up here."
           action={
-            <Link href="/jams">
-              <Button size="sm" variant="secondary">
-                Go to your jams
-              </Button>
+            <Link href="/jams" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+              Go to your jams
             </Link>
           }
         />
@@ -52,10 +47,7 @@ export function LiveListView() {
               {sessions.map((session) => {
                 const band = getBand(session.bandId ?? '')
                 const venue = getVenue(session.venueId)
-                const elapsed = Math.max(
-                  0,
-                  Math.round((Date.parse(NOW) - Date.parse(session.startedAt)) / 60_000),
-                )
+                const elapsed = minutesSince(session.startedAt, NOW)
                 return (
                   <Link
                     key={session.id}

@@ -1,15 +1,8 @@
-import { Compass } from 'lucide-react'
-import { TabStub } from '@/components/riff/TabStub'
+import type { Metadata } from 'next'
+import { DiscoverView } from '@/components/riff/DiscoverView'
 
-export const metadata = { title: 'Discover · Riff' }
+export const metadata: Metadata = { title: 'Discover · Riff' }
 
 export default function DiscoverPage() {
-  return (
-    <TabStub
-      tab="discover"
-      icon={<Compass size={22} />}
-      title="Discover is not built yet"
-      body="Musicians free tonight, their clips, and the open calls you can apply to."
-    />
-  )
+  return <DiscoverView />
 }

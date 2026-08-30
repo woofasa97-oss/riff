@@ -98,6 +98,35 @@
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 100%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 100%);
   }
+  /* Range input for the travel-radius slider. Track is painted inline (the fill needs the
+     current value); thumb styling has to go through pseudo-elements. */
+  .riff-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 9999px;
+    outline: none;
+  }
+  .riff-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    background: var(--card);
+    border: 2px solid var(--primary);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+  }
+  .riff-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    background: var(--card);
+    border: 2px solid var(--primary);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+  }
   /* Leaflet ships its own grey canvas colour; ours should show through when tiles are missing.
      The doubled selector beats Leaflet's own stylesheet without needing !important. */
   .riff-map.leaflet-container {

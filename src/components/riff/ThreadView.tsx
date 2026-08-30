@@ -1,27 +1,19 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { CalendarCheck, CalendarDays, CircleCheck, Info, Plus, SendHorizontal } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { authorName, describeThread } from '@/components/riff/threadDisplay'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { iconButtonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
 import { formatDayAndTime, formatDayHeading, formatTime, groupByDay } from '@/lib/datetime'
 import { useRiffStore } from '@/lib/store'
-import {
-  CURRENT_USER_ID,
-  NOW,
-  getJam,
-  getMusician,
-  getThread,
-  getVenue,
-  listMessages,
-} from '@/mocks'
+import { CURRENT_USER_ID, NOW, getJam, getMusician, getVenue, listMessages } from '@/mocks'
 
 /**
  * The conversation behind a thread row: pinned jam strip, day-grouped bubbles, inline system
@@ -32,10 +24,17 @@ export function ThreadView({ threadId }: { threadId: string }) {
   const [draft, setDraft] = useState('')
   const messages = useRiffStore((s) => s.messages)
   const jams = useRiffStore((s) => s.jams)
+  const threads = useRiffStore((s) => s.threads)
   const sendMessage = useRiffStore((s) => s.sendMessage)
 
-  const thread = getThread(threadId)
-  const display = thread ? describeThread(thread, CURRENT_USER_ID) : undefined
+  const markThreadRead = useRiffStore((s) => s.markThreadRead)
+  const thread = threads.find((t) => t.id === threadId)
+
+  // Reading the conversation clears its unread dot on the Messages list.
+  useEffect(() => {
+    if (thread && thread.unreadCount > 0) markThreadRead(thread.id)
+  }, [thread, markThreadRead])
+  const display = thread ? describeThread(thread, CURRENT_USER_ID, jams) : undefined
   const jam = thread?.jamId
     ? (jams.find((j) => j.id === thread.jamId) ?? getJam(thread.jamId))
     : undefined
@@ -58,10 +57,8 @@ export function ThreadView({ threadId }: { threadId: string }) {
           title="This conversation is gone"
           body="The thread may have been removed, or the link is out of date."
           action={
-            <Link href="/messages">
-              <Button size="sm" variant="secondary">
-                Back to messages
-              </Button>
+            <Link href="/messages" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+              Back to messages
             </Link>
           }
         />

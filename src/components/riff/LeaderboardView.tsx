@@ -56,9 +56,8 @@ function Row({
   if (!musician) return null
   const share = Math.round((entry.points / topPoints) * 100)
 
-  // Only the current user's row navigates. The musician profile is docs/BUILD-PLAN.md P2-03,
-  // and a row that goes nowhere is worse than a row that is plainly not a link.
   const isMe = entry.musicianId === CURRENT_USER_ID
+  const href = isMe ? '/me' : `/musicians/${entry.musicianId}`
   const rowClass = cn(
     'relative flex items-center overflow-hidden rounded-[16px] border p-3 shadow-sm',
     highlighted
@@ -114,12 +113,10 @@ function Row({
     </>
   )
 
-  return isMe ? (
-    <Link href="/me" className={rowClass}>
+  return (
+    <Link href={href} className={rowClass}>
       {inner}
     </Link>
-  ) : (
-    <div className={rowClass}>{inner}</div>
   )
 }
 
@@ -139,6 +136,7 @@ function PodiumPlace({
   if (!musician) return null
   const isFirst = place === 1
   const isMe = entry.musicianId === CURRENT_USER_ID
+  const href = isMe ? '/me' : `/musicians/${entry.musicianId}`
   const wrapperClass = cn('relative flex flex-1 flex-col items-center', padClass)
 
   const inner = (
@@ -187,12 +185,10 @@ function PodiumPlace({
     </>
   )
 
-  return isMe ? (
-    <Link href="/me" className={wrapperClass}>
+  return (
+    <Link href={href} className={wrapperClass}>
       {inner}
     </Link>
-  ) : (
-    <div className={wrapperClass}>{inner}</div>
   )
 }
 

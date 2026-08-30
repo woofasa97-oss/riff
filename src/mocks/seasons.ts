@@ -14,6 +14,12 @@ export const seasons: Season[] = [
 export const currentSeasonId = 'season-4'
 
 /**
+ * Points are authored constants, standing in for a season of history the fixtures do not
+ * model — the same trick ReputationBaseline plays for reliability. The derived formula
+ * docs/DATA-MODEL.md asks for (attendance + vouches + battle results, weights in one place)
+ * belongs to the backend that will actually have the rows to sum; deriving it from these
+ * fixtures would produce two-digit totals and break every reference number.
+ *
  * Fourteen ranked players. Marcus sits at #14 on 4,280 points and rank 10 holds 4,320 — which
  * is what makes the nudge "You are 40 points from the top 10" literally true rather than copy.
  */

@@ -102,6 +102,11 @@ export function formatRelativeShort(iso: string, now: string): string {
   return `${fmt({ day: 'numeric' }).format(new Date(iso))} ${fmt({ month: 'short' }).format(new Date(iso))}`
 }
 
+/** Whole minutes from `iso` to `now`, floored at zero. Feeds formatDurationMinutes. */
+export function minutesSince(iso: string, now: string): number {
+  return Math.max(0, Math.round((Date.parse(now) - Date.parse(iso)) / 60_000))
+}
+
 /** 102 → "1h 42m". Used for the session-recap duration line. */
 export function formatDurationMinutes(minutes: number): string {
   const h = Math.floor(minutes / 60)

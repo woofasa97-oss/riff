@@ -20,7 +20,7 @@ export const notifications: Notification[] = [
     kind: 'vouch_received',
     actorId: 'leo-rossi',
     body: 'vouched for you',
-    meta: { tags: '#GreatPocket #ListenFirst', musicianId: 'marcus-chen' },
+    meta: { tags: '#ListenFirst #GoodEnergy', musicianId: 'marcus-chen' },
     createdAt: '2026-08-28T14:00:00-04:00',
     read: false,
   },

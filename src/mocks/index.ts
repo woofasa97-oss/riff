@@ -57,11 +57,15 @@ export {
 }
 export { pointsFromTopTen } from './seasons'
 export { MAP_DEFAULT_CENTER, MAP_DEFAULT_ZOOM } from './zones'
-export { ROUND_LABEL, ROUND_ORDER, seasonBadgeFor, voteShare } from './battles'
+export { ROUND_LABEL, ROUND_ORDER, battleChatSeed, seasonBadgeFor, voteShare } from './battles'
 
 // --- Musicians -------------------------------------------------------------
 
 export const getMusician = (id: string): Musician | undefined => musicians.find((m) => m.id === id)
+
+/** Live-chat handles map back to musicians where one exists. */
+export const getMusicianByHandle = (handle: string): Musician | undefined =>
+  musicians.find((m) => m.handle === handle)
 
 export const getCurrentUser = (): Musician =>
   musicians.find((m) => m.id === CURRENT_USER_ID) as Musician

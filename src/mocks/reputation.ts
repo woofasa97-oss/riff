@@ -48,7 +48,8 @@ export const vouches: Vouch[] = [
     note: 'Dropped to brushes the second I started a quiet thing. Did not need asking.',
     sessionsTogether: 3,
     jamId: 'jam-neosoul-0821',
-    createdAt: '2026-08-22T09:40:00-04:00',
+    // Filed a week after the session — which is why the vouch notification is fresh today.
+    createdAt: '2026-08-28T13:55:00-04:00',
   },
   {
     id: 'v-3',
@@ -77,7 +78,7 @@ export const vouches: Vouch[] = [
     tags: ['GreatPocket', 'ProVibe'],
     note: 'Held a slow funk down for eleven minutes and never got bored.',
     sessionsTogether: 4,
-    jamId: 'jam-fusion-night',
+    jamId: 'jam-july-funk',
     createdAt: '2026-07-30T20:00:00-04:00',
   },
   {
@@ -87,7 +88,7 @@ export const vouches: Vouch[] = [
     tags: ['EasyToPlayWith', 'GoodEnergy'],
     note: 'Two percussionists in one room and it never turned into a fight.',
     sessionsTogether: 3,
-    jamId: 'jam-fusion-night',
+    jamId: 'jam-july-funk',
     createdAt: '2026-07-18T22:30:00-04:00',
   },
   {
@@ -97,7 +98,7 @@ export const vouches: Vouch[] = [
     tags: ['SolidTime', 'ListenFirst'],
     note: 'Locked in by the second chorus. Easiest session I have had this year.',
     sessionsTogether: 5,
-    jamId: 'jam-fusion-night',
+    jamId: 'jam-june-loft',
     createdAt: '2026-07-05T19:10:00-04:00',
   },
   {
@@ -105,9 +106,9 @@ export const vouches: Vouch[] = [
     fromId: 'jonah-wills',
     toId: 'marcus-chen',
     tags: ['ProVibe', 'EarlyBird'],
-    note: 'Showed up with spare sticks for someone who was not him.',
+    note: 'Showed up with spare sticks for someone who forgot theirs.',
     sessionsTogether: 2,
-    jamId: 'jam-fusion-night',
+    jamId: 'jam-june-loft',
     createdAt: '2026-06-21T21:45:00-04:00',
   },
 ]

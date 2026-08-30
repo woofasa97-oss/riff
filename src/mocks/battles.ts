@@ -122,3 +122,27 @@ export function voteShare(battle: Battle): { a: number; b: number } {
   const a = Math.round((battle.votesA / total) * 100)
   return { a, b: 100 - a }
 }
+
+/** Seed chat for the live final — the same shape live-session chat uses. */
+export const battleChatSeed: Record<string, import('@/types').LiveComment[]> = {
+  'b-final': [
+    {
+      id: 'bc-1',
+      handle: 'sarahj',
+      body: 'They are absolutely killing this set',
+      sentAt: '2026-08-28T14:48:00-04:00',
+    },
+    {
+      id: 'bc-2',
+      handle: 'mike_r',
+      body: 'Need them to win this one',
+      sentAt: '2026-08-28T14:52:00-04:00',
+    },
+    {
+      id: 'bc-3',
+      handle: 'jax_m',
+      body: 'warehouse 7 is going crazy right now',
+      sentAt: '2026-08-28T14:57:00-04:00',
+    },
+  ],
+}

@@ -10,9 +10,11 @@ export const threads: Thread[] = [
     unreadCount: 1,
   },
   {
+    // The direct thread where Marcus first asked Sarah to play. The request it carried was
+    // accepted and became tonight's jam, so the thread now wears that jam as its context.
     id: 'thread-sarah',
     kind: 'direct',
-    requestId: 'req-marcus-sarah',
+    jamId: 'jam-neosoul-0828',
     participantIds: ['marcus-chen', 'sarah-jenkins'],
     lastMessageAt: '2026-08-28T14:00:00-04:00',
     unreadCount: 0,
@@ -40,6 +42,71 @@ export const threads: Thread[] = [
     participantIds: ['marcus-chen', 'sarah-jenkins', 'leo-rossi'],
     lastMessageAt: '2026-08-24T21:05:00-04:00',
     unreadCount: 2,
+  },
+  {
+    id: 'thread-fusion',
+    kind: 'jam',
+    jamId: 'jam-late-night-fusion',
+    participantIds: ['marcus-chen', 'jonah-wills', 'priya-raman'],
+    lastMessageAt: '2026-08-27T21:20:00-04:00',
+    unreadCount: 0,
+  },
+  {
+    id: 'thread-neosoul-0821',
+    kind: 'jam',
+    jamId: 'jam-neosoul-0821',
+    participantIds: ['marcus-chen', 'sarah-jenkins', 'leo-rossi', 'nina-alvarez'],
+    lastMessageAt: '2026-08-21T23:10:00-04:00',
+    unreadCount: 0,
+  },
+  {
+    id: 'thread-fusion-night',
+    kind: 'jam',
+    jamId: 'jam-fusion-night',
+    participantIds: ['marcus-chen', 'sarah-jenkins', 'theo-park'],
+    lastMessageAt: '2026-08-14T23:40:00-04:00',
+    unreadCount: 0,
+  },
+  {
+    id: 'thread-june-loft',
+    kind: 'jam',
+    jamId: 'jam-june-loft',
+    participantIds: ['marcus-chen', 'miles-whitfield', 'jonah-wills'],
+    lastMessageAt: '2026-06-20T23:30:00-04:00',
+    unreadCount: 0,
+  },
+  {
+    id: 'thread-july-funk',
+    kind: 'jam',
+    jamId: 'jam-july-funk',
+    participantIds: ['marcus-chen', 'ruby-sims', 'camille-okafor'],
+    lastMessageAt: '2026-07-17T23:15:00-04:00',
+    unreadCount: 0,
+  },
+  // Open-call threads hold the host until someone is accepted onto the jam.
+  {
+    id: 'thread-open-call-keys',
+    kind: 'jam',
+    jamId: 'jam-open-call-keys',
+    participantIds: ['leo-rossi'],
+    lastMessageAt: '2026-08-28T13:00:00-04:00',
+    unreadCount: 0,
+  },
+  {
+    id: 'thread-open-call-rhythm',
+    kind: 'jam',
+    jamId: 'jam-open-call-rhythm',
+    participantIds: ['nina-alvarez'],
+    lastMessageAt: '2026-08-28T09:30:00-04:00',
+    unreadCount: 0,
+  },
+  {
+    id: 'thread-open-call-bass',
+    kind: 'jam',
+    jamId: 'jam-open-call-bass',
+    participantIds: ['marcus-chen'],
+    lastMessageAt: '2026-08-27T18:00:00-04:00',
+    unreadCount: 0,
   },
 ]
 
@@ -186,6 +253,70 @@ export const messages: Message[] = [
     authorId: 'the-attic',
     body: 'Your room is confirmed for Sunday',
     sentAt: '2026-08-25T10:30:00-04:00',
+    kind: 'text',
+  },
+
+  // thread-fusion — the pending Late Night Fusion jam.
+  {
+    id: 'm-lf-1',
+    threadId: 'thread-fusion',
+    authorId: 'marcus-chen',
+    body: 'Sunday afternoon at The Attic — Priya, does 4pm work for keys?',
+    sentAt: '2026-08-27T20:05:00-04:00',
+    kind: 'text',
+  },
+  {
+    id: 'm-lf-2',
+    threadId: 'thread-fusion',
+    authorId: 'jonah-wills',
+    body: 'Bringing the modular. Give me a corner and a power strip.',
+    sentAt: '2026-08-27T21:20:00-04:00',
+    kind: 'text',
+  },
+
+  // thread-neosoul-0821 — last Friday's session, wrapped up.
+  {
+    id: 'm-n21-1',
+    threadId: 'thread-neosoul-0821',
+    authorId: 'nina-alvarez',
+    body: 'That closer deserves a second life. Same time next week?',
+    sentAt: '2026-08-21T22:40:00-04:00',
+    kind: 'text',
+  },
+  {
+    id: 'm-n21-2',
+    threadId: 'thread-neosoul-0821',
+    authorId: 'marcus-chen',
+    body: 'Booked. Friday, same room.',
+    sentAt: '2026-08-21T23:10:00-04:00',
+    kind: 'text',
+  },
+
+  // thread-fusion-night — two weeks back.
+  {
+    id: 'm-fn-1',
+    threadId: 'thread-fusion-night',
+    authorId: 'theo-park',
+    body: 'Great night. Sending the chord chart for the last tune.',
+    sentAt: '2026-08-14T23:40:00-04:00',
+    kind: 'text',
+  },
+
+  // thread-june-loft / thread-july-funk — older history, one line each.
+  {
+    id: 'm-jl-1',
+    threadId: 'thread-june-loft',
+    authorId: 'miles-whitfield',
+    body: 'Half the notes, twice the groove. Told you.',
+    sentAt: '2026-06-20T23:30:00-04:00',
+    kind: 'text',
+  },
+  {
+    id: 'm-jf-1',
+    threadId: 'thread-july-funk',
+    authorId: 'camille-okafor',
+    body: 'Eleven minutes of one groove and nobody blinked. Again soon.',
+    sentAt: '2026-07-17T23:15:00-04:00',
     kind: 'text',
   },
 

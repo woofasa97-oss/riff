@@ -6,17 +6,22 @@ import { Eye, SendHorizontal, Share2, Star, X, Zap } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { TopBar } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button, iconButtonClass } from '@/components/ui/Button'
+import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/cn'
-import { formatDurationMinutes } from '@/lib/datetime'
+import { formatDurationMinutes, minutesSince } from '@/lib/datetime'
+import { compactCount } from '@/lib/labels'
 import { useRiffStore } from '@/lib/store'
-import { CURRENT_USER_ID, NOW, getBand, getLiveSession, getMusician, getVenue } from '@/mocks'
-
-function compactCount(n: number) {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
-}
+import {
+  CURRENT_USER_ID,
+  NOW,
+  getBand,
+  getLiveSession,
+  getMusician,
+  getMusicianByHandle,
+  getVenue,
+} from '@/mocks'
 
 /** Star input for the end-of-session rating. */
 function StarInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
@@ -77,10 +82,8 @@ export function LiveView({ sessionId }: { sessionId: string }) {
           title="This session has ended"
           body="Nothing is broadcasting on this link any more."
           action={
-            <Link href="/live">
-              <Button size="sm" variant="secondary">
-                See what is live
-              </Button>
+            <Link href="/live" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+              See what is live
             </Link>
           }
         />
@@ -88,10 +91,7 @@ export function LiveView({ sessionId }: { sessionId: string }) {
     )
   }
 
-  const elapsedMin = Math.max(
-    0,
-    Math.round((Date.parse(NOW) - Date.parse(session.startedAt)) / 60_000),
-  )
+  const elapsedMin = minutesSince(session.startedAt, NOW)
   const isFollowing = band ? followed.includes(band.id) : false
   const myRating = ratings[session.id]
 
@@ -239,7 +239,7 @@ export function LiveView({ sessionId }: { sessionId: string }) {
               src={
                 getMusician(
                   // Handles map back to musicians where we have one; otherwise a neutral tile.
-                  chatAuthorId(comment.handle) ?? '',
+                  getMusicianByHandle(comment.handle)?.id ?? '',
                 )?.avatarUrl ?? '/mock/bands/lunar-resonance.svg'
               }
               name={comment.handle}
@@ -282,26 +282,4 @@ export function LiveView({ sessionId }: { sessionId: string }) {
       </Modal>
     </AppShell>
   )
-}
-
-/** Live-chat handles belong to musicians where we have them; strangers stay anonymous. */
-function chatAuthorId(handle: string): string | undefined {
-  return HANDLE_TO_ID[handle]
-}
-
-const HANDLE_TO_ID: Record<string, string> = {
-  marcus_c: 'marcus-chen',
-  sarahj: 'sarah-jenkins',
-  leo_keys: 'leo-rossi',
-  nina_a: 'nina-alvarez',
-  theopark: 'theo-park',
-  rubysims: 'ruby-sims',
-  dchen: 'david-chen',
-  priya_r: 'priya-raman',
-  jonahw: 'jonah-wills',
-  cami_ok: 'camille-okafor',
-  ana_d: 'ana-duarte',
-  mileswf: 'miles-whitfield',
-  ivo_m: 'ivo-marek',
-  fay_a: 'fay-ansari',
 }

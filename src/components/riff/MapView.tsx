@@ -8,10 +8,10 @@ import { TopBar } from '@/components/riff/TopBar'
 import { ZoneMap } from '@/components/riff/ZoneMap'
 import { Avatar, AvatarStack } from '@/components/ui/Avatar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
-import { Button, iconButtonClass } from '@/components/ui/Button'
+import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
-import { formatDurationMinutes } from '@/lib/datetime'
-import { instrumentLabel, shortNeighborhood } from '@/lib/labels'
+import { formatDurationMinutes, minutesSince } from '@/lib/datetime'
+import { compactCount, instrumentLabel, shortNeighborhood } from '@/lib/labels'
 import { useUnreadNotificationCount } from '@/lib/store'
 import {
   NOW,
@@ -31,10 +31,6 @@ const INSTRUMENT_FILTERS: { id: Instrument | 'all'; label: string }[] = [
   { id: 'drums', label: 'Drums' },
   { id: 'keys', label: 'Keys' },
 ]
-
-function compactCount(n: number) {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
-}
 
 export function MapView() {
   const [tonightOnly, setTonightOnly] = useState(false)
@@ -56,9 +52,7 @@ export function MapView() {
   const session = selectedLiveId ? getLiveSession(selectedLiveId) : undefined
   const sessionBand = session?.bandId ? getBand(session.bandId) : undefined
   const sessionVenue = session ? getVenue(session.venueId) : undefined
-  const elapsed = session
-    ? Math.max(0, Math.round((Date.parse(NOW) - Date.parse(session.startedAt)) / 60_000))
-    : 0
+  const elapsed = session ? minutesSince(session.startedAt, NOW) : 0
 
   return (
     <AppShell
@@ -106,7 +100,7 @@ export function MapView() {
             className={cn(
               'shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-medium shadow-sm transition-transform active:scale-95',
               tonightOnly
-                ? 'bg-primary text-primary-foreground'
+                ? 'border border-primary bg-primary text-primary-foreground'
                 : 'border border-border-subtle bg-card/95 text-foreground backdrop-blur-sm',
             )}
           >
@@ -121,7 +115,7 @@ export function MapView() {
               className={cn(
                 'shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-medium shadow-sm transition-transform active:scale-95',
                 instrument === f.id
-                  ? 'bg-primary text-primary-foreground'
+                  ? 'border border-primary bg-primary text-primary-foreground'
                   : 'border border-border-subtle bg-card/95 text-foreground backdrop-blur-sm',
               )}
             >
@@ -203,20 +197,22 @@ export function MapView() {
                 {/* Names and instruments only. No street, no pin, no coordinates. */}
                 <ul className="mt-4 max-h-[132px] space-y-2 overflow-y-auto">
                   {selected.musicians.map((m) => (
-                    <li key={m.id} className="flex items-center gap-3">
-                      <Avatar src={m.avatarUrl} name={m.name} size="md" />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-serif text-[14px] font-bold text-foreground">
-                          {m.name}
+                    <li key={m.id}>
+                      <Link href={`/musicians/${m.id}`} className="flex items-center gap-3">
+                        <Avatar src={m.avatarUrl} name={m.name} size="md" />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-serif text-[14px] font-bold text-foreground">
+                            {m.name}
+                          </div>
+                          <div className="truncate text-[12px] text-foreground-dim">
+                            {m.instruments.map(instrumentLabel).join(' · ')}
+                            {m.availableTonight && ' · free tonight'}
+                          </div>
                         </div>
-                        <div className="truncate text-[12px] text-foreground-dim">
-                          {m.instruments.map(instrumentLabel).join(' · ')}
-                          {m.availableTonight && ' · free tonight'}
-                        </div>
-                      </div>
-                      <span className="shrink-0 text-[12px] text-foreground-dim">
-                        {m.distanceMi} mi
-                      </span>
+                        <span className="shrink-0 text-[12px] text-foreground-dim">
+                          {m.distanceMi} mi
+                        </span>
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -240,10 +236,11 @@ export function MapView() {
               </button>
             )}
 
-            <Link href="/discover" className="mt-4 block">
-              <Button fullWidth size="sm">
-                See who is free
-              </Button>
+            <Link
+              href="/discover"
+              className={cn(buttonClass({ size: 'sm', fullWidth: true }), 'mt-4 block')}
+            >
+              See who is free
             </Link>
           </>
         )}
@@ -294,16 +291,21 @@ export function MapView() {
 
             <div className="mt-5 flex gap-3">
               {sessionVenue && (
-                <Link href={`/venues/${sessionVenue.id}`} className="flex-1">
-                  <Button fullWidth size="sm" variant="secondary">
-                    Venue details
-                  </Button>
+                <Link
+                  href={`/venues/${sessionVenue.id}`}
+                  className={cn(
+                    buttonClass({ variant: 'secondary', size: 'sm', fullWidth: true }),
+                    'flex-1',
+                  )}
+                >
+                  Venue details
                 </Link>
               )}
-              <Link href={`/live/${session.id}`} className="flex-1">
-                <Button fullWidth size="sm">
-                  Watch live
-                </Button>
+              <Link
+                href={`/live/${session.id}`}
+                className={cn(buttonClass({ size: 'sm', fullWidth: true }), 'flex-1')}
+              >
+                Watch live
               </Link>
             </div>
           </>

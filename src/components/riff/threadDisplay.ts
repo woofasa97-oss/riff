@@ -1,6 +1,6 @@
 import { formatWeekdayAbbr } from '@/lib/datetime'
 import { getBand, getJam, getMusician, getVenue } from '@/mocks'
-import type { Musician, Thread } from '@/types'
+import type { Jam, Musician, Thread } from '@/types'
 
 export interface ThreadDisplay {
   title: string
@@ -18,14 +18,21 @@ export interface ThreadDisplay {
  * Everything a message row needs to render, resolved in one place so the list and the thread
  * header cannot drift apart.
  */
-export function describeThread(thread: Thread, viewerId: string): ThreadDisplay {
+export function describeThread(
+  thread: Thread,
+  viewerId: string,
+  /** Live jams from the store, so threads created this session resolve their jam. */
+  jams?: Jam[],
+): ThreadDisplay {
   const others = thread.participantIds
     .filter((id) => id !== viewerId)
     .map((id) => getMusician(id))
     .filter((m): m is Musician => Boolean(m))
     .map((m) => ({ id: m.id, name: m.name, avatarUrl: m.avatarUrl }))
 
-  const jam = thread.jamId ? getJam(thread.jamId) : undefined
+  const jam = thread.jamId
+    ? (jams?.find((j) => j.id === thread.jamId) ?? getJam(thread.jamId))
+    : undefined
   const jamContext = jam
     ? {
         contextLabel: `${jam.title} · ${formatWeekdayAbbr(jam.startsAt)}`,

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/riff/AppShell'
 import { TopBar } from '@/components/riff/TopBar'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import type { TabId } from '@/components/riff/BottomTabBar'
 
@@ -28,10 +28,8 @@ export function TabStub({
         title={title}
         body={body}
         action={
-          <Link href="/jams">
-            <Button size="sm" variant="secondary">
-              Go to your jams
-            </Button>
+          <Link href="/jams" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+            Go to your jams
           </Link>
         }
       />

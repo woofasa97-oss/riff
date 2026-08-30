@@ -6,21 +6,17 @@ import { AppShell } from '@/components/riff/AppShell'
 import { WaveformPlayer } from '@/components/riff/WaveformPlayer'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button, iconButtonClass } from '@/components/ui/Button'
+import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { StatTile } from '@/components/ui/StatTile'
 import { cn } from '@/lib/cn'
 import { formatDate } from '@/lib/datetime'
-import { formatClock, instrumentLabel } from '@/lib/labels'
+import { compactCount, formatClock, instrumentLabel } from '@/lib/labels'
 import { statsFor, useReputationContext, useRiffStore } from '@/lib/store'
 import { peaksFor } from '@/lib/waveform'
-import { getBand, getMusician, seasonBadgeFor } from '@/mocks'
-
-function compactCount(n: number) {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
-}
+import { CURRENT_USER_ID, getBand, getMusician, seasonBadgeFor } from '@/mocks'
 
 export function BandView({ bandId }: { bandId: string }) {
   const band = getBand(bandId)
@@ -40,10 +36,8 @@ export function BandView({ bandId }: { bandId: string }) {
           title="This band is gone"
           body="They may have broken up, or the link is out of date."
           action={
-            <Link href="/discover">
-              <Button size="sm" variant="secondary">
-                Back to Discover
-              </Button>
+            <Link href="/discover" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+              Back to Discover
             </Link>
           }
         />
@@ -136,8 +130,11 @@ export function BandView({ bandId }: { bandId: string }) {
             if (!musician) return null
             const stats = statsFor(member.musicianId, ctx)
             return (
-              <div
+              <Link
                 key={member.musicianId}
+                href={
+                  member.musicianId === CURRENT_USER_ID ? '/me' : `/musicians/${member.musicianId}`
+                }
                 className="flex items-center border-b border-border-hairline p-3 last:border-0"
               >
                 <Avatar
@@ -158,7 +155,7 @@ export function BandView({ bandId }: { bandId: string }) {
                     {stats.reliabilityPct}%
                   </span>
                 )}
-              </div>
+              </Link>
             )
           })}
 

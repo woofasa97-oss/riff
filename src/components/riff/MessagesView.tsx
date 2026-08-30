@@ -7,7 +7,7 @@ import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { authorName, describeThread } from '@/components/riff/threadDisplay'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { ContextLabel } from '@/components/ui/Badge'
 import { ChipTabs } from '@/components/ui/Tabs'
@@ -15,7 +15,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { formatRelativeShort } from '@/lib/datetime'
 import { useRiffStore } from '@/lib/store'
-import { CURRENT_USER_ID, NOW, getLastMessage, listThreads } from '@/mocks'
+import { CURRENT_USER_ID, NOW, getLastMessage } from '@/mocks'
 
 type Filter = 'all' | 'jams' | 'requests' | 'bands'
 
@@ -30,13 +30,16 @@ export function MessagesView() {
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
   const messages = useRiffStore((s) => s.messages)
+  const threads = useRiffStore((s) => s.threads)
+  const jams = useRiffStore((s) => s.jams)
 
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase()
     return (
-      listThreads(CURRENT_USER_ID)
+      threads
+        .filter((t) => t.participantIds.includes(CURRENT_USER_ID))
         .map((thread) => {
-          const display = describeThread(thread, CURRENT_USER_ID)
+          const display = describeThread(thread, CURRENT_USER_ID, jams)
           const last = getLastMessage(thread.id, messages)
           return { thread, display, last }
         })
@@ -60,7 +63,7 @@ export function MessagesView() {
             Date.parse(a.last?.sentAt ?? a.thread.lastMessageAt),
         )
     )
-  }, [filter, query, messages])
+  }, [filter, query, messages, threads, jams])
 
   return (
     <AppShell
@@ -114,10 +117,11 @@ export function MessagesView() {
                   Clear search
                 </Button>
               ) : (
-                <Link href="/discover">
-                  <Button size="sm" variant="secondary">
-                    Find musicians
-                  </Button>
+                <Link
+                  href="/discover"
+                  className={buttonClass({ variant: 'secondary', size: 'sm' })}
+                >
+                  Find musicians
                 </Link>
               )
             }

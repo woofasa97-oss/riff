@@ -12,15 +12,9 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { StatTile } from '@/components/ui/StatTile'
 import { iconButtonClass } from '@/components/ui/Button'
 import { genreLane, instrumentLabel } from '@/lib/labels'
-import { useMusicianStats, useUnreadNotificationCount } from '@/lib/store'
+import { useCurrentUser, useMusicianStats, useUnreadNotificationCount } from '@/lib/store'
 import { peaksFor } from '@/lib/waveform'
-import {
-  CURRENT_USER_ID,
-  getCurrentSeason,
-  getCurrentUser,
-  getLeaderboardEntry,
-  listBandsFor,
-} from '@/mocks'
+import { CURRENT_USER_ID, getCurrentSeason, getLeaderboardEntry, listBandsFor } from '@/mocks'
 
 /** Destinations that exist as stubs until their own tickets land. */
 const SETTINGS_ROWS = [
@@ -32,7 +26,7 @@ const SETTINGS_ROWS = [
 ]
 
 export function MeView() {
-  const me = getCurrentUser()
+  const me = useCurrentUser()
   const stats = useMusicianStats(CURRENT_USER_ID)
   const unread = useUnreadNotificationCount()
   const entry = getLeaderboardEntry(CURRENT_USER_ID)

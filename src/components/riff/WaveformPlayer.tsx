@@ -15,11 +15,14 @@ export function WaveformPlayer({
   durationSec,
   label,
   className,
+  compact = false,
 }: {
   peaks: number[]
   durationSec: number
   label: string
   className?: string
+  /** The tighter variant used inside MusicianCard on Discover. */
+  compact?: boolean
 }) {
   const [playing, setPlaying] = useState(false)
   const [elapsed, setElapsed] = useState(0)
@@ -53,7 +56,8 @@ export function WaveformPlayer({
   return (
     <div
       className={cn(
-        'flex items-center gap-4 rounded-[12px] border border-border-subtle bg-background p-3',
+        'flex items-center rounded-[12px] border border-border-subtle bg-background',
+        compact ? 'gap-2 p-2.5' : 'gap-4 p-3',
         className,
       )}
     >
@@ -61,16 +65,22 @@ export function WaveformPlayer({
         type="button"
         onClick={() => setPlaying((p) => !p)}
         aria-label={playing ? `Pause ${label}` : `Play ${label}`}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90"
+        className={cn(
+          'flex shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90',
+          compact ? 'h-8 w-8' : 'h-10 w-10',
+        )}
       >
         {playing ? (
-          <Pause size={16} fill="currentColor" />
+          <Pause size={compact ? 13 : 16} fill="currentColor" />
         ) : (
-          <Play size={16} fill="currentColor" className="ml-0.5" />
+          <Play size={compact ? 13 : 16} fill="currentColor" className="ml-0.5" />
         )}
       </button>
 
-      <div className="flex h-8 flex-1 items-center gap-0.5" aria-hidden="true">
+      <div
+        className={cn('flex flex-1 items-center gap-0.5', compact ? 'h-6' : 'h-8')}
+        aria-hidden="true"
+      >
         {peaks.map((peak, i) => {
           const played = i / peaks.length <= progress
           return (
@@ -80,13 +90,18 @@ export function WaveformPlayer({
                 'w-1 rounded-full transition-colors',
                 played ? 'bg-primary' : 'bg-primary/30',
               )}
-              style={{ height: `${Math.round(peak * 32)}px` }}
+              style={{ height: `${Math.round(peak * (compact ? 24 : 32))}px` }}
             />
           )
         })}
       </div>
 
-      <span className="shrink-0 font-mono text-[13px] font-medium tabular-nums text-foreground">
+      <span
+        className={cn(
+          'shrink-0 font-mono font-medium tabular-nums text-foreground',
+          compact ? 'text-[12px]' : 'text-[13px]',
+        )}
+      >
         {formatClock(playing || elapsed > 0 ? Math.floor(elapsed) : durationSec)}
       </span>
     </div>

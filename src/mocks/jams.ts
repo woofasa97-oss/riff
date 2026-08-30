@@ -104,9 +104,68 @@ export const jams: Jam[] = [
     // Marcus applied on drums; the title leads with keys because that is the harder seat.
     openSeats: ['keys', 'drums'],
     isOpenCall: true,
+    postedAt: '2026-08-28T13:00:00-04:00',
     message:
       'Loose neo-soul thing, nobody is auditioning. Bring something you have been sitting on.',
     threadId: 'thread-open-call-keys',
+  },
+  {
+    // Older history: these two carry the vouches whose authors are not on the recent jams,
+    // so rule 4 (only confirmed co-attendees vouch) holds for every vouch on record.
+    // No recaps exist for them, so they add nothing to the attendance denominator.
+    id: 'jam-june-loft',
+    title: 'Loft Session',
+    intent: 'casual',
+    status: 'completed',
+    startsAt: '2026-06-20T20:00:00-04:00',
+    durationHours: 2,
+    venueId: 'the-attic',
+    hostId: 'marcus-chen',
+    attendees: [
+      { musicianId: 'marcus-chen', instrument: 'drums', rsvp: 'confirmed' },
+      { musicianId: 'miles-whitfield', instrument: 'bass', rsvp: 'confirmed' },
+      { musicianId: 'jonah-wills', instrument: 'synth', rsvp: 'confirmed' },
+    ],
+    openSeats: [],
+    isOpenCall: false,
+    threadId: 'thread-june-loft',
+  },
+  {
+    id: 'jam-july-funk',
+    title: 'July Funk Night',
+    intent: 'casual',
+    status: 'completed',
+    startsAt: '2026-07-17T20:00:00-04:00',
+    durationHours: 2,
+    venueId: 'riverside-rehearsal',
+    hostId: 'camille-okafor',
+    attendees: [
+      { musicianId: 'marcus-chen', instrument: 'drums', rsvp: 'confirmed' },
+      { musicianId: 'ruby-sims', instrument: 'sax', rsvp: 'confirmed' },
+      { musicianId: 'camille-okafor', instrument: 'percussion', rsvp: 'confirmed' },
+    ],
+    openSeats: [],
+    isOpenCall: false,
+    threadId: 'thread-july-funk',
+  },
+  {
+    // The one open call the current user has NOT touched — it keeps the "Apply to join"
+    // state reachable on Discover (the other two calls are his own or already applied to).
+    id: 'jam-open-call-rhythm',
+    title: 'Vocalist seeks a funk rhythm section',
+    intent: 'gigging',
+    status: 'pending',
+    startsAt: '2026-09-05T20:00:00-04:00',
+    durationHours: 2,
+    venueId: 'the-attic',
+    hostId: 'nina-alvarez',
+    attendees: [{ musicianId: 'nina-alvarez', instrument: 'vocals', rsvp: 'confirmed' }],
+    openSeats: ['drums', 'bass'],
+    isOpenCall: true,
+    postedAt: '2026-08-28T09:30:00-04:00',
+    message:
+      'Three originals and a set of covers, aiming at a paid slot in October. Tight but fun.',
+    threadId: 'thread-open-call-rhythm',
   },
   {
     id: 'jam-open-call-bass',
@@ -120,6 +179,7 @@ export const jams: Jam[] = [
     attendees: [{ musicianId: 'marcus-chen', instrument: 'drums', rsvp: 'confirmed' }],
     openSeats: ['bass'],
     isOpenCall: true,
+    postedAt: '2026-08-27T18:00:00-04:00',
     message: 'Real book, slow tempos, nobody is auditioning. Bring a pencil.',
     threadId: 'thread-open-call-bass',
   },
