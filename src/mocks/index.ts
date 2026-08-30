@@ -79,6 +79,21 @@ export {
 export { pointsFromTopTen, SIGNUP_GRANT_CREDITS } from './seasons'
 export { MAP_DEFAULT_CENTER, MAP_DEFAULT_ZOOM } from './zones'
 export { ROUND_LABEL, ROUND_ORDER, battleChatSeed, seasonBadgeFor, voteShare } from './battles'
+// Public map layers — studios for rent, buskers, shops, events (src/mocks/places.ts).
+export {
+  studios,
+  streetPerformers,
+  musicShops,
+  mapEvents,
+  listStudios,
+  getStudio,
+  listStreetPerformers,
+  getStreetPerformer,
+  listMusicShops,
+  getMusicShop,
+  listMapEvents,
+  getMapEvent,
+} from './places'
 
 // --- Musicians -------------------------------------------------------------
 

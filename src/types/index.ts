@@ -455,3 +455,122 @@ export interface MapZone {
   /** How wide the zone is drawn. Coarse on purpose. */
   radiusMi: number
 }
+
+// ---------------------------------------------------------------------------
+// Map places — the public layers on the map beyond musicians and their jams.
+//
+// Privacy line (docs/SPEC.md §5.2, CLAUDE.md rule 2): PEOPLE and HOMES stay at neighbourhood
+// level. Musicians never carry a coordinate; a home-rig studio's exact address is withheld
+// until a booking is confirmed — the same rule as a confirmed jam. PUBLIC LISTINGS — music
+// shops, event venues, and buskers who chose to perform in public right now — legitimately
+// show their spot, because being found is the whole point of a shop or a gig.
+// ---------------------------------------------------------------------------
+
+export type MapPlaceKind = 'studio' | 'street' | 'shop' | 'event'
+
+/** A public map coordinate. Only ever a place's own point, never a private person's. */
+export interface GeoPoint {
+  lat: number
+  lng: number
+}
+
+/**
+ * A rentable studio — Airbnb-style, by the hour. Either a dedicated pro room or someone's home
+ * rig they let out. A home rig keeps its exact address hidden until a booking is confirmed
+ * (product rules 1 & 2), and its map pin sits at neighbourhood level on purpose.
+ */
+export interface Studio {
+  id: string
+  name: string
+  /** A dedicated room vs. someone's home setup. */
+  kind: 'pro-room' | 'home-rig'
+  /** Set for a home rig: the musician who owns it, so the card can link to their profile. */
+  hostId?: string
+  neighborhood: string
+  city: string
+  /** Where the pin sits. A home rig uses a coarse, neighbourhood-level point. */
+  location: GeoPoint
+  /** Public storefront address for a pro room; absent for a home rig until it is booked. */
+  address?: string
+  /** A home rig reveals its address only once a booking is confirmed. */
+  addressRevealed: boolean
+  distanceMi: number
+  hourlyRateUsd: number
+  photoUrl: string
+  rating: number
+  reviewCount: number
+  capacity: number
+  /** "Full drum kit", "Neumann U87", "Fender Twin"… */
+  gear: string[]
+  amenities: string[]
+  /** A pro room can confirm instantly; a home rig is a request the host accepts. */
+  instantBook: boolean
+  slots: VenueSlot[]
+}
+
+/** A busker performing in public now (or later today). Public by nature — no home is exposed. */
+export interface StreetPerformer {
+  id: string
+  /** The act's display name. */
+  name: string
+  /** Set if they are a Riff musician — links to their profile. */
+  musicianId?: string
+  handle?: string
+  instruments: Instrument[]
+  genres: Genre[]
+  neighborhood: string
+  /** The public spot: "Bedford Ave & N 7th", "Domino Park". Never a home address. */
+  spotLabel: string
+  location: GeoPoint
+  startedAt: string
+  /** Performing until roughly this time. */
+  until: string
+  /** Whether they are playing right now. */
+  live: boolean
+  avatarUrl: string
+  blurb: string
+}
+
+/** A music shop — instruments, vinyl, repairs, gear. A public storefront. */
+export interface MusicShop {
+  id: string
+  name: string
+  kind: 'instruments' | 'vinyl' | 'repair' | 'gear'
+  neighborhood: string
+  city: string
+  address: string
+  location: GeoPoint
+  distanceMi: number
+  photoUrl: string
+  rating: number
+  reviewCount: number
+  /** "Guitars", "Vintage synths", "Repairs"… */
+  tags: string[]
+  openNow: boolean
+  hoursLabel: string
+  phone?: string
+  website?: string
+}
+
+/** A public music event on the map — a gig, open mic, session or workshop. */
+export interface MapEvent {
+  id: string
+  title: string
+  kind: 'gig' | 'openmic' | 'session' | 'workshop'
+  /** Linked venue when it is one on Riff. */
+  venueId?: string
+  venueName: string
+  neighborhood: string
+  city: string
+  location: GeoPoint
+  startsAt: string
+  endsAt?: string
+  /** "Free", "$10", "$15 door". */
+  priceLabel: string
+  lineup: string[]
+  hostName?: string
+  coverUrl: string
+  blurb: string
+  goingCount: number
+  tags: string[]
+}

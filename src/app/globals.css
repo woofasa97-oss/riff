@@ -54,6 +54,13 @@
   --chart-4: #f0c88d;
   --chart-5: #a0bbe3;
 
+  /* Map layer colours — one per public place kind, so a pin and its detail card agree.
+     Musicians keep --primary; these four separate the other layers at a glance. */
+  --map-studio: #d98e4b; /* rentable studios — warm amber */
+  --map-street: #3fa688; /* street performers — teal */
+  --map-shop: #5b8fd4; /* music shops — blue */
+  --map-event: #d1568a; /* events — magenta */
+
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-lora), Georgia, serif;
   --font-mono: ui-monospace, 'Fira Code', 'Courier New', monospace;

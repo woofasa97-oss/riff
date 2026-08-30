@@ -63,6 +63,11 @@ const config: Config = {
           '4': token('--chart-4'),
           '5': token('--chart-5'),
         },
+        // One colour per public map layer, shared by the pin and its detail card.
+        'map-studio': token('--map-studio'),
+        'map-street': token('--map-street'),
+        'map-shop': token('--map-shop'),
+        'map-event': token('--map-event'),
       },
       borderRadius: {
         lg: 'var(--radius)',
