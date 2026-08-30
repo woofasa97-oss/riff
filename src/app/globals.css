@@ -98,6 +98,26 @@
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 100%);
     mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 100%);
   }
+  /* Leaflet ships its own grey canvas colour; ours should show through when tiles are missing.
+     The doubled selector beats Leaflet's own stylesheet without needing !important. */
+  .riff-map.leaflet-container {
+    background: var(--hero-from);
+    font-family: inherit;
+  }
+  /* OSM's default tiles are far more saturated than the rest of the app. Desaturating the tile
+     pane brings the basemap back to the design system's muted palette without hiding streets,
+     and leaves the zone overlays drawn on top at full strength. */
+  .riff-map .leaflet-tile-pane {
+    filter: saturate(0.4) brightness(1.05) contrast(0.95);
+  }
+  /* Leaflet's divIcon default has a border and background; this strips it back to nothing
+     so the marker is entirely whatever HTML we hand it. */
+  .riff-zone-label {
+    width: 0;
+    height: 0;
+    background: transparent;
+    border: 0;
+  }
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 1rem);
   }

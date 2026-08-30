@@ -60,3 +60,27 @@ Add the database and the API service to `render.yaml` alongside `riff-web`, and 
 
 Add it on `riff-web` in the Render dashboard. Nothing else in this repo needs to change while
 v1 is mocks-only.
+
+## Map tiles
+
+The map screen (`/map`) draws a real basemap with Leaflet. Tiles come from
+`tile.openstreetmap.org`, which needs no API key — the app ships with no map credentials and
+nothing to configure on Render.
+
+That is fine for a prototype and wrong for production. OSM's
+[tile usage policy](https://operations.osmfoundation.org/policies/tiles/) rules out heavy or
+commercial traffic against those servers. Before this takes real load, swap the tile URL in
+`src/components/riff/ZoneMap.tsx` for a keyed provider and add the key as an environment
+variable here:
+
+- **CARTO Positron** matches the design system's muted palette best, and is what the prototype
+  screens were designed against. It now watermarks every tile unless you hold a key.
+- **Stadia**, **MapTiler** and **Mapbox** are the usual alternatives, all keyed.
+
+If you move to a provider whose palette is already muted, drop the
+`.riff-map .leaflet-tile-pane` desaturation filter in `globals.css` — it exists only to bring
+OSM's default styling back in line with the rest of the app.
+
+**What never changes:** the map renders neighbourhoods, never people. `MapZone.center` is the
+only geography in the data, and musicians carry no coordinates at all — see `src/lib/privacy.ts`
+and `docs/SPEC.md` §5.2.

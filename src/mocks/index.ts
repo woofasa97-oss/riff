@@ -9,6 +9,7 @@ import { bands } from './bands'
 import { battles } from './battles'
 import { liveSessions } from './live'
 import { currentSeasonId, leaderboard, seasons } from './seasons'
+import { mapZones } from './zones'
 import { CURRENT_USER_ID, musicians } from './musicians'
 import { jamRequests, jams, openCallApplications } from './jams'
 import { notifications } from './notifications'
@@ -19,10 +20,12 @@ import { NOW } from './clock'
 import type {
   Band,
   Battle,
+  Instrument,
   Jam,
   JamRequest,
   LeaderboardEntry,
   LiveSession,
+  MapZone,
   Message,
   Musician,
   Season,
@@ -46,12 +49,14 @@ export {
   recordingConsents,
   recordings,
   sessionRecaps,
+  mapZones,
   seasons,
   threads,
   venues,
   vouches,
 }
 export { pointsFromTopTen } from './seasons'
+export { MAP_DEFAULT_CENTER, MAP_DEFAULT_ZOOM } from './zones'
 export { ROUND_LABEL, ROUND_ORDER, seasonBadgeFor, voteShare } from './battles'
 
 // --- Musicians -------------------------------------------------------------
@@ -214,4 +219,101 @@ export function listPlayingAtVenue(venueId: string, now = NOW, source: Jam[] = j
     .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
     .map((jam) => ({ kind: 'upcoming' as const, jam, host: getMusician(jam.hostId) }))
   return { live, upcoming }
+}
+
+// --- Map zones --------------------------------------------------------------
+
+export const getZone = (id: string): MapZone | undefined => mapZones.find((z) => z.id === id)
+
+/** The zone a musician lives in, joined on the neighbourhood name. */
+export const zoneForMusician = (musician: Musician): MapZone | undefined =>
+  mapZones.find((z) => z.name === musician.neighborhood)
+
+export interface ZoneFilter {
+  /** Only people flagged as free tonight. */
+  tonightOnly?: boolean
+  /** Only people who play this. Undefined means every instrument. */
+  instrument?: Instrument
+}
+
+/**
+ * Everyone in a zone, minus the viewer. This returns musicians, never positions — the map
+ * draws all of them at the zone centre.
+ */
+export function listMusiciansInZone(
+  zoneId: string,
+  filter: ZoneFilter = {},
+  viewerId = CURRENT_USER_ID,
+): Musician[] {
+  const zone = getZone(zoneId)
+  if (!zone) return []
+  return musicians.filter((m) => {
+    if (m.id === viewerId) return false
+    if (m.neighborhood !== zone.name) return false
+    if (filter.tonightOnly && !m.availableTonight) return false
+    if (filter.instrument && !m.instruments.includes(filter.instrument)) return false
+    return true
+  })
+}
+
+export interface ZoneSummary {
+  zone: MapZone
+  musicians: Musician[]
+  count: number
+  /** Nearest and furthest of the people in this zone, for the "0.7–0.9 miles away" line. */
+  distanceRange?: { min: number; max: number }
+  /** Live sessions broadcasting from a venue in this zone. */
+  liveSessionIds: string[]
+  /** How many of each instrument, biggest first. */
+  instrumentCounts: { instrument: Instrument; count: number }[]
+}
+
+/** Everything the map and its bottom sheet need about one zone. */
+export function summariseZone(
+  zoneId: string,
+  filter: ZoneFilter = {},
+  viewerId = CURRENT_USER_ID,
+): ZoneSummary | undefined {
+  const zone = getZone(zoneId)
+  if (!zone) return undefined
+  const inZone = listMusiciansInZone(zoneId, filter, viewerId)
+
+  const distances = inZone.map((m) => m.distanceMi).sort((a, b) => a - b)
+  const tally = new Map<Instrument, number>()
+  for (const m of inZone) {
+    for (const instrument of m.instruments) {
+      tally.set(instrument, (tally.get(instrument) ?? 0) + 1)
+    }
+  }
+
+  return {
+    zone,
+    musicians: inZone,
+    count: inZone.length,
+    distanceRange:
+      distances.length > 0
+        ? { min: distances[0], max: distances[distances.length - 1] }
+        : undefined,
+    liveSessionIds: liveSessions
+      .filter((session) => {
+        const venue = getVenue(session.venueId)
+        return venue ? venue.neighborhood.startsWith(zone.name) : false
+      })
+      .map((session) => session.id),
+    instrumentCounts: [...tally.entries()]
+      .map(([instrument, count]) => ({ instrument, count }))
+      .sort((a, b) => b.count - a.count),
+  }
+}
+
+export function summariseAllZones(filter: ZoneFilter = {}, viewerId = CURRENT_USER_ID) {
+  return mapZones
+    .map((z) => summariseZone(z.id, filter, viewerId))
+    .filter((s): s is ZoneSummary => Boolean(s))
+}
+
+/** The zone the viewer is in — where the "you" marker goes. */
+export function viewerZone(viewerId = CURRENT_USER_ID): MapZone | undefined {
+  const me = getMusician(viewerId)
+  return me ? zoneForMusician(me) : undefined
 }

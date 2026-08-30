@@ -365,11 +365,22 @@ export interface LiveSession {
   chat: LiveComment[]
 }
 
+/**
+ * A neighbourhood, and the only spatial unit the app ever renders.
+ *
+ * `center` is the neighbourhood's own centre — public geography, not a person's position.
+ * Musicians carry no coordinates at all: everyone in a zone is drawn at the zone, so there is
+ * no per-person location in the data to leak in the first place (docs/SPEC.md §4.2, §5.2).
+ *
+ * Counts are deliberately absent. They are derived from the musicians whose `neighborhood`
+ * matches `name`, so a zone's badge can never disagree with who is actually in it.
+ */
 export interface MapZone {
   id: string
+  /** Matches Musician.neighborhood — the join key between people and places. */
   name: string
-  musicianCount: number
-  liveJamCount: number
-  /** Stylised map coords, never lat/lng. */
-  centroid: { x: number; y: number }
+  borough: string
+  center: { lat: number; lng: number }
+  /** How wide the zone is drawn. Coarse on purpose. */
+  radiusMi: number
 }
