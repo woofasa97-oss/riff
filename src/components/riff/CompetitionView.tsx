@@ -2,7 +2,18 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Clock, Coins, Lock, PartyPopper, Trophy, Users, Wallet } from 'lucide-react'
+import {
+  ArrowRight,
+  CalendarClock,
+  Clock,
+  Coins,
+  ListOrdered,
+  Lock,
+  PartyPopper,
+  Trophy,
+  Users,
+  Wallet,
+} from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
@@ -11,7 +22,7 @@ import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { cn } from '@/lib/cn'
-import { formatShortDateTime } from '@/lib/datetime'
+import { formatDate, formatDayAndTime, formatShortDateTime } from '@/lib/datetime'
 import { formatCredits } from '@/lib/labels'
 import { getMusician } from '@/mocks'
 import {
@@ -55,6 +66,10 @@ export function CompetitionView() {
 
   const pool = prizePool(season, entries)
   const payouts = projectedPayouts(season, entries)
+  // "1st 50% · 2nd 30% · 3rd 20%" from the season's payout fractions.
+  const splitLabel = season.payoutSplit
+    .map((frac, i) => `${ordinal(i + 1)} ${Math.round(frac * 100)}%`)
+    .join(' · ')
   const fee = season.entryFeeCredits
   const regOpen = season.status === 'registration'
   const finished = season.status === 'finished'
@@ -107,7 +122,10 @@ export function CompetitionView() {
               Prize pool
             </p>
             <p className="font-serif text-[40px] font-bold leading-none">{formatCredits(pool)}</p>
-            <p className="mt-1 text-[12px] text-white/70">{season.city} · grows with every entry</p>
+            <p className="mt-1 text-[12px] text-white/70">
+              {season.city} · {entries.length} {entries.length === 1 ? 'act' : 'acts'} entered ·
+              grows with every {formatCredits(fee)} entry
+            </p>
 
             <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-[12px] bg-white/10 px-3 py-2.5 backdrop-blur-sm">
@@ -129,15 +147,16 @@ export function CompetitionView() {
           </div>
         </div>
 
-        {/* 2 · HOW THE PRIZE WORKS */}
+        {/* 2 · HOW THE SEASON WORKS — plain-language explainer so the ask is never a black box. */}
         <section>
-          <SectionHeader>How the prize works</SectionHeader>
+          <SectionHeader>How the season works</SectionHeader>
           <Card className="p-4">
             <ol className="space-y-2.5">
               {[
-                'Pay the entry fee to enter the season.',
-                'The pool is the base pool plus every entry.',
-                'The top places split it at season end.',
+                `It's Riff's ${season.scene} competition — enter your act and play for the pool.`,
+                `Pay a ${formatCredits(fee)} entry fee in Riff Credits — play money, no cash value.`,
+                `Every entry plus a ${formatCredits(season.basePoolCredits)} base pool builds the prize pool — ${formatCredits(pool)} so far.`,
+                'When registration closes the season runs; at the end the top places split the pool.',
               ].map((line, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--hero-from)] text-[11px] font-bold text-primary">
@@ -148,37 +167,67 @@ export function CompetitionView() {
               ))}
             </ol>
 
-            {payouts.length > 0 && (
-              <>
-                <p className="mb-2 mt-4 text-[10px] font-bold uppercase tracking-[0.08em] text-foreground-dim">
-                  Projected split
-                </p>
-                <div className="flex gap-2">
+            <div className="mt-4 rounded-[12px] border border-border-subtle bg-background p-3">
+              <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-foreground-dim">
+                <ListOrdered size={12} />
+                Winners split the pool · {splitLabel}
+              </p>
+              {payouts.length > 0 && (
+                <div className="mt-3 flex gap-2">
                   {payouts.map((amount, i) => (
                     <div
                       key={i}
-                      className="flex flex-1 flex-col items-center rounded-[12px] border border-border-subtle bg-background px-2 py-2.5"
+                      className="flex flex-1 flex-col items-center rounded-[10px] bg-[color:var(--hero-from)] px-2 py-2"
                     >
-                      <span className="text-[10px] font-bold uppercase tracking-wide text-foreground-dim">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
                         {ordinal(i + 1)}
                       </span>
-                      <span className="mt-0.5 font-serif text-[15px] font-bold text-foreground">
+                      <span className="mt-0.5 font-serif text-[14px] font-bold text-foreground">
                         {formatCredits(amount)}
                       </span>
                     </div>
                   ))}
                 </div>
-              </>
-            )}
+              )}
+            </div>
 
-            <p className="mt-4 flex items-center gap-1.5 text-[11px] text-foreground-dim">
+            <p className="mt-3 flex items-center gap-1.5 text-[11px] text-foreground-dim">
               <Coins size={12} />
-              Riff Credits — play money while we&rsquo;re in preview.
+              Riff Credits are play money — no cash value while we&rsquo;re in preview.
             </p>
           </Card>
         </section>
 
-        {/* 3 · YOUR ENTRY — the branch depends on guest / entered / registration status. */}
+        {/* 3 · KEY DATES + STANDINGS — surface the deadline and let people judge the field first. */}
+        <section>
+          <SectionHeader>Key dates</SectionHeader>
+          <Card className="p-4">
+            <div className="flex items-start gap-3">
+              <CalendarClock size={16} className="mt-0.5 shrink-0 text-primary" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-semibold text-foreground">
+                  {regOpen
+                    ? `Registration closes ${formatDayAndTime(season.registrationClosesAt)}`
+                    : finished
+                      ? 'Registration is closed — this season has settled'
+                      : 'Registration is closed for this season'}
+                </p>
+                <p className="mt-0.5 text-[12px] text-foreground-dim">
+                  Season runs {formatDate(season.startsAt)} → {formatDate(season.endsAt)}
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/leaderboard"
+              className={cn(buttonClass({ variant: 'outline', fullWidth: true }), 'mt-4')}
+            >
+              See the standings
+              <ArrowRight size={16} />
+            </Link>
+          </Card>
+        </section>
+
+        {/* 4 · YOUR ENTRY — the branch depends on guest / entered / registration status. */}
         <section>
           <SectionHeader>Your entry</SectionHeader>
 
@@ -216,10 +265,29 @@ export function CompetitionView() {
                   : `You're 1 of ${entries.length} ${entries.length === 1 ? 'act' : 'acts'} competing for the ${formatCredits(pool)} pool. Top prize projects at ${formatCredits(payouts[0] ?? 0)}.`}
               </p>
               {!finished && (
-                <p className="mt-2 text-[11px] text-foreground-dim">
-                  Paid {formatCredits(myEntry.feePaidCredits)} on entry
-                  {wallet ? ` · ${formatCredits(wallet.balanceCredits)} left in wallet` : ''}.
-                </p>
+                <>
+                  <p className="mt-2 text-[11px] text-foreground-dim">
+                    Paid {formatCredits(myEntry.feePaidCredits)} on entry
+                    {wallet ? ` · ${formatCredits(wallet.balanceCredits)} left in wallet` : ''}.
+                  </p>
+                  <div className="mt-3 rounded-[12px] border border-border-subtle bg-card p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-foreground-dim">
+                      What happens next
+                    </p>
+                    <p className="mt-1 text-[12px] leading-snug text-foreground">
+                      Registration closes {formatDayAndTime(season.registrationClosesAt)}. The season
+                      then runs to {formatDate(season.endsAt)}, when the top places split the pool —{' '}
+                      {splitLabel}. Nothing more to do until then.
+                    </p>
+                    <Link
+                      href="/leaderboard"
+                      className={cn(buttonClass({ variant: 'outline', fullWidth: true }), 'mt-3')}
+                    >
+                      Track the standings
+                      <ArrowRight size={16} />
+                    </Link>
+                  </div>
+                </>
               )}
             </Card>
           ) : regOpen ? (
@@ -275,7 +343,7 @@ export function CompetitionView() {
           )}
         </section>
 
-        {/* 4 · ENTRANTS */}
+        {/* 5 · ENTRANTS */}
         <section>
           <SectionHeader>Entrants{entries.length > 0 ? ` · ${entries.length}` : ''}</SectionHeader>
           {entries.length === 0 ? (

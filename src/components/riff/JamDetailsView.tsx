@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Check, ChevronRight, Lock, MapPinned } from 'lucide-react'
+import { Check, ChevronRight, Flag, Lock, MapPinned, ShieldCheck } from 'lucide-react'
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
 import { AttendeeRow } from '@/components/riff/AttendeeRow'
+import { ReportSheet } from '@/components/riff/ReportSheet'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
@@ -51,6 +52,7 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
   const [applicantError, setApplicantError] = useState<string | null>(null)
   const [inviteBusy, setInviteBusy] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const [reportOpen, setReportOpen] = useState(false)
 
   const jam = jams.find((j) => j.id === jamId)
   const venue = jam ? getVenue(jam.venueId) : undefined
@@ -364,6 +366,19 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
             </a>
           )}
         </Card>
+        {/* Guidance lands exactly where people arrange to meet — only once the jam is real. */}
+        {jam.status === 'confirmed' && (
+          <Link
+            href="/me/safety"
+            className="mt-3 flex items-center gap-3 rounded-[12px] border border-border-subtle bg-surface-muted px-4 py-3"
+          >
+            <ShieldCheck size={18} className="shrink-0 text-primary" />
+            <span className="min-w-0 flex-1 text-[13px] text-foreground">
+              Meeting someone new? A few safety tips
+            </span>
+            <ChevronRight size={14} className="shrink-0 text-foreground-dim" />
+          </Link>
+        )}
       </section>
 
       {/* THREAD */}
@@ -473,6 +488,25 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
           You are no longer on this jam.
         </p>
       )}
+
+      {/* Every meeting point needs a way to flag trouble — routes to out-of-band review. */}
+      <div className="pb-1 pt-4">
+        <button
+          type="button"
+          onClick={() => setReportOpen(true)}
+          className="mx-auto flex items-center gap-1.5 px-2 py-1 text-[13px] font-medium text-foreground-dim"
+        >
+          <Flag size={13} />
+          Report a problem
+        </button>
+      </div>
+
+      <ReportSheet
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        jamId={jam.id}
+        subjectLabel={jam.title}
+      />
     </AppShell>
   )
 }

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Disc3,
+  Flag,
   MapPin,
   Quote,
   ShieldCheck,
@@ -16,9 +17,10 @@ import {
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
 import { AvailabilityGrid } from '@/components/riff/AvailabilityGrid'
 import { RecordingRow } from '@/components/riff/RecordingRow'
+import { ReportSheet } from '@/components/riff/ReportSheet'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button, buttonClass } from '@/components/ui/Button'
+import { Button, buttonClass, IconButton } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
@@ -47,6 +49,7 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
 
   const [messageBusy, setMessageBusy] = useState(false)
   const [messageError, setMessageError] = useState<string | null>(null)
+  const [reportOpen, setReportOpen] = useState(false)
 
   const isSelf = musicianId === viewerId
   useEffect(() => {
@@ -109,7 +112,17 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
   return (
     <AppShell
       activeTab="discover"
-      header={<SubScreenHeader title="Profile" backHref="/discover" />}
+      header={
+        <SubScreenHeader
+          title="Profile"
+          backHref="/discover"
+          action={
+            <IconButton label={`Report ${musician.name}`} onClick={() => setReportOpen(true)}>
+              <Flag size={16} />
+            </IconButton>
+          }
+        />
+      }
       mainClassName="pb-6"
       footer={
         <StickyActionBar
@@ -357,6 +370,13 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
           )}
         </Card>
       </section>
+
+      <ReportSheet
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetMusicianId={musicianId}
+        subjectLabel={musician.name}
+      />
     </AppShell>
   )
 }

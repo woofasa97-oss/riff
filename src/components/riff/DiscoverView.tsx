@@ -15,9 +15,10 @@ import { cn } from '@/lib/cn'
 import { genreLabel, instrumentLabel, intentLabel, playerLabel } from '@/lib/labels'
 import { useIsGuest, useRiffStore } from '@/lib/store'
 import { listNearbyMusicians } from '@/mocks'
-import type { Intent, Jam, Musician } from '@/types'
+import type { Genre, Intent, Jam, Musician } from '@/types'
 
 type IntentFilter = Intent | 'all'
+type GenreFilter = Genre | 'all'
 
 /** Guest "just looking" strip: once dismissed it stays hidden for the session. */
 const GUEST_BANNER_KEY = 'riff_guest_banner_dismissed'
@@ -27,6 +28,13 @@ const INTENT_CHIPS: { id: IntentFilter; label: string }[] = [
   { id: 'casual', label: intentLabel('casual') },
   { id: 'serious', label: intentLabel('serious') },
   { id: 'gigging', label: intentLabel('gigging') },
+]
+
+// The seven canonical genres (docs/DATA-MODEL.md), leading with an "all" escape hatch.
+const GENRES: Genre[] = ['jazz', 'neo-soul', 'fusion', 'indie', 'rock', 'funk', 'hip-hop']
+const GENRE_CHIPS: { id: GenreFilter; label: string }[] = [
+  { id: 'all', label: 'All genres' },
+  ...GENRES.map((g) => ({ id: g, label: genreLabel(g) })),
 ]
 
 const postedTs = (jam: Jam) => (jam.postedAt ? Date.parse(jam.postedAt) : 0)
@@ -59,6 +67,7 @@ export function DiscoverView() {
   const zone = searchParams.get('zone')?.trim() || null
 
   const [intent, setIntent] = useState<IntentFilter>('all')
+  const [genre, setGenre] = useState<GenreFilter>('all')
   const [tonightOnly, setTonightOnly] = useState(() => searchParams.get('tonight') === '1')
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -97,6 +106,7 @@ export function DiscoverView() {
   const filtered = musicians.filter(
     (m) =>
       (intent === 'all' || m.intent === intent) &&
+      (genre === 'all' || m.genres.includes(genre)) &&
       (!tonightOnly || m.availableTonight) &&
       matchesSearch(m, q),
   )
@@ -111,10 +121,11 @@ export function DiscoverView() {
     [jams],
   )
 
-  const hasActiveFilters = intent !== 'all' || tonightOnly || q !== ''
+  const hasActiveFilters = intent !== 'all' || genre !== 'all' || tonightOnly || q !== ''
 
   function clearFilters() {
     setIntent('all')
+    setGenre('all')
     setTonightOnly(false)
     setQuery('')
     setSearchOpen(false)
@@ -246,6 +257,13 @@ export function DiscoverView() {
         items={INTENT_CHIPS}
         value={intent}
         onChange={setIntent}
+        className="shrink-0 px-4"
+      />
+
+      <ChipTabs<GenreFilter>
+        items={GENRE_CHIPS}
+        value={genre}
+        onChange={setGenre}
         className="shrink-0 px-4"
       />
 
