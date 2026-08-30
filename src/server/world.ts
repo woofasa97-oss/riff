@@ -13,7 +13,7 @@
 import crypto from 'node:crypto'
 import { db, etDateKey } from '@/server/db'
 import { canRevealAddress, canVouch } from '@/lib/privacy'
-import { mapZones } from '@/mocks'
+import { getLeaderboardEntry, mapZones } from '@/mocks'
 import { SLOTS, WEEKDAYS } from '@/lib/availability'
 import type {
   Availability,
@@ -70,8 +70,11 @@ function rowToMusician(r: any, nowKey: string): Musician {
     bio: r.bio ?? undefined,
     clip: r.clip ? JSON.parse(r.clip) : undefined,
     availability: JSON.parse(r.availability),
-    // "Available tonight" expires at local midnight: an old flag simply stops being true.
-    availableTonight: Boolean(r.available_tonight) && r.tonight_set_on === nowKey,
+    // "Available tonight" expires at local midnight for real users (they must re-toggle daily).
+    // Seed musicians are the demo crew that keeps the scene populated — their flag is sticky, so
+    // "who's free tonight" never empties out the day after a deploy.
+    availableTonight:
+      Boolean(r.available_tonight) && (Boolean(r.is_seed) || r.tonight_set_on === nowKey),
     verified: Boolean(r.verified),
     jamsHosted: r.jams_hosted,
     baseline: JSON.parse(r.baseline),
@@ -572,10 +575,20 @@ function settleSeason(season: Season) {
   ).map(rowToEntry)
   const pool = prizePoolCredits(season)
 
+  // Rank by the SAME leaderboard players can see, so the settlement can't contradict it — highest
+  // points win, ties broken by who entered first (entries is already ordered by entered_at). An
+  // entrant with no leaderboard standing (a brand-new real account) scores 0 and places last.
+  const ranked = entries
+    .map((entry, i) => ({
+      entry,
+      points: getLeaderboardEntry(entry.competitorId)?.points ?? 0,
+      order: i,
+    }))
+    .sort((a, b) => b.points - a.points || a.order - b.order)
+    .map((x) => x.entry)
+
   const tx = d.transaction(() => {
-    // Deterministic standings without real match results: earliest entrants placed first.
-    // A production settle would rank by bracket outcome; the payout mechanics are the point here.
-    entries.forEach((entry, i) => {
+    ranked.forEach((entry, i) => {
       const rank = i + 1
       const share = season.payoutSplit[i] ?? 0
       const payout = Math.round(pool * share)
@@ -936,7 +949,104 @@ export function sendJamRequest(
     })
   })
   tx()
+
+  // A request to a seed (demo) musician would otherwise sit pending forever — nobody's home to
+  // answer. So the demo crew accepts, turning it into a real confirmed jam the requester can carry
+  // all the way through to a recap. This is scripted demo behaviour, consistent with those
+  // accounts being labelled the "Riff crew"; it never fires for a request to a real user.
+  if (isSeedMusician(input.toId)) autoAcceptBySeed(request)
   return request
+}
+
+/** Seed musicians have no login (no users row) — that is exactly what makes them the demo crew. */
+function isSeedMusician(id: string): boolean {
+  const r = db().prepare(`SELECT is_seed FROM musicians WHERE id = ?`).get(id) as
+    | { is_seed: number }
+    | undefined
+  return Boolean(r?.is_seed)
+}
+
+/**
+ * The demo-crew accept. Mirrors the confirmed-jam creation in respondToRequest, but run on behalf
+ * of a seed recipient so a solo real user can experience the full loop. Uses the first FUTURE
+ * proposed time (so the jam does not instantly settle to completed) and the suggested venue, or a
+ * default. If no proposed time is still in the future, it leaves the request pending.
+ */
+function autoAcceptBySeed(request: JamRequest) {
+  const d = db()
+  const now = nowIso()
+  const startsAt = request.proposedTimes.find((t) => Date.parse(t) > Date.parse(now))
+  if (!startsAt) return
+  const venueId =
+    request.venueId ??
+    (d.prepare(`SELECT id FROM venues ORDER BY rowid LIMIT 1`).get() as { id: string } | undefined)
+      ?.id
+  if (!venueId) return
+
+  const fromRow = d.prepare(`SELECT instruments FROM musicians WHERE id = ?`).get(request.fromId) as
+    | { instruments: string }
+    | undefined
+  const toRow = d.prepare(`SELECT instruments FROM musicians WHERE id = ?`).get(request.toId) as
+    | { instruments: string }
+    | undefined
+  const at = nowIso()
+  const jamId = uid('jam')
+  const threadId = uid('thr')
+  const attendees = [
+    {
+      musicianId: request.fromId,
+      instrument: (JSON.parse(fromRow?.instruments ?? '["guitar"]')[0] ?? 'guitar') as Instrument,
+      rsvp: 'confirmed' as const,
+    },
+    {
+      musicianId: request.toId,
+      instrument: (JSON.parse(toRow?.instruments ?? '["drums"]')[0] ?? 'drums') as Instrument,
+      rsvp: 'confirmed' as const,
+    },
+  ]
+  const tx = d.transaction(() => {
+    d.prepare(`INSERT INTO jams VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+      jamId,
+      `${firstName(request.fromId)} & ${firstName(request.toId)}`,
+      request.intent,
+      'confirmed',
+      startsAt,
+      2,
+      null,
+      venueId,
+      request.fromId,
+      JSON.stringify(attendees),
+      '[]',
+      0,
+      null,
+      null,
+      threadId,
+      null,
+      null,
+    )
+    insertThread({
+      id: threadId,
+      kind: 'jam',
+      jamId,
+      participantIds: [request.fromId, request.toId],
+      lastMessageAt: at,
+    })
+    insertMessage({
+      id: uid('msg'),
+      threadId,
+      authorId: 'system',
+      body: `${firstName(request.toId)} accepted. The jam is on — say hi and sort the details.`,
+      sentAt: at,
+      kind: 'system',
+    })
+    touchRead(threadId, request.fromId, at)
+    d.prepare(`UPDATE requests SET status = 'accepted', jam_id = ? WHERE id = ?`).run(
+      jamId,
+      request.id,
+    )
+    notify(request.fromId, 'request_accepted', 'accepted your jam request', request.toId, { jamId })
+  })
+  tx()
 }
 
 export function respondToRequest(
@@ -1260,6 +1370,117 @@ export function withdrawFromJam(viewerId: string, jamId: string) {
     status,
     jamId,
   )
+}
+
+/**
+ * The host seats a pending open-call applicant. This is the missing other half of applyToOpenCall
+ * — without it, applications could be filed but never acted on. Only the host may accept, the role
+ * they applied for must still be open, and the call becomes a confirmed jam once every advertised
+ * seat is filled (which is what reveals the address to the now-confirmed attendees).
+ */
+export function acceptApplicant(viewerId: string, jamId: string, applicantId: string) {
+  const d = db()
+  const jam = getJamRow(jamId)
+  if (!jam) throw new WorldError('Jam not found', 404)
+  if (jam.hostId !== viewerId) throw new WorldError('Only the host can accept applicants', 403)
+  const appRow = d
+    .prepare(
+      `SELECT id, instrument FROM applications WHERE jam_id = ? AND applicant_id = ? AND status = 'pending'`,
+    )
+    .get(jamId, applicantId) as { id: string; instrument: string } | undefined
+  if (!appRow) throw new WorldError('No pending application from this player', 404)
+  if (jam.attendees.some((a) => a.musicianId === applicantId && a.rsvp !== 'declined'))
+    throw new WorldError('They are already on this jam', 409)
+  const instrument = appRow.instrument as Instrument
+  if (!jam.openSeats.includes(instrument))
+    throw new WorldError('That role has already been filled', 409)
+
+  const at = nowIso()
+  const attendees = [
+    ...jam.attendees,
+    { musicianId: applicantId, instrument, rsvp: 'confirmed' as const },
+  ]
+  const openSeats = [...jam.openSeats]
+  openSeats.splice(openSeats.indexOf(instrument), 1)
+  // An open call becomes a confirmed jam once every advertised role is filled.
+  const status = openSeats.length === 0 ? 'confirmed' : jam.status
+
+  const tx = d.transaction(() => {
+    d.prepare(`UPDATE jams SET attendees = ?, open_seats = ?, status = ? WHERE id = ?`).run(
+      JSON.stringify(attendees),
+      JSON.stringify(openSeats),
+      status,
+      jamId,
+    )
+    d.prepare(`UPDATE applications SET status = 'accepted' WHERE id = ?`).run(appRow.id)
+    // Bring the applicant into the jam's group thread so the plan can be made together.
+    const thread = getThreadRow(jam.threadId)
+    if (thread) {
+      if (!thread.participantIds.includes(applicantId)) {
+        d.prepare(`UPDATE threads SET participant_ids = ? WHERE id = ?`).run(
+          JSON.stringify([...thread.participantIds, applicantId]),
+          jam.threadId,
+        )
+      }
+      insertMessage({
+        id: uid('msg'),
+        threadId: jam.threadId,
+        authorId: 'system',
+        body: `${firstName(applicantId)} is in — welcome to the jam.`,
+        sentAt: at,
+        kind: 'system',
+      })
+      touchRead(jam.threadId, applicantId, at)
+    }
+    notify(applicantId, 'request_accepted', `added you to ${jam.title}`, viewerId, { jamId })
+  })
+  tx()
+}
+
+/**
+ * An invited attendee answers their invite. postJam seeds invited people as rsvp 'pending' and,
+ * until now, the only thing they could do was withdraw — so invited jams could never actually come
+ * together. Accepting flips the caller's own seat to confirmed (and a posted jam, which already has
+ * a real venue and time, becomes confirmed once two people are in); declining reuses the withdraw
+ * path. The caller can only change their own rsvp.
+ */
+export function respondToInvite(viewerId: string, jamId: string, action: 'accept' | 'decline') {
+  if (action !== 'accept' && action !== 'decline') throw new WorldError('Bad response')
+  const d = db()
+  const jam = getJamRow(jamId)
+  if (!jam) throw new WorldError('Jam not found', 404)
+  const me = jam.attendees.find((a) => a.musicianId === viewerId)
+  if (!me || me.rsvp !== 'pending')
+    throw new WorldError('You have no pending invite to this jam', 403)
+
+  const at = nowIso()
+  const rsvp = action === 'accept' ? ('confirmed' as const) : ('declined' as const)
+  const attendees = jam.attendees.map((a) => (a.musicianId === viewerId ? { ...a, rsvp } : a))
+  const confirmed = attendees.filter((a) => a.rsvp === 'confirmed').length
+  let status = jam.status
+  if (action === 'accept' && jam.status === 'pending' && confirmed >= 2) status = 'confirmed'
+  if (action === 'decline' && jam.status === 'confirmed' && confirmed < 2) status = 'pending'
+
+  const tx = d.transaction(() => {
+    d.prepare(`UPDATE jams SET attendees = ?, status = ? WHERE id = ?`).run(
+      JSON.stringify(attendees),
+      status,
+      jamId,
+    )
+    if (action === 'accept' && getThreadRow(jam.threadId)) {
+      insertMessage({
+        id: uid('msg'),
+        threadId: jam.threadId,
+        authorId: 'system',
+        body: `${firstName(viewerId)} is in.`,
+        sentAt: at,
+        kind: 'system',
+      })
+      touchRead(jam.threadId, viewerId, at)
+      notify(jam.hostId, 'request_accepted', `is coming to ${jam.title}`, viewerId, { jamId })
+    }
+  })
+  tx()
 }
 
 // --- messaging --------------------------------------------------------------

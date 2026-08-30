@@ -309,6 +309,10 @@ export function BattleView({ battleId }: { battleId: string }) {
           Battle of the Bands: {battle.round === 'final' ? 'Finals' : `${battle.round} finals`}
         </h1>
         <p className="text-[13px] font-medium text-white/50">{battle.stageLabel}</p>
+        {/* Honesty note: watching and vote counts here are a preview sample, not a live tally. */}
+        <p className="mt-0.5 text-[11px] text-white/40">
+          Preview — watching and vote counts are illustrative.
+        </p>
       </div>
 
       <ChallengerCard
@@ -336,7 +340,8 @@ export function BattleView({ battleId }: { battleId: string }) {
         </div>
         {myVote && (
           <p className="text-center text-[12px] text-white/60">
-            Your vote for {myVote === 'A' ? bandA.name : bandB.name} is in. One vote each.
+            Your vote for {myVote === 'A' ? bandA.name : bandB.name} is in — one vote each in this
+            preview tally.
           </p>
         )}
       </div>

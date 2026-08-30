@@ -195,6 +195,7 @@ export function DiscoverView() {
       }
       mainClassName="flex flex-col gap-5 pb-6 pt-2"
     >
+      <h1 className="sr-only">Discover musicians near you</h1>
       {isGuest && !bannerDismissed && (
         <div className="shrink-0 px-4">
           <div className="flex items-center gap-2.5 rounded-[12px] border border-border-subtle bg-surface-muted px-3 py-1.5 shadow-sm">

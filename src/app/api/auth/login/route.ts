@@ -21,6 +21,12 @@ export async function POST(req: Request) {
   // unspoofable, so a flood of forged XFF values cannot reset the per-account limit.
   const xff = req.headers.get('x-forwarded-for') ?? 'local'
   const clientIp = xff.split(',').pop()!.trim() || 'local'
+  // Global per-IP gate: caps TOTAL attempts from one IP regardless of which usernames it targets,
+  // so password-spraying many usernames from a single IP is capped even though no single
+  // per-username key trips. Checked alongside the per-username key below.
+  if (!throttleLogin(`login-ip:${clientIp}`)) {
+    return NextResponse.json({ error: 'Too many tries — wait ten minutes' }, { status: 429 })
+  }
   const key = `${clientIp}:${username.toLowerCase()}`
   if (!throttleLogin(key)) {
     return NextResponse.json({ error: 'Too many tries — wait ten minutes' }, { status: 429 })

@@ -51,6 +51,7 @@ export interface ProfileOverrides {
   availability?: Availability
   availableTonight?: boolean
   clip?: AudioClip
+  bio?: string
 }
 
 interface RiffState {
@@ -123,7 +124,11 @@ interface RiffState {
     asDraft?: boolean
   }) => Promise<Jam>
   applyToOpenCall: (jamId: string, instrument: Instrument) => Promise<void>
+  acceptApplicant: (jamId: string, applicantId: string) => Promise<void>
+  respondToInvite: (jamId: string, action: 'accept' | 'decline') => Promise<void>
   withdrawFromJam: (jamId: string) => Promise<void>
+  /** Flip "free to play tonight" (or off). Persists via updateProfile; expires at local midnight. */
+  setAvailableTonight: (on: boolean) => Promise<void>
   sendMessage: (threadId: string, body: string) => Promise<Message>
   markThreadRead: (threadId: string) => Promise<void>
   openDirectThread: (musicianId: string) => Promise<Thread>
@@ -201,6 +206,8 @@ const FEATURE_LABELS: Record<string, string> = {
   respondToRequest: 'reply to a request',
   postJam: 'post a jam',
   applyToOpenCall: 'apply to an open call',
+  acceptApplicant: 'accept an applicant',
+  respondToInvite: 'reply to an invite',
   withdrawFromJam: 'change a jam',
   sendMessage: 'send a message',
   openDirectThread: 'message a musician',
@@ -282,7 +289,11 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
       postJam: (draft) => dispatch<Jam>('postJam', draft),
       applyToOpenCall: (jamId, instrument) =>
         dispatch<void>('applyToOpenCall', { jamId, instrument }),
+      acceptApplicant: (jamId, applicantId) =>
+        dispatch<void>('acceptApplicant', { jamId, applicantId }),
+      respondToInvite: (jamId, action) => dispatch<void>('respondToInvite', { jamId, action }),
       withdrawFromJam: (jamId) => dispatch<void>('withdrawFromJam', { jamId }),
+      setAvailableTonight: (on) => dispatch<void>('updateProfile', { availableTonight: on }),
       sendMessage: (threadId, body) => dispatch<Message>('sendMessage', { threadId, body }),
       markThreadRead: async (threadId) => {
         // Optimistic: the dot clears the instant the thread opens; the server confirms after.

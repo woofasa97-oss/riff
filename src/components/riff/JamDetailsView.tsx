@@ -12,8 +12,15 @@ import { Button, buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
+import { cn } from '@/lib/cn'
 import { formatDayAndTime, formatTime, isSameDay } from '@/lib/datetime'
-import { directionsHref, intentLabel, jamStatusLabel, shortNeighborhood } from '@/lib/labels'
+import {
+  directionsHref,
+  intentLabel,
+  jamStatusLabel,
+  playerLabel,
+  shortNeighborhood,
+} from '@/lib/labels'
 import { jamLocationLines } from '@/lib/privacy'
 import { statsFor, useReputationContext, useRiffStore } from '@/lib/store'
 import { getMusician, getVenue, listLiveSessions, listMessages } from '@/mocks'
@@ -33,10 +40,17 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
   const threads = useRiffStore((s) => s.threads)
   const messages = useRiffStore((s) => s.messages)
   const withdrawFromJam = useRiffStore((s) => s.withdrawFromJam)
+  const applications = useRiffStore((s) => s.applications)
+  const acceptApplicant = useRiffStore((s) => s.acceptApplicant)
+  const respondToInvite = useRiffStore((s) => s.respondToInvite)
   const ctx = useReputationContext()
   const [confirmingExit, setConfirmingExit] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
   const [withdrawError, setWithdrawError] = useState<string | null>(null)
+  const [busyApplicant, setBusyApplicant] = useState<string | null>(null)
+  const [applicantError, setApplicantError] = useState<string | null>(null)
+  const [inviteBusy, setInviteBusy] = useState(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
 
   const jam = jams.find((j) => j.id === jamId)
   const venue = jam ? getVenue(jam.venueId) : undefined
@@ -75,6 +89,14 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
     threadExists && jam.attendees.some((a) => a.musicianId === viewerId && a.rsvp !== 'declined')
   const me = jam.attendees.find((a) => a.musicianId === viewerId)
   const attending = me?.rsvp === 'confirmed'
+  const isHost = jam.hostId === viewerId
+  // The host's snapshot carries applications to their own jams — surface the pending ones so the
+  // open call can actually be answered.
+  const pendingApplicants = applications.filter(
+    (a) => a.jamId === jam.id && a.status === 'pending',
+  )
+  // A pending seat means the viewer was invited and hasn't answered yet.
+  const invited = me?.rsvp === 'pending'
   // "Go live" opens the broadcast only when one actually exists. Starting a stream is out of
   // scope for v1 (docs/SPEC.md §6), so the button stays disabled rather than pointing at nothing.
   const session = listLiveSessions().find((s) => s.jamId === jam.id)
@@ -82,6 +104,32 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
   const whenLabel = isSameDay(jam.startsAt, now)
     ? `Tonight ${formatTime(jam.startsAt)}`
     : formatDayAndTime(jam.startsAt)
+
+  async function respondInvite(action: 'accept' | 'decline') {
+    if (!jam || inviteBusy) return
+    setInviteBusy(true)
+    setInviteError(null)
+    try {
+      await respondToInvite(jam.id, action)
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Something went wrong — try again')
+    } finally {
+      setInviteBusy(false)
+    }
+  }
+
+  async function acceptOne(applicantId: string) {
+    if (!jam || busyApplicant) return
+    setBusyApplicant(applicantId)
+    setApplicantError(null)
+    try {
+      await acceptApplicant(jam.id, applicantId)
+    } catch (err) {
+      setApplicantError(err instanceof Error ? err.message : 'Something went wrong — try again')
+    } finally {
+      setBusyApplicant(null)
+    }
+  }
 
   return (
     <AppShell
@@ -159,6 +207,41 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
         </div>
       </div>
 
+      {/* INVITE RESPONSE — an invited player answers. Accepting can confirm the jam. */}
+      {invited && (
+        <section className="mb-8">
+          <Card className="p-4">
+            <h2 className="font-serif text-[16px] font-bold text-foreground">
+              You’re invited to this jam
+            </h2>
+            <p className="mt-1 text-[13px] text-foreground-dim">
+              {getMusician(jam.hostId)?.name ?? 'The host'} asked you to play. Let them know if
+              you’re in — nothing’s locked until you say yes.
+            </p>
+            {inviteError && <p className="mt-2 text-[13px] text-destructive">{inviteError}</p>}
+            <div className="mt-4 flex gap-3">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="flex-1"
+                disabled={inviteBusy}
+                onClick={() => respondInvite('decline')}
+              >
+                Can’t make it
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1"
+                disabled={inviteBusy}
+                onClick={() => respondInvite('accept')}
+              >
+                {inviteBusy ? 'Saving…' : 'I’m in'}
+              </Button>
+            </div>
+          </Card>
+        </section>
+      )}
+
       {/* WHO IS COMING */}
       <section className="mb-8">
         <SectionHeader>Who is coming</SectionHeader>
@@ -194,6 +277,66 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
           </p>
         )}
       </section>
+
+      {/* APPLICATIONS — only the host sees these; accepting seats the player in an open role. */}
+      {isHost && jam.isOpenCall && (
+        <section className="mb-8">
+          <SectionHeader>
+            {pendingApplicants.length > 0
+              ? `Applicants (${pendingApplicants.length})`
+              : 'Applicants'}
+          </SectionHeader>
+          {pendingApplicants.length === 0 ? (
+            <p className="px-1 text-[13px] text-foreground-dim">
+              No one’s applied yet. Open calls show up in Discover for players nearby.
+            </p>
+          ) : (
+            <Card className="overflow-hidden">
+              {pendingApplicants.map((app, index) => {
+                const applicant = getMusician(app.applicantId)
+                if (!applicant) return null
+                const seatOpen = jam.openSeats.includes(app.instrument)
+                return (
+                  <div
+                    key={app.id}
+                    className={cn(
+                      'flex items-center gap-3 p-3',
+                      index < pendingApplicants.length - 1 && 'border-b border-border-hairline',
+                    )}
+                  >
+                    <Link href={`/musicians/${applicant.id}`} className="shrink-0">
+                      <Avatar src={applicant.avatarUrl} name={applicant.name} size="md" />
+                    </Link>
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        href={`/musicians/${applicant.id}`}
+                        className="block truncate font-serif text-[14px] font-bold text-foreground"
+                      >
+                        {applicant.name}
+                      </Link>
+                      <div className="truncate text-[12px] text-foreground-dim">
+                        for {playerLabel(app.instrument)}
+                        {!seatOpen && ' · role filled'}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="shrink-0"
+                      disabled={!seatOpen || busyApplicant !== null}
+                      onClick={() => acceptOne(app.applicantId)}
+                    >
+                      {busyApplicant === app.applicantId ? 'Adding…' : seatOpen ? 'Accept' : 'Filled'}
+                    </Button>
+                  </div>
+                )
+              })}
+            </Card>
+          )}
+          {applicantError && (
+            <p className="mt-2 px-1 text-[13px] text-destructive">{applicantError}</p>
+          )}
+        </section>
+      )}
 
       {/* LOCATION — exact address only on a confirmed jam, and only to attendees. */}
       <section className="mb-8">

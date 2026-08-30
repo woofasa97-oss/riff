@@ -1,4 +1,5 @@
 import type { MapEvent, MusicShop, StreetPerformer, Studio } from '@/types'
+import { NOW } from './clock'
 
 /**
  * The public map layers beyond musicians and their jams: studios you can rent by the hour,
@@ -181,10 +182,11 @@ export const streetPerformers: StreetPerformer[] = [
     blurb: 'Standards and street-funk. Requests welcome — drop a tip in the case.',
   },
   {
-    id: 'street-rosa-cello',
-    name: 'Rosa on Cello',
+    // A Riff musician busking — identity matches her profile so "View Riff profile" is consistent.
+    id: 'street-ana-duarte',
+    name: 'Ana Duarte',
     musicianId: 'ana-duarte',
-    handle: '@rosa',
+    handle: '@ana_d',
     instruments: ['guitar', 'vocals'],
     genres: ['indie', 'neo-soul'],
     neighborhood: 'Greenpoint',
@@ -194,13 +196,12 @@ export const streetPerformers: StreetPerformer[] = [
     until: '2026-08-28T16:30:00-04:00',
     live: true,
     avatarUrl: '/mock/avatars/ana-duarte.svg',
-    blurb: 'Looping cello and voice. Come sit on the grass for a bit.',
+    blurb: 'Looping guitar and voice. Come sit on the grass for a bit.',
   },
   {
+    // A street act that isn't on Riff — no profile link, so nothing to contradict.
     id: 'street-l-platform',
     name: 'Subway Sessions',
-    musicianId: 'theo-park',
-    handle: '@theo',
     instruments: ['keys', 'vocals'],
     genres: ['neo-soul', 'hip-hop'],
     neighborhood: 'Williamsburg',
@@ -209,7 +210,7 @@ export const streetPerformers: StreetPerformer[] = [
     startedAt: '2026-08-28T14:45:00-04:00',
     until: '2026-08-28T16:15:00-04:00',
     live: true,
-    avatarUrl: '/mock/avatars/theo-park.svg',
+    avatarUrl: '/mock/avatars/miles-whitfield.svg',
     blurb: 'Keys-and-verse commuter sets. Catch me before rush hour clears.',
   },
   {
@@ -419,19 +420,89 @@ export const mapEvents: MapEvent[] = [
 ]
 
 // ---------------------------------------------------------------------------
-// Selectors — public reads, mirroring the getX/listX pattern in src/mocks/index.ts.
+// Read-time freshness — these fixtures are static (never seeded), so their timestamps would sit
+// frozen on the authoring day (NOW = 2026-08-28) while the app renders relative labels against the
+// real clock, showing past "tonight" slots and buskers "live" days after they finished. We apply
+// the SAME whole-day shift the DB seed uses (src/server/db.ts), so "tonight" is tonight and a
+// busker's live window lands on today. `live` is then derived from the shifted window, not trusted
+// as a static flag. Whole-day granularity means SSR and client agree within a calendar day.
 // ---------------------------------------------------------------------------
 
-export const listStudios = (): Studio[] => studios
-export const getStudio = (id: string): Studio | undefined => studios.find((s) => s.id === id)
+const DAY_MS = 86_400_000
 
-export const listStreetPerformers = (): StreetPerformer[] => streetPerformers
-export const getStreetPerformer = (id: string): StreetPerformer | undefined =>
-  streetPerformers.find((s) => s.id === id)
+function etDateKey(iso: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(iso))
+}
+
+/** Whole-day offset (ms) from the fixture scene to `now`'s calendar day. */
+function sceneShiftMs(now: string): number {
+  const days = Math.round(
+    (Date.parse(`${etDateKey(now)}T12:00:00Z`) - Date.parse(`${etDateKey(NOW)}T12:00:00Z`)) / DAY_MS,
+  )
+  return days * DAY_MS
+}
+
+const shiftIso = (iso: string, ms: number): string => new Date(Date.parse(iso) + ms).toISOString()
+
+function freshStudio(s: Studio, ms: number): Studio {
+  return { ...s, slots: s.slots.map((slot) => ({ ...slot, startsAt: shiftIso(slot.startsAt, ms) })) }
+}
+
+function freshPerformer(p: StreetPerformer, ms: number, now: string): StreetPerformer {
+  const startedAt = shiftIso(p.startedAt, ms)
+  const until = shiftIso(p.until, ms)
+  const nowMs = Date.parse(now)
+  return { ...p, startedAt, until, live: nowMs >= Date.parse(startedAt) && nowMs <= Date.parse(until) }
+}
+
+function freshEvent(e: MapEvent, ms: number): MapEvent {
+  return {
+    ...e,
+    startsAt: shiftIso(e.startsAt, ms),
+    ...(e.endsAt ? { endsAt: shiftIso(e.endsAt, ms) } : {}),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Selectors — public reads, mirroring the getX/listX pattern in src/mocks/index.ts. Each accepts
+// an optional `now` (defaults to the real clock) so callers can pin it to the store's clock.
+// ---------------------------------------------------------------------------
+
+export const listStudios = (now = new Date().toISOString()): Studio[] => {
+  const ms = sceneShiftMs(now)
+  return studios.map((s) => freshStudio(s, ms))
+}
+export const getStudio = (id: string, now = new Date().toISOString()): Studio | undefined => {
+  const s = studios.find((x) => x.id === id)
+  return s ? freshStudio(s, sceneShiftMs(now)) : undefined
+}
+
+export const listStreetPerformers = (now = new Date().toISOString()): StreetPerformer[] => {
+  const ms = sceneShiftMs(now)
+  return streetPerformers.map((p) => freshPerformer(p, ms, now))
+}
+export const getStreetPerformer = (
+  id: string,
+  now = new Date().toISOString(),
+): StreetPerformer | undefined => {
+  const p = streetPerformers.find((x) => x.id === id)
+  return p ? freshPerformer(p, sceneShiftMs(now), now) : undefined
+}
 
 export const listMusicShops = (): MusicShop[] => musicShops
 export const getMusicShop = (id: string): MusicShop | undefined =>
   musicShops.find((s) => s.id === id)
 
-export const listMapEvents = (): MapEvent[] => mapEvents
-export const getMapEvent = (id: string): MapEvent | undefined => mapEvents.find((e) => e.id === id)
+export const listMapEvents = (now = new Date().toISOString()): MapEvent[] => {
+  const ms = sceneShiftMs(now)
+  return mapEvents.map((e) => freshEvent(e, ms))
+}
+export const getMapEvent = (id: string, now = new Date().toISOString()): MapEvent | undefined => {
+  const e = mapEvents.find((x) => x.id === id)
+  return e ? freshEvent(e, sceneShiftMs(now)) : undefined
+}

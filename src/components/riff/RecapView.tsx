@@ -346,6 +346,7 @@ export function RecapView({ jamId }: { jamId: string }) {
                       value={notes[musician.id] ?? ''}
                       onChange={(e) => setNotes((n) => ({ ...n, [musician.id]: e.target.value }))}
                       placeholder={`Say one true thing about playing with ${musician.name.split(' ')[0]}`}
+                      aria-label={`A note about playing with ${musician.name}`}
                       className="w-full rounded-[12px] border border-border-subtle bg-background px-4 py-3 text-[14px] text-foreground placeholder:text-foreground-dim focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </>

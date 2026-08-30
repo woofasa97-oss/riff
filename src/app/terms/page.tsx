@@ -13,7 +13,7 @@ export default function TermsPage() {
     <>
       <header className="flex h-[56px] shrink-0 items-center bg-background px-4">
         <Link
-          href="/signup"
+          href="/me"
           aria-label="Back"
           className="-ml-1 flex h-8 w-8 items-center justify-start text-foreground transition-transform active:scale-90"
         >

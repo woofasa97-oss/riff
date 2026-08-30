@@ -33,6 +33,7 @@ export function LiveListView() {
       header={<TopBar />}
       mainClassName="px-4 py-6"
     >
+      <h1 className="sr-only">Live now</h1>
       {nothingLive ? (
         <EmptyState
           icon={<RadioTower size={22} />}
@@ -49,6 +50,9 @@ export function LiveListView() {
           {sessions.length > 0 && (
             <section className="mb-6">
               <SectionHeader>On now</SectionHeader>
+              <p className="mb-3 text-[12px] text-foreground-dim">
+                Preview — live viewer counts are illustrative.
+              </p>
               {sessions.map((session) => {
                 const band = getBand(session.bandId ?? '')
                 const venue = getVenue(session.venueId)

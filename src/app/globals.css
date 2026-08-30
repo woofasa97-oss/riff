@@ -11,7 +11,7 @@
   --card-foreground: #3d3c4f;
   --popover: #ffffff;
   --popover-foreground: #3d3c4f;
-  --primary: #8a79ab;
+  --primary: #6f5f92; /* AA on white for links + white-on-primary buttons (was #8a79ab, 3.9:1) */
   --primary-foreground: #f8f7fa;
   --secondary: #dfd9ec;
   --secondary-foreground: #3d3c4f;
@@ -28,7 +28,7 @@
   /* Recurring in the prototype but never tokenised there. */
   --border-subtle: #e4dfee; /* hairline on white cards, chips, icon buttons */
   --border-hairline: #f0edf5; /* divider *inside* a card, lighter than the card's own border */
-  --foreground-dim: #9c97a9; /* dim metadata — one step lighter than --muted-foreground */
+  --foreground-dim: #6f6a7a; /* AA-legible dim metadata (was #9c97a9, 2.8:1 fail) */ /* dim metadata — one step lighter than --muted-foreground */
   --surface-muted: #efebf6; /* filled secondary buttons */
 
   /* Status colours. The prototype inlines these; they carry meaning, so they are tokens. */
@@ -56,10 +56,10 @@
 
   /* Map layer colours — one per public place kind, so a pin and its detail card agree.
      Musicians keep --primary; these four separate the other layers at a glance. */
-  --map-studio: #d98e4b; /* rentable studios — warm amber */
-  --map-street: #3fa688; /* street performers — teal */
-  --map-shop: #5b8fd4; /* music shops — blue */
-  --map-event: #d1568a; /* events — magenta */
+  --map-studio: #9c6520; /* rentable studios — warm amber */
+  --map-street: #2c7a62; /* street performers — teal */
+  --map-shop: #4574ac; /* music shops — blue */
+  --map-event: #bd4a7f; /* events — magenta */
 
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-lora), Georgia, serif;
@@ -168,5 +168,18 @@
   }
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 1rem);
+  }
+}
+
+/* Respect the OS "reduce motion" setting: neutralise looping animations (the live/map pin pulse,
+   skeleton shimmer) and long transitions, without removing the elements themselves. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

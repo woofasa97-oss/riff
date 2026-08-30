@@ -64,10 +64,14 @@ export function ResetView() {
         return
       }
       setMessage(typeof data.message === 'string' ? data.message : null)
-      // A real account gets a devToken back (preview only) — prefill it and move on.
+      // A real account gets a devToken back (preview without email) — prefill it and move on.
       if (typeof data.devToken === 'string' && data.devToken) {
         setDevToken(data.devToken)
         setToken(data.devToken)
+        setStep('reset')
+      } else {
+        // Email path (or a non-matching account, which returns the same shape): advance to the
+        // code step so the user can paste the code we emailed. The message explains what to expect.
         setStep('reset')
       }
     } catch {
@@ -240,7 +244,7 @@ export function ResetView() {
               </form>
             ) : (
               <form onSubmit={setNewPassword} noValidate>
-                {devToken && (
+                {devToken ? (
                   <div className="mb-4 rounded-[12px] border border-primary/30 bg-primary/10 p-4">
                     <p className="text-[13px] leading-snug text-foreground">
                       <span className="font-semibold">Preview mode:</span> in production this code
@@ -248,6 +252,12 @@ export function ResetView() {
                       <span className="font-mono font-semibold text-primary">{devToken}</span>
                     </p>
                   </div>
+                ) : (
+                  message && (
+                    <div className="mb-4 rounded-[12px] border border-border-subtle bg-surface-muted p-4">
+                      <p className="text-[13px] leading-snug text-foreground-dim">{message}</p>
+                    </div>
+                  )
                 )}
 
                 <Card className="p-4">

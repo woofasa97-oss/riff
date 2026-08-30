@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next'
+import { cookies } from 'next/headers'
 import { Geist, Lora } from 'next/font/google'
 import { RiffProvider } from '@/lib/store'
 import { SessionReset } from '@/components/riff/SessionReset'
-import { viewerFromCookies } from '@/server/auth'
+import { SESSION_COOKIE, viewerFromCookies } from '@/server/auth'
 import { buildSnapshot, buildGuestSnapshot } from '@/server/world'
 import type { WorldSnapshot } from '@/lib/snapshot'
 import './globals.css'
@@ -40,18 +41,34 @@ export const viewport: Viewport = {
  * Signed-out requests render bare — middleware only lets them reach /welcome, /login, /signup.
  */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const jar = await cookies()
+  const hasSessionCookie = Boolean(jar.get(SESSION_COOKIE)?.value)
   const viewerId = await viewerFromCookies()
   let snapshot: WorldSnapshot | null = null
   let staleCookie = false
+  let dbUnavailable = false
   if (viewerId) {
     try {
       snapshot = buildSnapshot(viewerId)
     } catch {
+      // Valid cookie, but the musician is gone (DB reset) — sign out and start clean.
       staleCookie = true
     }
+  } else if (hasSessionCookie) {
+    // A cookie is present but resolves to no live session — expired, the DB was reset, or a
+    // "log out everywhere" password reset revoked it. Without this, the layout would silently
+    // drop the user into guest mode while middleware keeps bouncing them off /login, /welcome
+    // and /signup — a lockout with no way back in. Clear the cookie and return to the door.
+    staleCookie = true
   } else {
-    // No account: the public world. Guests browse; every action prompts sign-up.
-    snapshot = buildGuestSnapshot()
+    // No account: the public world. Guests browse; every action prompts sign-up. Guarded so a
+    // database failure degrades to a calm message instead of throwing an unstyled white screen
+    // at every first-time visitor.
+    try {
+      snapshot = buildGuestSnapshot()
+    } catch {
+      dbUnavailable = true
+    }
   }
   return (
     <html lang="en" className={`${geist.variable} ${lora.variable}`}>
@@ -61,6 +78,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <SessionReset />
         ) : snapshot ? (
           <RiffProvider snapshot={snapshot}>{children}</RiffProvider>
+        ) : dbUnavailable ? (
+          <main className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+            <h1 className="font-serif text-[22px] font-bold text-foreground">Riff is catching its breath</h1>
+            <p className="mt-2 max-w-[280px] text-[14px] text-foreground-dim">
+              We couldn’t reach the database just now. Give it a moment and reload.
+            </p>
+            {/* A hard reload (not client nav) so the server re-attempts opening the DB. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a
+              href="/"
+              className="mt-6 rounded-[12px] bg-primary px-5 py-2.5 text-[15px] font-semibold text-primary-foreground"
+            >
+              Try again
+            </a>
+          </main>
         ) : (
           children
         )}

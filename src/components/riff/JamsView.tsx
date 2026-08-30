@@ -138,6 +138,7 @@ export function JamsView({ initialTab = 'upcoming' }: { initialTab?: TabKey } = 
       }
       mainClassName="px-4 py-6"
     >
+      <h1 className="sr-only">Your jams</h1>
       {isGuest ? (
         // A guest owns no jams, requests or open calls — send them to make a card instead of
         // three empty tabs. The tab chrome above stays; its lists are all empty for a guest.

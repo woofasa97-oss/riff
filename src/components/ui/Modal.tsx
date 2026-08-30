@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/cn'
+import { useFocusTrap } from '@/lib/use-focus-trap'
 
 /**
  * Centred sheet over the phone column. The body is the positioning context, so this stays
@@ -23,6 +24,9 @@ export function Modal({
   children: React.ReactNode
   className?: string
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, open)
+
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -43,9 +47,11 @@ export function Modal({
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        tabIndex={-1}
         className={cn(
           'relative w-full rounded-[16px] border border-border-subtle bg-card p-6 shadow-xl',
           className,

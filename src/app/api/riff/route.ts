@@ -51,6 +51,12 @@ export async function POST(req: Request) {
       case 'withdrawFromJam':
         world.withdrawFromJam(viewerId, payload.jamId)
         break
+      case 'acceptApplicant':
+        world.acceptApplicant(viewerId, payload.jamId, payload.applicantId)
+        break
+      case 'respondToInvite':
+        world.respondToInvite(viewerId, payload.jamId, payload.action)
+        break
       case 'sendMessage':
         result = world.sendMessage(viewerId, payload.threadId, payload.body)
         break

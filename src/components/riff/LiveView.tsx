@@ -224,7 +224,10 @@ export function LiveView({ sessionId }: { sessionId: string }) {
             <h1 className="truncate font-serif text-[17px] font-bold leading-tight text-white">
               {band?.name ?? 'Live session'}
             </h1>
-            <div className="mt-0.5 flex items-center gap-1.5 text-white/70">
+            <div
+              className="mt-0.5 flex items-center gap-1.5 text-white/70"
+              title="Preview — viewer activity is illustrative"
+            >
               <Eye size={10} />
               <span className="text-[12px] font-medium">
                 {compactCount(session.viewerCount)} watching
@@ -245,6 +248,11 @@ export function LiveView({ sessionId }: { sessionId: string }) {
           </button>
         )}
       </div>
+
+      {/* Honesty note: the watching count is a preview sample, not a live tally. */}
+      <p className="mt-1.5 px-4 text-[10px] text-white/40">
+        Preview — viewer activity is illustrative
+      </p>
 
       {/* GLASS PILLS */}
       <div className="mt-6 flex flex-col items-start gap-2 px-4">

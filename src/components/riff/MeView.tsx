@@ -1,16 +1,19 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { Bell, ChevronRight, LogOut, Settings, UserPlus, Zap } from 'lucide-react'
+import { Bell, ChevronRight, LogOut, Moon, Settings, Sparkles, UserPlus, Zap } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { AvailabilityStrip } from '@/components/riff/AvailabilityStrip'
 import { TopBar } from '@/components/riff/TopBar'
 import { WaveformPlayer } from '@/components/riff/WaveformPlayer'
 import { Avatar } from '@/components/ui/Avatar'
 import { Card } from '@/components/ui/Card'
+import { Toggle } from '@/components/ui/Toggle'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { StatTile } from '@/components/ui/StatTile'
 import { buttonClass, iconButtonClass } from '@/components/ui/Button'
+import { cn } from '@/lib/cn'
 import { formatCredits, genreLane, instrumentLabel } from '@/lib/labels'
 import type { Musician } from '@/types'
 import {
@@ -76,6 +79,18 @@ function SignedInMe({ me }: { me: Musician }) {
   const entry = getLeaderboardEntry(me.id)
   const season = getCurrentSeason()
   const bands = listBandsFor(me.id)
+  const setAvailableTonight = useRiffStore((s) => s.setAvailableTonight)
+  const [tonightBusy, setTonightBusy] = useState(false)
+
+  async function toggleTonight(next: boolean) {
+    if (tonightBusy) return
+    setTonightBusy(true)
+    try {
+      await setAvailableTonight(next)
+    } finally {
+      setTonightBusy(false)
+    }
+  }
 
   return (
     <AppShell
@@ -124,9 +139,19 @@ function SignedInMe({ me }: { me: Musician }) {
         </div>
         <h1 className="font-serif text-[28px] font-bold text-foreground">{me.name}</h1>
         <div className="mb-1 text-[13px] font-medium text-foreground-dim">@{me.handle}</div>
-        <div className="mb-2 text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
-          {instrumentLabel(me.instruments[0]).toUpperCase()} · {genreLane(me.genres)}
-        </div>
+        {/* An unfinished profile has no instrument yet — don't crash the card, invite them to finish. */}
+        {me.instruments.length > 0 ? (
+          <div className="mb-2 text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
+            {instrumentLabel(me.instruments[0]).toUpperCase()} · {genreLane(me.genres)}
+          </div>
+        ) : (
+          <Link
+            href="/me/edit"
+            className="mb-2 text-[12px] font-bold uppercase tracking-[0.06em] text-primary underline underline-offset-2"
+          >
+            Finish your player card
+          </Link>
+        )}
         <div className="text-[13px] font-medium text-foreground-dim">
           {me.neighborhood} · {me.city.replace(', NY', '')}
         </div>
@@ -140,6 +165,34 @@ function SignedInMe({ me }: { me: Musician }) {
         />
         <StatTile value={stats?.repeatJams ?? 0} label="Repeat jams" />
         <StatTile value={stats?.vouchCount ?? 0} label="Vouches" />
+      </div>
+
+      {/* FREE TONIGHT — the headline discovery signal, re-toggleable daily (expires at midnight). */}
+      <div className="mb-6 px-4">
+        <Card className="flex items-center gap-3 p-4">
+          <span
+            className={cn(
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]',
+              me.availableTonight ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground-dim',
+            )}
+          >
+            {me.availableTonight ? <Sparkles size={18} /> : <Moon size={18} />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="font-serif text-[15px] font-bold text-foreground">Free to play tonight</div>
+            <div className="text-[12px] text-foreground-dim">
+              {me.availableTonight
+                ? 'You’re showing on the map and in tonight’s list.'
+                : 'Turn on to appear for people looking to jam tonight.'}
+            </div>
+          </div>
+          <Toggle
+            checked={Boolean(me.availableTonight)}
+            onChange={toggleTonight}
+            label="Free to play tonight"
+            className={tonightBusy ? 'opacity-60' : undefined}
+          />
+        </Card>
       </div>
 
       <div className="mb-8 px-4">

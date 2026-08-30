@@ -19,10 +19,10 @@ import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
-import { IconButton } from '@/components/ui/Button'
+import { buttonClass, IconButton } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
 import { dayDelta, formatRelativeShort, formatShortDateTime } from '@/lib/datetime'
-import { useRiffStore } from '@/lib/store'
+import { useIsGuest, useRiffStore } from '@/lib/store'
 import { getBand, getJam, getMusician } from '@/mocks'
 import type { Notification } from '@/types'
 
@@ -144,6 +144,7 @@ function NotificationRow({ n }: { n: Notification }) {
 
 export function NotificationsView() {
   const [filter, setFilter] = useState<Filter>('all')
+  const isGuest = useIsGuest()
   const notifications = useRiffStore((s) => s.notifications)
   const now = useRiffStore((s) => s.now)
   const markAll = useRiffStore((s) => s.markAllNotificationsRead)
@@ -211,7 +212,30 @@ export function NotificationsView() {
       }
       mainClassName="pb-6"
     >
-      {today.length === 0 && earlier.length === 0 ? (
+      {isGuest ? (
+        // Notifications only exist once people can reach you — requests, accepts and vouches all
+        // depend on a player card, so guests get the same sign-up nudge every private surface shows.
+        <div className="px-4 py-6">
+          <EmptyState
+            icon={<Bell size={22} />}
+            title="Sign up to get notified"
+            body="Requests to play, accepted jams and vouches from the people you play with all land here."
+            action={
+              <div className="flex gap-2">
+                <Link href="/signup" className={buttonClass({ size: 'sm' })}>
+                  Create player card
+                </Link>
+                <Link
+                  href="/discover"
+                  className={buttonClass({ variant: 'secondary', size: 'sm' })}
+                >
+                  Browse musicians
+                </Link>
+              </div>
+            }
+          />
+        </div>
+      ) : today.length === 0 && earlier.length === 0 ? (
         <div className="px-4 py-6">
           <EmptyState
             icon={<Bell size={22} />}

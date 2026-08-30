@@ -1,9 +1,11 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Sparkles, X } from 'lucide-react'
 import { buttonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
+import { useFocusTrap } from '@/lib/use-focus-trap'
 
 /**
  * The sign-up nudge shown when a guest tries to act. Deliberately gentle — the whole point of
@@ -20,6 +22,17 @@ export function GuestAccountSheet({
   feature: string
   onDismiss: () => void
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, true)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onDismiss()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onDismiss])
+
   return (
     <div className="fixed inset-0 z-50 mx-auto flex w-full max-w-md flex-col justify-end">
       <button
@@ -28,7 +41,14 @@ export function GuestAccountSheet({
         onClick={onDismiss}
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
       />
-      <div className="relative animate-fade-in rounded-t-[16px] border-t border-border-subtle bg-card px-5 pb-8 pt-4 shadow-[0_-8px_24px_rgba(0,0,0,0.12)]">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Create your player card to ${feature}`}
+        tabIndex={-1}
+        className="relative animate-fade-in rounded-t-[16px] border-t border-border-subtle bg-card px-5 pb-8 pt-4 shadow-[0_-8px_24px_rgba(0,0,0,0.12)]"
+      >
         <button
           type="button"
           onClick={onDismiss}
