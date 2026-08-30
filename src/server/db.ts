@@ -239,6 +239,12 @@ function migrate(d: Database.Database) {
       body TEXT NOT NULL, meta TEXT, created_at TEXT NOT NULL, read INTEGER NOT NULL DEFAULT 0
     );
     CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at);
+
+    -- Safety reports. Write-only from the app; reviewed out of band. Never leaves the server.
+    CREATE TABLE IF NOT EXISTS reports (
+      id TEXT PRIMARY KEY, reporter_id TEXT NOT NULL, target_musician_id TEXT, jam_id TEXT,
+      reason TEXT NOT NULL, detail TEXT, created_at TEXT NOT NULL
+    );
   `)
 }
 

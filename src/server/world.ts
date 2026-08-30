@@ -857,6 +857,11 @@ export function updateProfile(viewerId: string, input: ProfileInput) {
     complete ? 1 : 0,
     viewerId,
   )
+  // Echo the saved card back so a client gets an explicit confirmation, not a bare null.
+  const saved = d.prepare(`SELECT * FROM musicians WHERE id = ?`).get(viewerId) as
+    | Record<string, unknown>
+    | undefined
+  return saved ? rowToMusician(saved, etDateKey(nowIso())) : undefined
 }
 
 // --- requests ---------------------------------------------------------------
@@ -967,6 +972,35 @@ function isSeedMusician(id: string): boolean {
 }
 
 /**
+ * Whether `musicianId` already has a CONFIRMED jam whose time window overlaps [startsAt, +hours].
+ * Guards against double-booking: high-volume users kept firing several requests for the same slot
+ * and landing in overlapping confirmed jams with no warning.
+ */
+function hasConfirmedConflict(
+  musicianId: string,
+  startsAt: string,
+  durationHours = 2,
+  excludeJamId?: string,
+): boolean {
+  const start = Date.parse(startsAt)
+  if (!Number.isFinite(start)) return false
+  const end = start + durationHours * 3_600_000
+  const rows = db().prepare(`SELECT * FROM jams WHERE status = 'confirmed'`).all() as Record<
+    string,
+    unknown
+  >[]
+  for (const r of rows) {
+    const jam = rowToJam(r)
+    if (jam.id === excludeJamId) continue
+    if (!jam.attendees.some((a) => a.musicianId === musicianId && a.rsvp === 'confirmed')) continue
+    const s = Date.parse(jam.startsAt)
+    const e = s + jam.durationHours * 3_600_000
+    if (start < e && s < end) return true
+  }
+  return false
+}
+
+/**
  * The demo-crew accept. Mirrors the confirmed-jam creation in respondToRequest, but run on behalf
  * of a seed recipient so a solo real user can experience the full loop. Uses the first FUTURE
  * proposed time (so the jam does not instantly settle to completed) and the suggested venue, or a
@@ -977,6 +1011,9 @@ function autoAcceptBySeed(request: JamRequest) {
   const now = nowIso()
   const startsAt = request.proposedTimes.find((t) => Date.parse(t) > Date.parse(now))
   if (!startsAt) return
+  // Don't auto-book the requester into a slot they're already committed to — leave it pending so
+  // they (or the recipient) can sort it out instead of silently double-booking them.
+  if (hasConfirmedConflict(request.fromId, startsAt)) return
   const venueId =
     request.venueId ??
     (d.prepare(`SELECT id FROM venues ORDER BY rowid LIMIT 1`).get() as { id: string } | undefined)
@@ -1096,6 +1133,11 @@ export function respondToRequest(
     if (!offered.includes(input.startsAt)) throw new WorldError('Pick one of the proposed times')
     if (!d.prepare(`SELECT 1 FROM venues WHERE id = ?`).get(input.venueId))
       throw new WorldError('Pick a real place — a jam cannot confirm without one')
+    // Neither person should be double-booked into an overlapping confirmed jam.
+    if (hasConfirmedConflict(viewerId, input.startsAt))
+      throw new WorldError('You already have a jam at that time', 409)
+    if (hasConfirmedConflict(request.fromId, input.startsAt))
+      throw new WorldError('They already have a jam at that time', 409)
 
     const fromRow = d
       .prepare(`SELECT instruments FROM musicians WHERE id = ?`)
@@ -1328,6 +1370,12 @@ export function postJam(
     }
   })
   tx()
+  // Tell the people you invited — otherwise an invite sits silently as 'pending' with no signal.
+  if (!draft.asDraft) {
+    for (const id of invited) {
+      notify(id, 'request_received', 'invited you to a jam', viewerId, { jamId })
+    }
+  }
   return jam
 }
 
@@ -1352,6 +1400,16 @@ export function applyToOpenCall(viewerId: string, jamId: string, instrument: Ins
     throw new WorldError('Already applied', 409)
   }
   notify(jam.hostId, 'open_call_application', `applied to your open call`, viewerId, { jamId })
+  // A demo-crew host seats the applicant right away, so open calls to the crew actually convert
+  // instead of sitting 'pending' forever. Runs the same tested accept path on the host's behalf;
+  // a conflict or filled seat just leaves the application pending.
+  if (isSeedMusician(jam.hostId)) {
+    try {
+      acceptApplicant(jam.hostId, jamId, viewerId)
+    } catch {
+      // leave the application pending
+    }
+  }
 }
 
 export function withdrawFromJam(viewerId: string, jamId: string) {
@@ -1360,6 +1418,19 @@ export function withdrawFromJam(viewerId: string, jamId: string) {
   if (!jam) throw new WorldError('Jam not found', 404)
   if (!jam.attendees.some((a) => a.musicianId === viewerId))
     throw new WorldError('You are not on this jam', 403)
+
+  // The HOST leaving cancels the jam rather than leaving a headless "zombie" the others are still
+  // confirmed into. Everyone else is notified so it doesn't just vanish on them.
+  if (jam.hostId === viewerId) {
+    d.prepare(`UPDATE jams SET status = 'cancelled' WHERE id = ?`).run(jamId)
+    for (const a of jam.attendees) {
+      if (a.musicianId !== viewerId && a.rsvp !== 'declined') {
+        notify(a.musicianId, 'request_received', 'cancelled a jam you were on', viewerId, { jamId })
+      }
+    }
+    return
+  }
+
   const attendees = jam.attendees.map((a) =>
     a.musicianId === viewerId ? { ...a, rsvp: 'declined' as const } : a,
   )
@@ -1370,6 +1441,34 @@ export function withdrawFromJam(viewerId: string, jamId: string) {
     status,
     jamId,
   )
+}
+
+/** File a safety report against a person or a jam. Recorded server-side for out-of-band review. */
+export function reportContent(
+  viewerId: string,
+  input: { targetMusicianId?: string; jamId?: string; reason?: string; detail?: string },
+): { ok: true } {
+  const reason = String(input.reason ?? '').trim().slice(0, 80)
+  if (!reason) throw new WorldError('Pick a reason for the report')
+  const detail = String(input.detail ?? '').trim().slice(0, 1000) || null
+  const target =
+    input.targetMusicianId && musicianExists(input.targetMusicianId)
+      ? input.targetMusicianId
+      : null
+  const jamId = input.jamId && getJamRow(input.jamId) ? input.jamId : null
+  if (!target && !jamId) throw new WorldError('Nothing to report')
+  db()
+    .prepare(`INSERT INTO reports VALUES (?,?,?,?,?,?,?)`)
+    .run(uid('rpt'), viewerId, target, jamId, reason, detail, nowIso())
+  return { ok: true }
+}
+
+/** Cancel your own pending application to an open call. */
+export function withdrawApplication(viewerId: string, jamId: string) {
+  const info = db()
+    .prepare(`DELETE FROM applications WHERE jam_id = ? AND applicant_id = ? AND status = 'pending'`)
+    .run(jamId, viewerId)
+  if (info.changes === 0) throw new WorldError('No pending application to withdraw', 404)
 }
 
 /**
@@ -1394,6 +1493,8 @@ export function acceptApplicant(viewerId: string, jamId: string, applicantId: st
   const instrument = appRow.instrument as Instrument
   if (!jam.openSeats.includes(instrument))
     throw new WorldError('That role has already been filled', 409)
+  if (hasConfirmedConflict(applicantId, jam.startsAt, jam.durationHours, jamId))
+    throw new WorldError('They already have a jam at that time', 409)
 
   const at = nowIso()
   const attendees = [
@@ -1452,6 +1553,8 @@ export function respondToInvite(viewerId: string, jamId: string, action: 'accept
   const me = jam.attendees.find((a) => a.musicianId === viewerId)
   if (!me || me.rsvp !== 'pending')
     throw new WorldError('You have no pending invite to this jam', 403)
+  if (action === 'accept' && hasConfirmedConflict(viewerId, jam.startsAt, jam.durationHours, jamId))
+    throw new WorldError('You already have a jam at that time', 409)
 
   const at = nowIso()
   const rsvp = action === 'accept' ? ('confirmed' as const) : ('declined' as const)
@@ -1502,6 +1605,28 @@ export function sendMessage(viewerId: string, threadId: string, body: string): M
   }
   insertMessage(message)
   touchRead(threadId, viewerId, message.sentAt)
+  // If the other side is demo crew, they answer — a message to the crew shouldn't vanish into
+  // silence. The reply is authored by the seed, so it never re-triggers this (only real users
+  // reach sendMessage via the API).
+  const seedOther = thread.participantIds.find((id) => id !== viewerId && isSeedMusician(id))
+  if (seedOther) {
+    const replies = [
+      'Hey! Thanks for reaching out — sounds good to me. Let’s make it happen.',
+      'Appreciate the message! I’m into it — send me a time and place.',
+      'Nice, yeah let’s play. What are you thinking for the set?',
+      'Cool cool — count me in. See you there.',
+    ]
+    const pick = replies[Math.abs(Date.parse(message.sentAt)) % replies.length]
+    insertMessage({
+      id: uid('msg'),
+      threadId,
+      authorId: seedOther,
+      body: pick,
+      sentAt: nowIso(),
+      kind: 'text',
+    })
+    touchRead(threadId, seedOther, nowIso())
+  }
   return message
 }
 
@@ -1705,5 +1830,13 @@ export function enterCompetition(viewerId: string): CompetitionEntry {
     }
   })
   tx()
+  // Confirm the entry landed — the old flow spent 150 credits and said nothing back.
+  notify(
+    viewerId,
+    'rank_change',
+    `You're entered in the Season ${season.number} ${season.scene} competition. Good luck.`,
+    undefined,
+    { seasonId: season.id },
+  )
   return entry
 }

@@ -124,6 +124,13 @@ interface RiffState {
     asDraft?: boolean
   }) => Promise<Jam>
   applyToOpenCall: (jamId: string, instrument: Instrument) => Promise<void>
+  withdrawApplication: (jamId: string) => Promise<void>
+  reportContent: (input: {
+    targetMusicianId?: string
+    jamId?: string
+    reason: string
+    detail?: string
+  }) => Promise<void>
   acceptApplicant: (jamId: string, applicantId: string) => Promise<void>
   respondToInvite: (jamId: string, action: 'accept' | 'decline') => Promise<void>
   withdrawFromJam: (jamId: string) => Promise<void>
@@ -206,6 +213,8 @@ const FEATURE_LABELS: Record<string, string> = {
   respondToRequest: 'reply to a request',
   postJam: 'post a jam',
   applyToOpenCall: 'apply to an open call',
+  withdrawApplication: 'withdraw an application',
+  reportContent: 'report a concern',
   acceptApplicant: 'accept an applicant',
   respondToInvite: 'reply to an invite',
   withdrawFromJam: 'change a jam',
@@ -289,6 +298,8 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
       postJam: (draft) => dispatch<Jam>('postJam', draft),
       applyToOpenCall: (jamId, instrument) =>
         dispatch<void>('applyToOpenCall', { jamId, instrument }),
+      withdrawApplication: (jamId) => dispatch<void>('withdrawApplication', { jamId }),
+      reportContent: (input) => dispatch<void>('reportContent', input),
       acceptApplicant: (jamId, applicantId) =>
         dispatch<void>('acceptApplicant', { jamId, applicantId }),
       respondToInvite: (jamId, action) => dispatch<void>('respondToInvite', { jamId, action }),

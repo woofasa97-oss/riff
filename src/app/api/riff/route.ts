@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     let result: unknown
     switch (action) {
       case 'updateProfile':
-        world.updateProfile(viewerId, payload)
+        result = world.updateProfile(viewerId, payload)
         break
       case 'sendJamRequest':
         result = world.sendJamRequest(viewerId, payload)
@@ -50,6 +50,12 @@ export async function POST(req: Request) {
         break
       case 'withdrawFromJam':
         world.withdrawFromJam(viewerId, payload.jamId)
+        break
+      case 'withdrawApplication':
+        world.withdrawApplication(viewerId, payload.jamId)
+        break
+      case 'reportContent':
+        result = world.reportContent(viewerId, payload)
         break
       case 'acceptApplicant':
         world.acceptApplicant(viewerId, payload.jamId, payload.applicantId)
