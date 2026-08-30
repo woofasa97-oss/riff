@@ -4,6 +4,7 @@ Mobile-first web app that helps musicians find people nearby to play with tonigh
 a confirmed session, and build a reputation from sessions they actually showed up to.
 
 **Stack:** Next.js 15 (App Router) · TypeScript · Tailwind · zustand · lucide-react.
+**Deploy:** one Render web service via `render.yaml`. No database.
 **Data:** mock fixtures in `src/mocks/` for v1. No backend yet. Types are written to translate
 directly into Postgres tables later — see `docs/DATA-MODEL.md`.
 
@@ -32,6 +33,7 @@ Rules:
 | `docs/DESIGN-SYSTEM.md` | You are writing any UI. Read once, early. |
 | `docs/SCREENS.md` | You need the screen → route → file mapping |
 | `docs/BUILD-PLAN.md` | Always — it is the ticket list |
+| `docs/DEPLOY-RENDER.md` | You are touching the build, the start command, or `render.yaml` |
 
 ## Reference screens
 

@@ -42,7 +42,25 @@ riff/
     └── _variants/         — 48 superseded iterations. Archive; don't read.
 ```
 
-## Getting started in VS Code
+## Running it
+
+Phase 0 ticket `P0-01` is done — the Next.js app is scaffolded and the design tokens are wired
+in. Everything else is still to build.
+
+```bash
+npm install
+npm run dev          # http://localhost:3000
+```
+
+Other scripts: `npm run typecheck` · `npm run build` · `npm run lint` · `npm run format`.
+
+## Deploying
+
+`render.yaml` is a Render Blueprint for a single Node web service. Push to GitHub, then
+Render dashboard → New → Blueprint → pick the repo → Apply. No env vars to set, no database.
+See `docs/DEPLOY-RENDER.md` for what runs and what breaks.
+
+## Working the build plan
 
 Open the repo in VS Code, then in the Claude Code terminal:
 
@@ -53,7 +71,7 @@ claude
 Then, one at a time:
 
 ```
-Do ticket P0-01 from docs/BUILD-PLAN.md
+Do ticket P0-02 from docs/BUILD-PLAN.md
 ```
 
 `/clear` between tickets. That single habit is what keeps context flat across the whole build.

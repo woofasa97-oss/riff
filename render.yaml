@@ -1,0 +1,31 @@
+# Render Blueprint — one Node web service running the Next.js app.
+# Deploy: Render dashboard → New → Blueprint → pick this repo → Apply.
+#
+# v1 has no backend and no database: all data comes from fixtures in src/mocks/. When the API
+# lands, add the database and service blocks here — see docs/DATA-MODEL.md for the schema.
+
+services:
+  - type: web
+    name: riff-web
+    runtime: node
+    plan: free
+    region: oregon
+
+    # --include=dev is load-bearing. tailwindcss, postcss, autoprefixer and typescript are
+    # devDependencies but are all required by `next build`. If NODE_ENV is ever set to
+    # production on this service, a plain `npm ci` would omit them and the build would fail
+    # with "Cannot find module 'tailwindcss'".
+    buildCommand: npm ci --include=dev && npm run build
+
+    # `next start -p ${PORT:-3000}` — Render injects PORT and the service must bind to it.
+    startCommand: npm run start
+
+    autoDeploy: true
+    envVars:
+      # Pin the runtime so a Render default bump cannot change the build under you.
+      - key: NODE_VERSION
+        value: "22"
+      # Deliberately NOT setting NODE_ENV. `next build` always produces a production build and
+      # `next start` always serves one, so the variable buys nothing and breaks `npm ci`.
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"

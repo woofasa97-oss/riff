@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens are copied from docs/DESIGN-SYSTEM.md, which extracted them from the prototype.
+   Change them here, never inline a hex in a component. */
+:root {
+  --background: #f8f7fa;
+  --foreground: #3d3c4f;
+  --card: #ffffff;
+  --card-foreground: #3d3c4f;
+  --popover: #ffffff;
+  --popover-foreground: #3d3c4f;
+  --primary: #8a79ab;
+  --primary-foreground: #f8f7fa;
+  --secondary: #dfd9ec;
+  --secondary-foreground: #3d3c4f;
+  --muted: #dcd9e3;
+  --muted-foreground: #6b6880;
+  --accent: #e6a5b8;
+  --accent-foreground: #4b2e36;
+  --destructive: #d95c5c;
+  --destructive-foreground: #f8f7fa;
+  --border: #cec9d9;
+  --input: #eae7f0;
+  --ring: #8a79ab;
+
+  /* Recurring in the prototype but never tokenised there. */
+  --border-subtle: #e4dfee;
+  --foreground-dim: #9c97a9;
+
+  --chart-1: #8a79ab;
+  --chart-2: #e6a5b8;
+  --chart-3: #77b8a1;
+  --chart-4: #f0c88d;
+  --chart-5: #a0bbe3;
+
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-lora), Georgia, serif;
+  --font-mono: ui-monospace, 'Fira Code', 'Courier New', monospace;
+
+  --radius: 0.5rem;
+
+  --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+  --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+  --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+  --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+  --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+  --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+  --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+  --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-serif);
+  }
+}
+
+@layer utilities {
+  /* Scroll containers in the reference screens hide their scrollbar. */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
+  }
+}

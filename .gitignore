@@ -9,3 +9,11 @@ dist/
 .env*.local
 .DS_Store
 *.log
+
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+/build
+*.tsbuildinfo
+.vercel
