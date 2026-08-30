@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<!-- Riff reference screen — Leaderboard
+     Route: /leaderboard
+     Source: prototype screen #10 ("Leaderboard", group "Unlabelled")
+     Visual reference only. Do not copy this markup; see CLAUDE.md. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Leaderboard
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+  </head>
+  <body class="m-0 p-0 min-h-[100dvh] flex flex-col w-full max-w-md mx-auto relative overflow-hidden bg-[#110e17] text-white">
+    <!-- Background Base -->
+    <div class="absolute inset-0 z-0 bg-[#0a080d]">
+      <div class="absolute inset-0 bg-gradient-to-b from-[#1a1428] via-[#110e17] to-black opacity-80">
+      </div>
+    </div>
+    <!-- Header -->
+    <header id="header" class="h-[56px] px-4 flex items-center justify-between z-10 relative pt-2">
+      <button class="w-[36px] h-[36px] flex items-center justify-center text-white" aria-label="Back">
+            <i class="text-[16px]"><i class="fa-solid fa-chevron-left"></i></i>
+        </button>
+      <h1 class="font-serif font-bold text-[17px] text-white absolute left-1/2 -translate-x-1/2">
+        Leaderboard
+      </h1>
+      <button class="w-[36px] h-[36px] rounded-full flex items-center justify-center bg-white/12 text-white backdrop-blur-md border border-white/10" aria-label="Info">
+            <i class="text-[15px]"><i class="fa-solid fa-info"></i></i>
+        </button>
+    </header>
+    <!-- Main Content -->
+    <main class="flex-1 relative z-10 flex flex-col pb-[140px] overflow-y-auto">
+      <!-- Top Pills -->
+      <div class="px-4 py-3 flex gap-2 items-center justify-center">
+        <button class="bg-white text-[#3D3C4F] font-sans text-[13px] font-medium px-4 py-1.5 rounded-full">Brooklyn</button>
+            <button class="bg-white text-[#3D3C4F] font-sans text-[13px] font-medium px-4 py-1.5 rounded-full">Jazz Scene</button>
+            <button class="bg-white/10 border border-white/20 text-white font-sans text-[11px] font-medium px-3 py-1.5 rounded-full ml-auto">Season 4</button>
+      </div>
+      <!-- Podium -->
+      <div class="mt-6 mb-8 px-4 relative flex justify-center items-end h-[220px]">
+        <!-- Rank 2 -->
+        <div class="flex flex-col items-center absolute left-8 bottom-0 z-10">
+          <div class="relative">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Theo Park" class="w-[72px] h-[72px] rounded-full border-2 border-[#E4DFEE] object-cover">
+            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white text-[#3D3C4F] w-6 h-6 rounded-full flex items-center justify-center font-serif font-bold text-[13px] border border-[#E4DFEE]">
+              2
+            </div>
+          </div>
+          <div class="mt-4 text-center">
+            <p class="font-serif font-bold text-[14px] text-white">
+              Theo Park
+            </p>
+            <p class="font-sans text-[12px] text-white/70">
+              9,420 pts
+            </p>
+          </div>
+        </div>
+        <!-- Rank 1 -->
+        <div class="flex flex-col items-center relative z-20 pb-8">
+          <i class="text-[#FACC15] text-[20px] mb-2 drop-shadow-md"><i class="fa-solid fa-crown"></i></i>
+          <div class="relative">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" alt="Nina Alvarez" class="w-[96px] h-[96px] rounded-full border-[3px] border-[#8A79AB] object-cover">
+            <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#8A79AB] text-white w-8 h-8 rounded-full flex items-center justify-center font-serif font-bold text-[15px] border-2 border-white shadow-lg">
+              1
+            </div>
+          </div>
+          <div class="mt-5 text-center">
+            <p class="font-serif font-bold text-[16px] text-white">
+              Nina Alvarez
+            </p>
+            <p class="font-sans text-[13px] text-white/80">
+              12,850 pts
+            </p>
+          </div>
+        </div>
+        <!-- Rank 3 -->
+        <div class="flex flex-col items-center absolute right-8 bottom-0 z-10">
+          <div class="relative">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" alt="Ruby Sims" class="w-[72px] h-[72px] rounded-full border-2 border-[#E4DFEE] object-cover">
+            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white text-[#3D3C4F] w-6 h-6 rounded-full flex items-center justify-center font-serif font-bold text-[13px] border border-[#E4DFEE]">
+              3
+            </div>
+          </div>
+          <div class="mt-4 text-center">
+            <p class="font-serif font-bold text-[14px] text-white">
+              Ruby Sims
+            </p>
+            <p class="font-sans text-[12px] text-white/70">
+              8,900 pts
+            </p>
+          </div>
+        </div>
+        <!-- Podium Graphic -->
+        <div class="absolute bottom-16 left-0 right-0 h-[140px] bg-gradient-to-t from-[#8A79AB]/40 to-[#E6A5B8]/0 -z-10 blur-xl rounded-t-full">
+        </div>
+      </div>
+      <!-- List -->
+      <div class="px-4 flex flex-col gap-2">
+        <!-- Row 4 -->
+        <div class="bg-white/5 border border-white/10 rounded-[12px] p-3 flex items-center gap-3 relative overflow-hidden">
+          <span class="font-serif font-bold text-[15px] text-white/60 w-5 text-center">4</span>
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="David Chen" class="w-10 h-10 rounded-full border border-white/20 object-cover">
+          <div class="flex-1 flex flex-col justify-center">
+            <div class="flex items-center gap-2">
+              <span class="font-serif font-bold text-[15px] text-white">David Chen</span>
+              <div class="flex items-center gap-0.5 bg-[#2FBF71]/20 text-[#2FBF71] px-1.5 py-0.5 rounded text-[10px] font-sans font-bold">
+                <i class="text-[8px]"><i class="fa-solid fa-arrow-up"></i></i> 1
+              </div>
+            </div>
+            <span class="font-sans text-[12px] text-white/60">Bass</span>
+          </div>
+          <div class="flex flex-col items-end justify-center w-16">
+            <span class="font-sans text-[13px] font-medium text-white mb-1">8,420</span>
+            <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+              <div class="h-full bg-[#8A79AB] rounded-full" style="width: 65%;">
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Row 5 -->
+        <div class="bg-white/5 border border-white/10 rounded-[12px] p-3 flex items-center gap-3 relative overflow-hidden">
+          <span class="font-serif font-bold text-[15px] text-white/60 w-5 text-center">5</span>
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Sarah Jenkins" class="w-10 h-10 rounded-full border border-white/20 object-cover">
+          <div class="flex-1 flex flex-col justify-center">
+            <div class="flex items-center gap-2">
+              <span class="font-serif font-bold text-[15px] text-white">Sarah Jenkins</span>
+              <div class="flex items-center gap-0.5 bg-[#E5262F]/20 text-[#E5262F] px-1.5 py-0.5 rounded text-[10px] font-sans font-bold">
+                <i class="text-[8px]"><i class="fa-solid fa-arrow-down"></i></i> 2
+              </div>
+            </div>
+            <span class="font-sans text-[12px] text-white/60">Bassist, Indie</span>
+          </div>
+          <div class="flex flex-col items-end justify-center w-16">
+            <span class="font-sans text-[13px] font-medium text-white mb-1">7,950</span>
+            <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+              <div class="h-full bg-[#8A79AB] rounded-full" style="width: 60%;">
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Row 6 -->
+        <div class="bg-white/5 border border-white/10 rounded-[12px] p-3 flex items-center gap-3 relative overflow-hidden">
+          <span class="font-serif font-bold text-[15px] text-white/60 w-5 text-center">6</span>
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Leo Rossi" class="w-10 h-10 rounded-full border border-white/20 object-cover">
+          <div class="flex-1 flex flex-col justify-center">
+            <div class="flex items-center gap-2">
+              <span class="font-serif font-bold text-[15px] text-white">Leo Rossi</span>
+              <div class="flex items-center justify-center bg-white/10 text-white/60 px-1.5 py-0.5 rounded text-[10px] font-sans font-bold">
+                <i class="text-[8px]"><i class="fa-solid fa-minus"></i></i>
+              </div>
+            </div>
+            <span class="font-sans text-[12px] text-white/60">Keys, Neo-Soul</span>
+          </div>
+          <div class="flex flex-col items-end justify-center w-16">
+            <span class="font-sans text-[13px] font-medium text-white mb-1">7,100</span>
+            <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+              <div class="h-full bg-[#8A79AB] rounded-full" style="width: 55%;">
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Divider -->
+        <div class="py-2 flex justify-center">
+          <div class="flex flex-col gap-1">
+            <div class="w-1 h-1 bg-white/20 rounded-full">
+            </div>
+            <div class="w-1 h-1 bg-white/20 rounded-full">
+            </div>
+            <div class="w-1 h-1 bg-white/20 rounded-full">
+            </div>
+          </div>
+        </div>
+        <!-- User Row -->
+        <div class="bg-[#8A79AB]/20 border border-[#8A79AB]/30 rounded-[12px] p-3 flex items-center gap-3 relative overflow-hidden shadow-[0_0_15px_rgba(138,121,171,0.15)]">
+          <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-[#8A79AB]">
+          </div>
+          <span class="font-serif font-bold text-[15px] text-white w-5 text-center">14</span>
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="Marcus Chen" class="w-10 h-10 rounded-full border-2 border-[#8A79AB] object-cover">
+          <div class="flex-1 flex flex-col justify-center">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="font-serif font-bold text-[15px] text-white">Marcus Chen</span>
+                        <span class="bg-[#8A79AB] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-[4px] uppercase tracking-wider">YOU</span>
+              <div class="flex items-center gap-0.5 bg-[#2FBF71]/20 text-[#2FBF71] px-1.5 py-0.5 rounded text-[10px] font-sans font-bold">
+                <i class="text-[8px]"><i class="fa-solid fa-arrow-up"></i></i> 3
+              </div>
+            </div>
+            <span class="font-sans text-[12px] text-white/80">Drums, Jazz</span>
+          </div>
+          <div class="flex flex-col items-end justify-center w-16">
+            <span class="font-sans text-[13px] font-bold text-white mb-1">4,280</span>
+            <div class="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+              <div class="h-full bg-white rounded-full" style="width: 35%;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- Sticky Bottom Bar (Above Nav) -->
+    <div class="fixed bottom-[76px] w-full max-w-md bg-white border-t border-[#E4DFEE] py-3 px-4 flex justify-between items-center z-30 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+      <span class="font-sans text-[13px] text-[#3D3C4F] font-medium">You are 40 points from the top 10</span>
+        <a href="#" class="font-sans text-[13px] text-[#8A79AB] font-semibold underline decoration-[#8A79AB]/40 underline-offset-2">How points work</a>
+    </div>
+    <!-- Bottom Tab Bar -->
+    <nav id="footer" class="fixed bottom-0 w-full max-w-md bg-white/96 backdrop-blur-md border-t border-[#E4DFEE] h-[76px] pb-5 pt-2 px-6 flex justify-between items-center z-40">
+      <a href="#" class="flex flex-col items-center justify-center w-12 text-[#9C97A9]">
+            <i class="text-[22px] mb-1"><i class="fa-solid fa-map-location-dot"></i></i>
+            <span class="text-[10.5px] font-sans font-medium">Map</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center w-12 text-[#9C97A9]">
+            <i class="text-[22px] mb-1"><i class="fa-regular fa-compass"></i></i>
+            <span class="text-[10.5px] font-sans font-medium">Discover</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center w-12 text-[#9C97A9]">
+            <i class="text-[22px] mb-1"><i class="fa-solid fa-guitar"></i></i>
+            <span class="text-[10.5px] font-sans font-medium">Jams</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center w-12 text-[#9C97A9] relative">
+            <i class="text-[22px] mb-1"><i class="fa-solid fa-tower-broadcast"></i></i>
+            <span class="text-[10.5px] font-sans font-medium">Live</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center w-12 text-[#8A79AB]">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="Me" class="w-6 h-6 rounded-full border-2 border-[#8A79AB] mb-1 object-cover">
+            <span class="text-[10.5px] font-sans font-semibold">Me</span>
+        </a>
+    </nav>
+  </body>
+</html>

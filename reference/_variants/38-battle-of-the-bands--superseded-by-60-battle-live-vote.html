@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Battle of the Bands - Riff
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Lora:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+            --primary: #8a79ab;
+            --secondary: #dfd9ec;
+            --accent: #e6a5b8;
+            --background: #0f0e13;
+            --foreground: #ffffff;
+            --muted: #a19fb1;
+            --font-sans: 'Geist', sans-serif;
+            --font-serif: 'Lora', serif;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--background);
+            color: var(--foreground);
+            overflow-x: hidden;
+        }
+
+        .serif { font-family: var(--font-serif); }
+
+        .glass-dark {
+            background: rgba(15, 14, 19, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .battle-gradient {
+            background: linear-gradient(90deg, #8a79ab 0%, #e6a5b8 100%);
+        }
+
+        .vote-bar {
+            transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .live-indicator {
+            animation: pulse-red 2s infinite;
+        }
+
+        /* Hide scrollbars but keep functionality */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 p-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl font-black text-white serif tracking-tighter">Riff</span>
+          <div class="px-2 py-0.5 bg-red-600 rounded text-[10px] font-bold uppercase tracking-widest live-indicator">
+            Live
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="glass-dark px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-medium border-white/20">
+            <i class="text-white/60"><i class="fa-solid fa-users"></i></i>
+                    <span>14.2k watching</span>
+          </div>
+          <button class="w-10 h-10 rounded-full glass-dark flex items-center justify-center border-white/20">
+                    <i><i class="fa-solid fa-share-nodes"></i></i>
+                </button>
+        </div>
+      </div>
+    </header>
+    <!-- Main Content: Dual Stream -->
+    <main class="flex-1 flex flex-col pt-16 pb-32">
+      <div class="px-4 mb-4">
+        <h1 class="text-xl font-bold italic serif">
+          Battle of the Bands: Finals
+        </h1>
+        <p class="text-xs text-white/60">
+          Stage 04 • Grand Ballroom vs. Warehouse 7
+        </p>
+      </div>
+      <!-- The Streams -->
+      <div class="flex-1 flex flex-col gap-1 px-2">
+        <!-- Band A Stream -->
+        <div id="band-a-container" class="relative flex-1 rounded-2xl overflow-hidden group">
+          <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_f3f58b3f85_769eb4e37f82d4f6.png" alt="indie rock band performing on stage with purple stage lighting, energetic atmosphere, cinematic shal">
+
+                <!-- Overlay Info -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-[#8a79ab]">Challenger A</span>
+                <h2 class="text-lg font-bold">
+                  The Neon Echoes
+                </h2>
+                <p class="text-xs text-white/70 italic">
+                  Indie Rock • Brooklyn, NY
+                </p>
+              </div>
+              <button class="bg-[#8a79ab] hover:scale-105 active:scale-95 transition-transform text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-[#8a79ab]/40">
+                            Vote A
+                        </button>
+            </div>
+          </div>
+        </div>
+        <!-- VS Divider & Scoreboard -->
+        <div class="py-3 px-2">
+          <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-widest mb-2">
+            <span id="score-a" class="text-[#8a79ab]">48%</span>
+                    <span class="text-white/40 italic">VS</span>
+                    <span id="score-b" class="text-[#e6a5b8]">52%</span>
+          </div>
+          <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden flex">
+            <div id="bar-a" class="vote-bar h-full bg-[#8a79ab]" style="width: 48%;">
+            </div>
+            <div id="bar-b" class="vote-bar h-full bg-[#e6a5b8]" style="width: 52%;">
+            </div>
+          </div>
+        </div>
+        <!-- Band B Stream -->
+        <div id="band-b-container" class="relative flex-1 rounded-2xl overflow-hidden group">
+          <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_eb944c1af0_393a13ef83f7cefe.png" alt="alternative rock band playing in a dimly lit industrial space, moody red lighting, smoke effects, in">
+
+                <!-- Overlay Info -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-[#e6a5b8]">Challenger B</span>
+                <h2 class="text-lg font-bold">
+                  Velvet Static
+                </h2>
+                <p class="text-xs text-white/70 italic">
+                  Post-Punk • London, UK
+                </p>
+              </div>
+              <button class="bg-[#e6a5b8] hover:scale-105 active:scale-95 transition-transform text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-[#e6a5b8]/40">
+                            Vote B
+                        </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- Chat Overlay (Floating Drawer Style) -->
+    <div id="chat-panel" class="fixed bottom-20 left-0 right-0 h-48 px-4 pointer-events-none">
+      <div class="h-full flex flex-col justify-end gap-2 pointer-events-auto">
+        <div class="flex flex-col gap-1 max-w-[80%] overflow-y-auto no-scrollbar mask-gradient">
+          <div class="glass-dark px-3 py-1.5 rounded-2xl text-xs flex items-center gap-2 self-start animate-fade-in">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" class="w-5 h-5 rounded-full">
+                    <span class="font-bold text-[#8a79ab]">sarah_j:</span>
+                    <span>The bassist for A is killing it! 🔥</span>
+          </div>
+          <div class="glass-dark px-3 py-1.5 rounded-2xl text-xs flex items-center gap-2 self-start animate-fade-in">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-5 h-5 rounded-full">
+                    <span class="font-bold text-[#e6a5b8]">mike_r:</span>
+                    <span>Velvet Static has better energy though.</span>
+          </div>
+          <div class="glass-dark px-3 py-1.5 rounded-2xl text-xs flex items-center gap-2 self-start animate-fade-in">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" class="w-5 h-5 rounded-full">
+                    <span class="font-bold text-white/60">jax_m:</span>
+                    <span>VOTED B! Let's gooooo</span>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1 glass-dark rounded-full px-4 py-2 flex items-center">
+            <input type="text" placeholder="Say something..." class="bg-transparent border-none outline-none text-xs w-full text-white placeholder-white/40">
+                    <button class="text-white/40 hover:text-white ml-2">
+                        <i><i class="fa-solid fa-face-smile"></i></i>
+                    </button>
+          </div>
+          <button class="w-10 h-10 rounded-full battle-gradient flex items-center justify-center text-white shadow-lg">
+                    <i class="text-xs"><i class="fa-solid fa-paper-plane"></i></i>
+                </button>
+        </div>
+      </div>
+    </div>
+    <!-- Navigation -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 glass-dark border-t border-white/10 px-8 py-3 flex justify-between items-center z-50">
+      <button class="flex flex-col items-center gap-1 text-white/60">
+            <i class="text-lg"><i class="fa-solid fa-map-location-dot"></i></i>
+            <span class="text-[9px] font-medium">Discover</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-white">
+      <div class="relative">
+        <i class="text-lg"><i class="fa-solid fa-bolt"></i></i>
+                <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+      </div>
+      <span class="text-[9px] font-bold">Battle</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-white/60">
+            <i class="text-lg"><i class="fa-solid fa-guitar"></i></i>
+            <span class="text-[9px] font-medium">My Jams</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-white/60">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" class="w-5 h-5 rounded-full opacity-60">
+            <span class="text-[9px] font-medium">Profile</span>
+        </button>
+    </nav>
+  </body>
+</html>

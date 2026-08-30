@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>
+      window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Discovery - Riff
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Lora:ital,wght@0,400..700;1,400..700&amp;family=Fira+Code:wght@300..700&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+            --background: #f8f7fa;
+            --foreground: #3d3c4f;
+            --card: #ffffff;
+            --card-foreground: #3d3c4f;
+            --popover: #ffffff;
+            --popover-foreground: #3d3c4f;
+            --primary: #8a79ab;
+            --primary-foreground: #f8f7fa;
+            --secondary: #dfd9ec;
+            --secondary-foreground: #3d3c4f;
+            --muted: #dcd9e3;
+            --muted-foreground: #6b6880;
+            --accent: #e6a5b8;
+            --accent-foreground: #4b2e36;
+            --destructive: #d95c5c;
+            --destructive-foreground: #f8f7fa;
+            --border: #cec9d9;
+            --input: #eae7f0;
+            --ring: #8a79ab;
+            --radius: 0.5rem;
+            --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+            --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+            --font-sans: 'Geist', sans-serif;
+            --font-serif: "Lora", Georgia, serif;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--background);
+            color: var(--foreground);
+            margin: 0;
+            padding: 0;
+        }
+
+        .serif { font-family: var(--font-serif); }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-secondary {
+            background-color: var(--secondary);
+            color: var(--secondary-foreground);
+        }
+
+        .badge-accent {
+            background-color: var(--accent);
+            color: var(--accent-foreground);
+        }
+
+        .audio-player-mock {
+            background: var(--input);
+            border-radius: var(--radius);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            gap: 0.75rem;
+        }
+
+        .waveform-mock {
+            flex-grow: 1;
+            height: 24px;
+            background: linear-gradient(90deg, var(--primary) 30%, var(--muted) 30%);
+            mask-image: repeating-linear-gradient(90deg, black, black 2px, transparent 2px, transparent 4px);
+            -webkit-mask-image: repeating-linear-gradient(90deg, black, black 2px, transparent 2px, transparent 4px);
+        }
+
+        /* Bottom Nav shadow */
+        #bottom-nav {
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+    </style>
+  </head>
+  <body class="pb-24">
+    <!-- Header -->
+    <header id="header" class="sticky top-0 bg-[#f8f7fa]/80 backdrop-blur-md z-50 px-4 py-4 flex items-center justify-between">
+      <h1 class="text-2xl font-bold tracking-tight text-[#8a79ab] serif">
+        Riff
+      </h1>
+      <div class="flex gap-4">
+        <button class="w-10 h-10 rounded-full bg-white border border-[#cec9d9] flex items-center justify-center shadow-sm">
+                <i class="text-[#6b6880]"><i class="fa-solid fa-magnifying-glass"></i></i>
+            </button>
+            <button class="w-10 h-10 rounded-full bg-white border border-[#cec9d9] flex items-center justify-center shadow-sm">
+                <i class="text-[#6b6880]"><i class="fa-solid fa-sliders"></i></i>
+            </button>
+      </div>
+    </header>
+    <main class="px-4 space-y-6">
+      <!-- Intent Toggle -->
+      <section id="intent-filter" class="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+        <button class="whitespace-nowrap px-4 py-2 rounded-full bg-[#8a79ab] text-white text-sm font-medium shadow-sm">All Musician</button>
+            <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white border border-[#cec9d9] text-[#6b6880] text-sm font-medium shadow-sm">Casual Jam</button>
+            <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white border border-[#cec9d9] text-[#6b6880] text-sm font-medium shadow-sm">Serious Project</button>
+            <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white border border-[#cec9d9] text-[#6b6880] text-sm font-medium shadow-sm">Gigging</button>
+      </section>
+      <!-- Availability Banner (Calendar First) -->
+      <section id="availability-quick" class="card p-4 flex items-center justify-between bg-gradient-to-r from-[#dfd9ec] to-[#f8f7fa]">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-[#8a79ab]">
+            <i class="text-xl"><i class="fa-solid fa-calendar-day"></i></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm">
+              Who's free tonight?
+            </h3>
+            <p class="text-xs text-[#6b6880]">
+              12 musicians nearby ready to jam
+            </p>
+          </div>
+        </div>
+        <i class="text-[#6b6880]"><i class="fa-solid fa-chevron-right"></i></i>
+      </section>
+      <!-- Discovery Feed -->
+      <section id="discovery-feed" class="space-y-4">
+        <!-- User Card 1 -->
+        <div class="card p-4 space-y-4">
+          <div class="flex items-start justify-between">
+            <div class="flex gap-3">
+              <div class="relative">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Marcus" class="w-14 h-14 rounded-full object-cover border-2 border-[#8a79ab]">
+                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full">
+                </div>
+              </div>
+              <div>
+                <h2 class="font-bold text-lg">
+                  Marcus Chen
+                </h2>
+                <p class="text-xs text-[#6b6880] font-medium uppercase tracking-wider">
+                  Drummer • Jazz / Fusion
+                </p>
+                <div class="flex items-center gap-1 mt-1 text-[#8a79ab]">
+                  <i class="text-[10px]"><i class="fa-solid fa-star"></i></i>
+                                <span class="text-[10px] font-bold">TOP RELIABILITY</span>
+                                <span class="text-[10px] text-[#6b6880] ml-1">• 12 Repeat Jams</span>
+                </div>
+              </div>
+            </div>
+            <span class="badge badge-accent">Casual Jam</span>
+          </div>
+          <!-- Play, don't type (Audio Focus) -->
+          <div class="audio-player-mock">
+            <button class="w-8 h-8 rounded-full bg-[#8a79ab] text-white flex items-center justify-center">
+                        <i class="text-xs ml-0.5"><i class="fa-solid fa-play"></i></i>
+                    </button>
+            <div class="waveform-mock">
+            </div>
+            <span class="text-[10px] font-mono font-medium text-[#6b6880]">0:24</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <div class="flex items-center gap-2 text-[#6b6880]">
+              <i><i class="fa-solid fa-location-dot"></i></i>
+                        <span>Brooklyn, 1.2 mi</span>
+            </div>
+            <div class="flex items-center gap-2 text-[#8a79ab]">
+              <i><i class="fa-solid fa-calendar-check"></i></i>
+                        <span class="font-medium">Free Tue, Thu, Sun</span>
+            </div>
+          </div>
+          <div class="flex gap-2 pt-2">
+            <button class="flex-1 py-2.5 bg-[#dfd9ec] text-[#3d3c4f] rounded-lg font-bold text-sm">View Profile</button>
+                    <button class="flex-1 py-2.5 bg-[#8a79ab] text-white rounded-lg font-bold text-sm">Request Jam</button>
+          </div>
+        </div>
+        <!-- User Card 2 -->
+        <div class="card p-4 space-y-4">
+          <div class="flex items-start justify-between">
+            <div class="flex gap-3">
+              <div class="relative">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Sarah" class="w-14 h-14 rounded-full object-cover border-2 border-transparent">
+              </div>
+              <div>
+                <h2 class="font-bold text-lg">
+                  Sarah Jenkins
+                </h2>
+                <p class="text-xs text-[#6b6880] font-medium uppercase tracking-wider">
+                  Bassist • Indie / Rock
+                </p>
+                <div class="flex items-center gap-1 mt-1 text-[#6b6880]">
+                  <i class="text-[10px] text-[#8a79ab]"><i class="fa-solid fa-shield-check"></i></i>
+                                <span class="text-[10px] font-bold">VERIFIED</span>
+                                <span class="text-[10px] ml-1">• 4 Jams Hosted</span>
+                </div>
+              </div>
+            </div>
+            <span class="badge badge-secondary">Serious Project</span>
+          </div>
+          <div class="audio-player-mock">
+            <button class="w-8 h-8 rounded-full bg-[#8a79ab] text-white flex items-center justify-center">
+                        <i class="text-xs ml-0.5"><i class="fa-solid fa-play"></i></i>
+                    </button>
+            <div class="waveform-mock opacity-40">
+            </div>
+            <span class="text-[10px] font-mono font-medium text-[#6b6880]">0:45</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <div class="flex items-center gap-2 text-[#6b6880]">
+              <i><i class="fa-solid fa-location-dot"></i></i>
+                        <span>Queens, 3.4 mi</span>
+            </div>
+            <div class="flex items-center gap-2 text-[#8a79ab]">
+              <i><i class="fa-solid fa-clock"></i></i>
+                        <span class="font-medium">Free Weekends</span>
+            </div>
+          </div>
+          <div class="flex gap-2 pt-2">
+            <button class="flex-1 py-2.5 bg-[#dfd9ec] text-[#3d3c4f] rounded-lg font-bold text-sm">View Profile</button>
+                    <button class="flex-1 py-2.5 bg-[#8a79ab] text-white rounded-lg font-bold text-sm">Request Jam</button>
+          </div>
+        </div>
+        <!-- Jam Request Card -->
+        <div class="card p-4 space-y-4 border-dashed border-2 border-[#8a79ab]/40 bg-[#f8f7fa]">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-[#8a79ab] uppercase tracking-widest">Active Jam Request</span>
+                    <span class="text-[10px] text-[#6b6880]">Posted 2h ago</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-base serif">
+              Looking for Keys for Neo-Soul Session
+            </h3>
+            <p class="text-sm text-[#6b6880] mt-1 line-clamp-2 italic">
+              "We have a drummer and bassist. Just looking for some tasty Rhodes/Synth textures to fill out the sound. Very casual."
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex -space-x-3">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-8 h-8 rounded-full border-2 border-white">
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" class="w-8 h-8 rounded-full border-2 border-white">
+            </div>
+            <span class="text-xs font-medium text-[#6b6880]">Hosted by Leo &amp; Sam</span>
+          </div>
+          <div class="flex items-center gap-4 text-xs font-bold text-[#8a79ab]">
+            <div class="flex items-center gap-1">
+              <i><i class="fa-solid fa-calendar"></i></i>
+                        <span>THIS FRIDAY</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <i><i class="fa-solid fa-clock"></i></i>
+                        <span>7:00 PM</span>
+            </div>
+          </div>
+          <button class="w-full py-2.5 border-2 border-[#8a79ab] text-[#8a79ab] rounded-lg font-bold text-sm">Apply to Join</button>
+        </div>
+      </section>
+      <!-- No dead ends: Invite section -->
+      <section id="invite-friends" class="py-8 text-center space-y-4">
+        <h3 class="font-bold text-lg serif text-[#3d3c4f]">
+          Can't find your rhythm?
+        </h3>
+        <p class="text-sm text-[#6b6880] max-w-xs mx-auto">
+          Invite your regular bandmates to Riff and manage your sessions in one place.
+        </p>
+        <button class="px-6 py-2 border border-[#cec9d9] rounded-full text-sm font-bold text-[#6b6880]">Invite Musicians</button>
+      </section>
+    </main>
+    <!-- Bottom Navigation -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-[#cec9d9] px-6 py-3 flex justify-between items-center z-50">
+      <button class="flex flex-col items-center gap-1 text-[#8a79ab]">
+            <i class="text-xl"><i class="fa-solid fa-compass"></i></i>
+            <span class="text-[10px] font-bold">Discover</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-[#6b6880]">
+      <div class="relative">
+        <i class="text-xl"><i class="fa-solid fa-message"></i></i>
+                <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#e6a5b8] rounded-full border border-white"></span>
+      </div>
+      <span class="text-[10px] font-medium">Messages</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-[#6b6880]">
+            <i class="text-xl"><i class="fa-solid fa-guitar"></i></i>
+            <span class="text-[10px] font-medium">My Jams</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-[#6b6880]">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" class="w-6 h-6 rounded-full grayscale opacity-70">
+            <span class="text-[10px] font-medium">Profile</span>
+        </button>
+    </nav>
+  </body>
+</html>

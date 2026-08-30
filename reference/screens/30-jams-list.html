@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<!-- Riff reference screen — Jams
+     Route: /jams
+     Source: prototype screen #54 ("Jams", group "Unlabelled")
+     Visual reference only. Do not copy this markup; see CLAUDE.md. -->
+<html lang="en">
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Jams
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Fira+Code:wght@400;500&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+  </head>
+  <body class="m-0 p-0 min-h-[100dvh] flex flex-col w-full max-w-md mx-auto relative overflow-x-hidden bg-background">
+    <!-- HEADER (Top Level) -->
+    <header id="header" class="h-[56px] px-4 flex items-center justify-between flex-shrink-0 bg-background z-10 sticky top-0">
+      <h1 class="font-serif font-bold text-[22px] text-primary tracking-tight">
+        Riff
+      </h1>
+      <div class="flex items-center gap-2">
+        <button class="w-[36px] h-[36px] rounded-full bg-white border border-border flex items-center justify-center text-foreground hover:bg-muted/50 transition-colors">
+                <i class="text-[14px]"><i class="fa-solid fa-sliders"></i></i>
+            </button>
+      </div>
+    </header>
+    <!-- CONTENT AREA -->
+    <main class="flex-1 overflow-y-auto pb-[90px] w-full">
+      <!-- Text Tabs -->
+      <div class="px-4 mt-2 mb-6 flex gap-6 text-[14px] font-medium border-b border-border/50 pb-2">
+        <button class="tab-underline active text-primary font-semibold">Upcoming</button>
+            <button class="tab-underline text-muted-foreground flex items-center gap-1.5">
+                Requests
+                <span class="bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">2</span>
+            </button>
+            <button class="tab-underline text-muted-foreground">Past</button>
+      </div>
+      <div class="px-4 space-y-6">
+        <!-- THIS WEEK Section -->
+        <section id="this-week-section">
+          <h2 class="text-primary text-[10.5px] font-bold tracking-widest uppercase mb-3 pl-1">
+            THIS WEEK
+          </h2>
+          <div class="space-y-4">
+            <!-- Hero Jam Card -->
+            <article class="bg-card rounded-[16px] border border-border overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+              <!-- Top Half (Gradient) -->
+              <div class="bg-gradient-to-br from-[#f0ebf8] to-[#faedf1] p-4 relative">
+                <!-- Small Pill -->
+                <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-[11px] font-medium text-foreground shadow-sm">
+                  In 2 days
+                </div>
+                <h3 class="font-serif font-bold text-[18px] text-foreground mb-1 pr-16 leading-tight">
+                  Neo-Soul Session
+                </h3>
+                <p class="font-sans text-[13px] text-foreground/80 mb-3 font-medium">
+                  Friday, 7:00 PM
+                </p>
+                <div class="flex items-center gap-1.5 text-[12px] text-foreground/70 mb-4">
+                  <i class="text-[10px] text-primary"><i class="fa-solid fa-location-dot"></i></i>
+                                <span>Sonic Basement, Greenpoint</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="flex -space-x-2">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="Marcus" class="w-7 h-7 rounded-full border-2 border-white object-cover">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" alt="Sarah" class="w-7 h-7 rounded-full border-2 border-white object-cover">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Leo" class="w-7 h-7 rounded-full border-2 border-white object-cover">
+                  </div>
+                  <div class="w-7 h-7 rounded-full bg-white border-2 border-white flex items-center justify-center text-[10px] font-bold text-primary -ml-2 z-10 shadow-sm">
+                    +1
+                  </div>
+                </div>
+              </div>
+              <!-- Bottom Half -->
+              <div class="p-4 bg-white border-t border-white/50">
+                <div class="flex gap-3">
+                  <button class="flex-1 bg-[#efebf6] text-foreground font-semibold text-[14px] rounded-[12px] h-[44px] flex items-center justify-center transition-opacity hover:opacity-90">
+                                    Message group
+                                </button>
+                                <button class="flex-1 bg-white border border-border text-foreground font-semibold text-[14px] rounded-[12px] h-[44px] flex items-center justify-center transition-colors hover:bg-muted/30">
+                                    Directions
+                                </button>
+                </div>
+              </div>
+            </article>
+            <!-- Plainer Jam Card -->
+            <article class="bg-card rounded-[16px] border border-border p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] relative">
+              <div class="absolute top-4 right-4 bg-muted/50 px-2.5 py-1 rounded-full text-[11px] font-medium text-foreground/70 flex items-center gap-1.5 border border-border/50">
+                <i class="text-[10px]"><i class="fa-regular fa-clock"></i></i> Awaiting 1 reply
+              </div>
+              <h3 class="font-serif font-bold text-[17px] text-foreground mb-1.5 leading-tight pr-28">
+                Late Night Fusion
+              </h3>
+              <p class="font-sans text-[13px] text-foreground/70 mb-4 flex items-center gap-1.5">
+                <i class="text-[11px] text-muted-foreground"><i class="fa-solid fa-calendar-day"></i></i>
+                            The Attic · Sun 17 Nov, 4:00 PM
+              </p>
+              <div class="flex items-center">
+                <div class="flex -space-x-2">
+                  <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" alt="User" class="w-7 h-7 rounded-full border-2 border-white object-cover">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="User" class="w-7 h-7 rounded-full border-2 border-white object-cover">
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+        <!-- OPEN CALLS Section -->
+        <section id="open-calls-section" class="mt-8">
+          <h2 class="text-primary text-[10.5px] font-bold tracking-widest uppercase mb-3 pl-1">
+            OPEN CALLS YOU APPLIED TO
+          </h2>
+          <article class="bg-card rounded-[16px] border border-border p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col gap-2">
+            <div class="flex justify-between items-start gap-3">
+              <h3 class="font-serif font-bold text-[15px] text-foreground leading-snug">
+                Looking for Keys for a Neo-Soul Session
+              </h3>
+              <span class="bg-amber-100/50 text-amber-700 border border-amber-200/50 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase shrink-0">
+                            Pending
+                        </span>
+            </div>
+            <p class="font-sans text-[12px] text-muted-foreground">
+              Applied 2h ago
+            </p>
+          </article>
+        </section>
+      </div>
+    </main>
+    <!-- BOTTOM TAB BAR (Identical everywhere) -->
+    <nav id="bottom-tabs" class="fixed bottom-0 w-full max-w-md h-[76px] bg-white/96 backdrop-blur-md border-t border-border flex justify-between items-start px-2 pt-3 pb-6 z-50">
+      <!-- MAP -->
+        <a href="#" class="flex flex-col items-center justify-center w-16 gap-1 group text-muted-foreground">
+      <div class="relative">
+        <i class="text-[22px] group-hover:text-primary transition-colors"><i class="fa-solid fa-map-location-dot"></i></i>
+      </div>
+      <span class="text-[10.5px] font-medium group-hover:text-primary transition-colors">MAP</span>
+        </a>
+
+        <!-- DISCOVER -->
+        <a href="#" class="flex flex-col items-center justify-center w-16 gap-1 group text-muted-foreground">
+      <div class="relative">
+        <i class="text-[22px] group-hover:text-primary transition-colors"><i class="fa-solid fa-compass"></i></i>
+      </div>
+      <span class="text-[10.5px] font-medium group-hover:text-primary transition-colors">DISCOVER</span>
+        </a>
+
+        <!-- JAMS (Active) -->
+        <a href="#" class="flex flex-col items-center justify-center w-16 gap-1 group text-primary">
+      <div class="relative">
+        <i class="text-[22px]"><i class="fa-solid fa-guitar"></i></i>
+      </div>
+      <span class="text-[10.5px] font-semibold">JAMS</span>
+        </a>
+
+        <!-- LIVE -->
+        <a href="#" class="flex flex-col items-center justify-center w-16 gap-1 group text-muted-foreground">
+      <div class="relative">
+        <i class="text-[22px] group-hover:text-primary transition-colors"><i class="fa-solid fa-tower-broadcast"></i></i>
+      </div>
+      <span class="text-[10.5px] font-medium group-hover:text-primary transition-colors">LIVE</span>
+        </a>
+
+        <!-- ME -->
+        <a href="#" class="flex flex-col items-center justify-center w-16 gap-1 group text-muted-foreground">
+      <div class="relative mt-0.5">
+        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Me" class="w-6 h-6 rounded-full border border-border group-hover:border-primary transition-colors object-cover">
+      </div>
+      <span class="text-[10.5px] font-medium group-hover:text-primary transition-colors mt-0.5">ME</span>
+        </a>
+    </nav>
+  </body>
+</html>

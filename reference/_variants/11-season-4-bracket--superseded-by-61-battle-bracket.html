@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Riff - Season 4 bracket
+    </title>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+  </head>
+  <body class="bg-black text-white h-[100dvh] flex flex-col w-full max-w-md mx-auto relative shadow-2xl overflow-hidden m-0 p-0 font-sans selection:bg-[#8a79ab] selection:text-white">
+    <!-- FULL BLEED BACKGROUND -->
+    <div class="absolute inset-0 z-0 bg-[#121118]">
+    </div>
+    <!-- HEADER (SUB SCREEN DARK) -->
+    <header id="header" class="absolute top-0 left-0 w-full h-[56px] flex items-center justify-between px-4 z-20">
+      <div class="flex items-center gap-2">
+        <button class="w-9 h-9 flex items-center justify-center text-white shrink-0">
+                <i class="text-[16px]"><i class="fa-solid fa-chevron-left"></i></i>
+            </button>
+      </div>
+      <h1 class="font-serif font-bold text-[17px] text-white absolute left-1/2 transform -translate-x-1/2">
+        Season 4 bracket
+      </h1>
+      <button class="w-[36px] h-[36px] flex items-center justify-center bg-white/12 text-white rounded-full shrink-0 backdrop-blur-md border border-white/5">
+            <i class="text-[14px]"><i class="fa-solid fa-share"></i></i>
+        </button>
+    </header>
+    <!-- MAIN CONTENT -->
+    <main id="main" class="flex-1 flex flex-col relative z-10 pt-[72px] pb-[96px] overflow-hidden">
+      <!-- FILTERS -->
+      <div class="flex gap-2 px-4 pb-4 overflow-x-auto hide-scrollbar shrink-0">
+        <button class="bg-[#8a79ab] text-white px-4 py-1.5 rounded-full text-[13px] font-medium border border-transparent whitespace-nowrap shadow-sm">
+                Brooklyn
+            </button>
+            <button class="bg-transparent text-white border border-white/20 px-4 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap">
+                Global
+            </button>
+            <button class="bg-transparent text-white border border-white/20 px-4 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap">
+                My matches
+            </button>
+      </div>
+      <!-- HORIZONTALLY SCROLLING BRACKET -->
+      <div class="flex-1 overflow-x-auto overflow-y-auto hide-scrollbar px-4 relative flex items-start gap-12 pb-6 min-h-[400px]">
+        <!-- COLUMN 1: QUARTER FINALS -->
+        <div class="flex flex-col gap-6 shrink-0 w-[180px] relative z-10 pt-8">
+          <div class="absolute top-0 left-0 text-[10.5px] uppercase tracking-[0.1em] text-[#8a79ab] font-bold">
+            QUARTER FINALS
+          </div>
+          <!-- Match 1 -->
+          <div class="glass-card rounded-[12px] overflow-hidden border border-white/10 relative">
+            <div class="flex items-center justify-between p-2.5 bg-[#8a79ab]/10 border-b border-white/5 relative">
+              <span class="font-serif font-bold text-[13px] text-white">The Neon Echoes</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[11px] font-medium text-white/70">61%</span>
+                            <i class="text-[10px] text-[#facc15]"><i class="fa-solid fa-check"></i></i>
+              </div>
+            </div>
+            <div class="flex items-center justify-between p-2.5">
+              <span class="font-serif font-bold text-[13px] text-white/60">Dust Radio</span>
+                        <span class="text-[11px] font-medium text-white/40">39%</span>
+            </div>
+            <!-- Right connector -->
+            <div class="absolute right-[-24px] top-1/2 w-[24px] h-[1px] bg-white/20">
+            </div>
+          </div>
+          <!-- Match 2 -->
+          <div class="glass-card rounded-[12px] overflow-hidden border border-white/10 relative mt-4">
+            <div class="flex items-center justify-between p-2.5 border-b border-white/5">
+              <span class="font-serif font-bold text-[13px] text-white/60">Paper Cranes</span>
+                        <span class="text-[11px] font-medium text-white/40">45%</span>
+            </div>
+            <div class="flex items-center justify-between p-2.5 bg-[#8a79ab]/10 relative">
+              <span class="font-serif font-bold text-[13px] text-white">Iron Belle</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[11px] font-medium text-white/70">55%</span>
+                            <i class="text-[10px] text-[#facc15]"><i class="fa-solid fa-check"></i></i>
+              </div>
+            </div>
+            <!-- Right connector -->
+            <div class="absolute right-[-24px] top-1/2 w-[24px] h-[1px] bg-white/20">
+            </div>
+            <!-- Vertical connector to Match 1 -->
+            <div class="absolute right-[-24px] top-[-52px] w-[1px] h-[92px] bg-white/20">
+            </div>
+          </div>
+        </div>
+        <!-- COLUMN 2: SEMI FINALS -->
+        <div class="flex flex-col gap-12 shrink-0 w-[180px] relative z-10 pt-[64px]">
+          <div class="absolute top-0 left-0 text-[10.5px] uppercase tracking-[0.1em] text-[#8a79ab] font-bold">
+            SEMI FINALS
+          </div>
+          <!-- Match 3 -->
+          <div class="glass-card rounded-[12px] overflow-hidden border border-white/10 relative">
+            <!-- Left connector -->
+            <div class="absolute left-[-24px] top-1/2 w-[24px] h-[1px] bg-white/20">
+            </div>
+            <div class="flex items-center justify-between p-2.5 bg-[#8a79ab]/10 border-b border-white/5 relative">
+              <span class="font-serif font-bold text-[13px] text-white">The Neon Echoes</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[11px] font-medium text-white/70">58%</span>
+                            <i class="text-[10px] text-[#facc15]"><i class="fa-solid fa-check"></i></i>
+              </div>
+            </div>
+            <div class="flex items-center justify-between p-2.5">
+              <span class="font-serif font-bold text-[13px] text-white/60">Iron Belle</span>
+                        <span class="text-[11px] font-medium text-white/40">42%</span>
+            </div>
+            <!-- Right connector -->
+            <div class="absolute right-[-24px] top-1/2 w-[24px] h-[1px] bg-white/20">
+            </div>
+          </div>
+        </div>
+        <!-- COLUMN 3: FINAL (LIVE) -->
+        <div class="flex flex-col gap-12 shrink-0 w-[220px] relative z-10 pt-[52px]">
+          <div class="absolute top-0 left-0 text-[10.5px] uppercase tracking-[0.1em] text-[#8a79ab] font-bold">
+            FINAL
+          </div>
+          <!-- Match 4 (Final) -->
+          <div class="glass-card rounded-[16px] overflow-hidden border border-[#8a79ab]/40 relative bg-[#121118]/80 shadow-[0_0_15px_rgba(138,121,171,0.2)]">
+            <!-- Left connector -->
+            <div class="absolute left-[-24px] top-1/2 w-[24px] h-[1px] bg-white/20">
+            </div>
+            <!-- Live Header -->
+            <div class="p-3 border-b border-white/5 flex items-center justify-between bg-white/5">
+              <div class="bg-[#e5262f] rounded-[3px] px-1.5 py-0.5 flex items-center justify-center">
+                <span class="text-white text-[9px] font-bold uppercase tracking-wider leading-none">Live</span>
+              </div>
+              <button class="bg-[#8a79ab]/20 text-[#8a79ab] px-3 py-1 rounded-full text-[11px] font-bold border border-[#8a79ab]/30 flex items-center gap-1">
+                            <i class="text-[9px]"><i class="fa-solid fa-play"></i></i> Watch now
+                        </button>
+            </div>
+            <div class="flex flex-col">
+              <div class="flex items-center justify-between p-3 border-b border-white/5">
+                <span class="font-serif font-bold text-[15px] text-white">The Neon Echoes</span>
+                            <span class="text-[13px] font-bold text-[#8a79ab]">48%</span>
+              </div>
+              <div class="flex items-center justify-between p-3">
+                <span class="font-serif font-bold text-[15px] text-white">Velvet Static</span>
+                            <span class="text-[13px] font-bold text-[#e6a5b8]">52%</span>
+              </div>
+            </div>
+            <!-- Right connector -->
+            <div class="absolute right-[-24px] top-1/2 w-[24px] h-[1px] bg-white/20">
+            </div>
+          </div>
+        </div>
+        <!-- COLUMN 4: CHAMPION -->
+        <div class="flex flex-col gap-12 shrink-0 w-[140px] relative z-10 pt-[74px]">
+          <div class="absolute top-0 left-0 text-[10.5px] uppercase tracking-[0.1em] text-[#8a79ab] font-bold">
+            CHAMPION
+          </div>
+          <!-- Winner Placeholder -->
+          <div class="h-[60px] rounded-[12px] border border-dashed border-white/20 flex items-center justify-center relative">
+            <!-- Left connector -->
+            <div class="absolute left-[-24px] top-1/2 w-[24px] h-[1px] bg-white/20">
+            </div>
+            <i class="text-white/20 text-[20px]"><i class="fa-solid fa-trophy"></i></i>
+          </div>
+        </div>
+      </div>
+      <!-- YOUR RUN SECTION -->
+      <div class="px-4 mt-2 shrink-0">
+        <h3 class="text-[10.5px] uppercase tracking-[0.1em] text-[#8a79ab] font-bold mb-2">
+          YOUR RUN
+        </h3>
+        <div class="glass-card rounded-[16px] p-4 flex flex-col gap-1 border border-white/10 bg-[#1a1924]/80">
+          <div class="flex items-center justify-between">
+            <span class="font-serif font-bold text-[15px] text-white">The Neon Echoes</span>
+                    <span class="text-[12px] text-white/60 font-medium">Quarter finalist</span>
+          </div>
+          <p class="text-[13px] text-white/70 mt-1">
+            beat <span class="font-serif text-white">Dust Radio</span> 61 / 39
+          </p>
+        </div>
+      </div>
+    </main>
+    <!-- THE BOTTOM TAB BAR (DARK VARIANT) -->
+    <nav id="bottom-nav" class="absolute bottom-0 left-0 w-full h-[76px] bg-black/90 backdrop-blur-xl border-t border-white/10 flex justify-between items-center px-6 z-30 pb-4">
+      <!-- Map -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-white/50 hover:text-white/80 transition-colors">
+            <i class="text-[22px]"><i class="fa-regular fa-map"></i></i>
+            <span class="text-[10.5px] font-medium">MAP</span>
+        </a>
+
+        <!-- Discover -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-white/50 hover:text-white/80 transition-colors">
+            <i class="text-[22px]"><i class="fa-regular fa-compass"></i></i>
+            <span class="text-[10.5px] font-medium">DISCOVER</span>
+        </a>
+
+        <!-- Jams -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-white/50 hover:text-white/80 transition-colors">
+            <i class="text-[22px]"><i class="fa-solid fa-guitar"></i></i>
+            <span class="text-[10.5px] font-medium">JAMS</span>
+        </a>
+
+        <!-- Live (Active on dark) -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-white relative">
+      <div class="relative">
+        <i class="text-[22px] text-[#8a79ab]"><i class="fa-solid fa-tower-broadcast"></i></i>
+        <div class="absolute top-0 right-[-2px] w-[6px] h-[6px] bg-[#e6a5b8] rounded-full">
+        </div>
+      </div>
+      <span class="text-[10.5px] font-semibold text-[#8a79ab]">LIVE</span>
+        </a>
+
+        <!-- Me -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-white/50 hover:text-white/80 transition-colors">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="Me" class="w-[22px] h-[22px] rounded-full border border-white/50 object-cover opacity-80">
+            <span class="text-[10.5px] font-medium">ME</span>
+        </a>
+    </nav>
+  </body>
+</html>

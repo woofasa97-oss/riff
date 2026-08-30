@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Jam Request - Riff 2
+    </title>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+        body { font-family: var(--font-sans); background-color: var(--background); }
+        h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+    <style>
+      :root {
+          --background: #EFEBF6;
+          --foreground: #6B6880;
+          --card: #FFFFFF;
+          --card-foreground: #3D3C4F;
+          --primary: #8A79AB;
+          --primary-foreground: #FFFFFF;
+          --secondary: #E6A5B8;
+          --secondary-foreground: #3D3C4F;
+          --muted: #EFEBF6;
+          --muted-foreground: #6B6880;
+          --accent: #E6A5B8;
+          --accent-foreground: #3D3C4F;
+          --destructive: #DC2626;
+          --destructive-foreground: #FFFFFF;
+          --border: #DFD9EC;
+          --input: #DFD9EC;
+          --ring: #8A79AB;
+          --font-sans: Geist;
+          --font-serif: Lora;
+          --font-mono: JetBrains Mono, monospace;
+          --radius: 1rem;
+          --shadow: -2px 4px 12px 4px rgba(51,51,51,0.05);
+}
+    </style>
+  </head>
+  <body class="m-0 p-0 min-h-[100dvh] flex justify-center text-[var(--foreground)] relative">
+    <div class="w-full max-w-md min-h-[100dvh] bg-[var(--background)] relative flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.05)]">
+      <!-- Header -->
+      <header class="w-full px-5 py-4 flex items-center bg-[var(--background)] sticky top-0 z-10 border-b border-[var(--border)]">
+        <button class="w-10 h-10 flex items-center justify-center rounded-full text-[var(--card-foreground)] hover:bg-[var(--muted)] transition-colors">
+                <i><i class="fa-solid fa-chevron-left"></i></i>
+            </button>
+        <h1 class="font-serif text-xl font-bold text-[var(--card-foreground)] flex-1 text-center pr-10">
+          Jam request
+        </h1>
+      </header>
+      <!-- Main Content -->
+      <main class="flex-1 p-5 pb-24 overflow-y-auto hide-scrollbar flex flex-col gap-5">
+        <!-- Request Card -->
+        <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-[var(--shadow)] p-5 flex flex-col gap-6">
+          <!-- Profile Block -->
+          <div class="flex items-center gap-4">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Sarah Jenkins" class="w-16 h-16 rounded-full object-cover border border-[var(--border)]">
+            <div class="flex flex-col">
+              <h2 class="font-serif font-bold text-xl text-[var(--card-foreground)]">
+                Sarah Jenkins
+              </h2>
+              <span class="text-sm text-[var(--foreground)] mb-1">Bassist - Indie / Rock</span>
+              <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1 bg-[var(--muted)] rounded-full px-2 py-0.5">
+                  <i class="text-[var(--primary)] text-[10px]"><i class="fa-solid fa-certificate"></i></i>
+                                <span class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-wide">VERIFIED</span>
+                </div>
+                <span class="text-xs font-medium text-[var(--foreground)]">4 jams hosted</span>
+              </div>
+            </div>
+          </div>
+          <!-- Message -->
+          <div class="bg-[#F8F7FA] rounded-[12px] p-4 relative">
+            <i class="absolute top-3 left-3 text-[var(--border)] text-lg opacity-50"><i class="fa-solid fa-quote-left"></i></i>
+            <p class="text-sm text-[var(--foreground)] italic pl-6 leading-relaxed">
+              "Heard your clip. I have been looking for someone with this pocket for months. Free Tuesday?"
+            </p>
+          </div>
+          <!-- Details Block -->
+          <div class="flex flex-col gap-4 border-t border-b border-[var(--border)] py-5">
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-full bg-[var(--muted)] flex items-center justify-center shrink-0">
+                <i class="text-[var(--primary)] text-sm"><i class="fa-regular fa-clock"></i></i>
+              </div>
+              <div class="flex flex-col pt-0.5">
+                <span class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider mb-1">WHEN</span>
+                            <span class="text-sm font-medium text-[var(--card-foreground)]">Tue 12 Nov, 7:00 PM - 9:00 PM</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-full bg-[var(--muted)] flex items-center justify-center shrink-0">
+                <i class="text-[var(--primary)] text-sm"><i class="fa-solid fa-location-dot"></i></i>
+              </div>
+              <div class="flex flex-col pt-0.5">
+                <span class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider mb-1">WHERE</span>
+                            <span class="text-sm font-medium text-[var(--card-foreground)]">Sonic Basement, Greenpoint - 0.9 mi</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div class="w-8 h-8 rounded-full bg-[var(--muted)] flex items-center justify-center shrink-0">
+                <i class="text-[var(--primary)] text-sm"><i class="fa-solid fa-bolt"></i></i>
+              </div>
+              <div class="flex flex-col pt-0.5">
+                <span class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider mb-2">VIBE</span>
+                            <span class="inline-flex px-3 py-1 bg-[var(--primary)] text-white text-xs font-semibold rounded-full w-fit">Casual Jam</span>
+              </div>
+            </div>
+          </div>
+          <!-- Trust Summary / Audio -->
+          <div class="bg-[var(--muted)] rounded-[12px] p-4 flex flex-col gap-3 border border-[var(--border)]">
+            <div class="flex items-center gap-3">
+              <button class="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white shrink-0 hover:opacity-90 transition-opacity shadow-sm">
+                            <i class="text-xs ml-0.5"><i class="fa-solid fa-play"></i></i>
+                        </button>
+              <div class="flex-1 h-6 flex items-center gap-0.5 opacity-80">
+                <div class="w-1 h-3 bg-[var(--primary)] rounded-full">
+                </div>
+                <div class="w-1 h-5 bg-[var(--primary)] rounded-full">
+                </div>
+                <div class="w-1 h-4 bg-[var(--primary)] rounded-full">
+                </div>
+                <div class="w-1 h-6 bg-[var(--primary)] rounded-full">
+                </div>
+                <div class="w-1 h-3 bg-[var(--primary)] rounded-full">
+                </div>
+                <div class="w-1 h-5 bg-[var(--primary)] rounded-full">
+                </div>
+                <div class="w-1 h-2 bg-[var(--primary)] rounded-full">
+                </div>
+                <div class="w-1 h-4 bg-[var(--primary)] rounded-full">
+                </div>
+                <div class="w-1 h-5 bg-[var(--primary)] rounded-full">
+                </div>
+                <div class="w-1 h-3 bg-[var(--primary)] rounded-full">
+                </div>
+                <div class="w-1 h-4 bg-[var(--primary)] rounded-full">
+                </div>
+              </div>
+              <span class="text-xs font-semibold text-[var(--primary)]">0:45</span>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <span class="px-2.5 py-1 bg-white border border-[var(--border)] rounded-full text-[10px] font-semibold text-[var(--card-foreground)] shadow-sm">#SolidTime</span>
+                        <span class="px-2.5 py-1 bg-white border border-[var(--border)] rounded-full text-[10px] font-semibold text-[var(--card-foreground)] shadow-sm">#EasyToPlayWith</span>
+            </div>
+          </div>
+        </div>
+        <!-- Action Buttons -->
+        <div class="flex flex-col gap-3 mt-4">
+          <button class="w-full py-4 rounded-[12px] bg-[var(--primary)] text-white font-semibold text-[15px] shadow-sm transition-transform hover:scale-[0.98] active:scale-95">
+                    Accept and confirm
+                </button>
+                <button class="w-full py-4 rounded-[12px] bg-[var(--muted)] text-[var(--card-foreground)] font-semibold text-[15px] shadow-sm transition-transform hover:scale-[0.98] active:scale-95 border border-[var(--border)]">
+                    Suggest another time
+                </button>
+                <button class="text-sm font-medium text-[var(--foreground)] mt-2 hover:text-[var(--card-foreground)] transition-colors underline-offset-4 hover:underline">
+                    Decline politely
+                </button>
+        </div>
+      </main>
+      <!-- Bottom Tab Bar -->
+      <nav class="absolute bottom-0 w-full bg-[var(--card)] border-t border-[var(--border)] flex justify-between px-6 py-3 pb-8 z-20">
+        <div class="flex flex-col items-center gap-1 text-[var(--foreground)] opacity-60">
+          <i class="text-xl"><i class="fa-solid fa-compass"></i></i>
+                <span class="text-[10px] font-medium">Discover</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 text-[var(--primary)]">
+          <div class="relative">
+            <i class="text-xl"><i class="fa-regular fa-comment"></i></i>
+            <div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#E5262F] rounded-full border-2 border-[var(--card)]">
+            </div>
+          </div>
+          <span class="text-[10px] font-medium">Messages</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 text-[var(--foreground)] opacity-60">
+          <i class="text-xl"><i class="fa-solid fa-guitar"></i></i>
+                <span class="text-[10px] font-medium">My Jams</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 text-[var(--foreground)] opacity-60">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Profile" class="w-6 h-6 rounded-full object-cover">
+                <span class="text-[10px] font-medium">Profile</span>
+        </div>
+      </nav>
+    </div>
+  </body>
+</html>

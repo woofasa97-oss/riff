@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>
+      window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Discovery Map
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Lora:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+            --primary: #8a79ab;
+            --secondary: #dfd9ec;
+            --accent: #e6a5b8;
+            --background: #f8f7fa;
+            --foreground: #3d3c4f;
+            --muted: #6b6880;
+            --font-sans: 'Geist', sans-serif;
+            --font-serif: "Lora", serif;
+        }
+        body { font-family: var(--font-sans); background-color: var(--background); color: var(--foreground); }
+        .serif { font-family: var(--font-serif); }
+
+        .map-bg {
+            background-color: #e5e7eb;
+            background-image:
+                radial-gradient(#d1d5db 1px, transparent 1px),
+                linear-gradient(#d1d5db 0.5px, transparent 0.5px),
+                linear-gradient(90deg, #d1d5db 0.5px, transparent 0.5px);
+            background-size: 20px 20px, 100px 100px, 100px 100px;
+            position: relative;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(.33); }
+            80%, 100% { opacity: 0; }
+        }
+        .pulse-marker::before {
+            content: '';
+            position: absolute;
+            display: block;
+            width: 300%;
+            height: 300%;
+            box-sizing: border-box;
+            margin-left: -100%;
+            margin-top: -100%;
+            border-radius: 45px;
+            background-color: var(--accent);
+            animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { display: none; }
+        .map-card-glow { box-shadow: 0 10px 25px -5px rgba(138, 121, 171, 0.25); }
+        .sheet-transition { transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
+    </style>
+  </head>
+  <body class="overflow-hidden">
+    <!-- Top Header Overlay -->
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 py-4 flex items-center justify-between pointer-events-none">
+      <div class="pointer-events-auto bg-white/90 backdrop-blur-md px-3 sm:px-4 py-2 rounded-2xl border border-gray-200 shadow-lg flex items-center gap-2 sm:gap-3 max-w-[62%]">
+        <h1 class="text-lg sm:text-xl font-bold text-[#8a79ab] serif whitespace-nowrap">
+          Musicianmap
+        </h1>
+        <div class="h-4 w-[1px] bg-gray-300 hidden sm:block">
+        </div>
+        <div class="hidden sm:flex items-center gap-2 text-xs font-medium text-[#6b6880]">
+          <i class="text-[#8a79ab]"><i class="fa-solid fa-location-dot"></i></i>
+                <span>Brooklyn, NY</span>
+        </div>
+      </div>
+      <div class="flex gap-2 pointer-events-auto">
+        <button class="w-11 h-11 bg-white/90 backdrop-blur-md rounded-2xl border border-gray-200 shadow-lg flex items-center justify-center text-[#6b6880]">
+                <i><i class="fa-solid fa-sliders"></i></i>
+            </button>
+            <button class="w-11 h-11 bg-[#8a79ab] rounded-2xl shadow-lg flex items-center justify-center text-white">
+                <i><i class="fa-solid fa-plus"></i></i>
+            </button>
+      </div>
+    </header>
+    <!-- Map View Container -->
+    <main id="map-view" class="w-full h-[100dvh] map-bg flex items-center justify-center relative overflow-hidden">
+      <!-- Zone 1: Williamsburg -->
+        <button class="absolute top-[22%] left-[8%] sm:left-[15%] flex flex-col items-center">
+      <div class="bg-white/95 backdrop-blur-sm px-3 py-2.5 rounded-2xl border border-[#8a79ab]/20 shadow-md flex flex-col items-center gap-1 min-w-[90px]">
+        <span class="text-[11px] font-black text-[#3d3c4f]">Williamsburg</span>
+        <div class="flex -space-x-2 my-0.5">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-6 h-6 rounded-full border-2 border-white">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" class="w-6 h-6 rounded-full border-2 border-white">
+          <div class="w-6 h-6 rounded-full bg-[#dfd9ec] border-2 border-white flex items-center justify-center text-[9px] font-bold text-[#8a79ab]">
+            +18
+          </div>
+        </div>
+        <span class="text-[10px] font-bold uppercase tracking-tight text-[#8a79ab]">20 Musicians</span>
+      </div>
+      <div class="w-4 h-4 bg-[#8a79ab] rounded-full border-4 border-white shadow-md mt-1">
+      </div>
+      </button>
+
+        <!-- Zone 2: Greenpoint -->
+        <button class="absolute top-[38%] right-[6%] sm:right-[18%] flex flex-col items-center">
+      <div class="bg-white/95 backdrop-blur-sm px-3 py-2.5 rounded-2xl border border-[#e6a5b8]/40 shadow-md flex flex-col items-center gap-1 min-w-[90px]">
+        <span class="text-[11px] font-black text-[#3d3c4f]">Greenpoint</span>
+                <span class="text-[9px] font-bold text-[#e6a5b8] bg-[#e6a5b8]/10 px-2 py-0.5 rounded-full">1 Jam Live</span>
+                <span class="text-[10px] font-bold uppercase tracking-tight text-[#8a79ab]">9 Musicians</span>
+      </div>
+      <div class="relative flex items-center justify-center mt-1">
+        <div class="pulse-marker absolute w-3 h-3 bg-[#e6a5b8] rounded-full">
+        </div>
+        <div class="w-4 h-4 bg-[#e6a5b8] rounded-full border-4 border-white shadow-md relative z-10">
+        </div>
+      </div>
+      </button>
+
+        <!-- Zone 3: Bushwick -->
+        <button class="absolute bottom-[32%] left-[24%] sm:left-[30%] flex flex-col items-center">
+      <div class="bg-white/95 backdrop-blur-sm px-3 py-2.5 rounded-2xl border border-[#8a79ab]/20 shadow-md flex flex-col items-center gap-1 min-w-[90px]">
+        <span class="text-[11px] font-black text-[#3d3c4f]">Bushwick</span>
+                <span class="text-[10px] font-bold uppercase tracking-tight text-[#8a79ab]">14 Musicians</span>
+      </div>
+      <div class="w-4 h-4 bg-[#8a79ab] rounded-full border-4 border-white shadow-md mt-1 opacity-70">
+      </div>
+      </button>
+
+        <!-- You are here -->
+      <div class="absolute top-[58%] left-[52%] flex flex-col items-center z-10">
+        <div class="w-4 h-4 bg-blue-500 rounded-full border-4 border-white shadow-lg">
+        </div>
+        <span class="text-[9px] font-bold text-blue-600 bg-white px-1.5 py-0.5 rounded-full shadow mt-1">You</span>
+      </div>
+    </main>
+    <!-- ZONE BUNDLE SHEET: category breakdown per zone -->
+    <div id="zone-sheet" class="fixed inset-x-0 bottom-0 z-40 translate-y-full sheet-transition">
+      <div class="bg-white rounded-t-3xl shadow-2xl map-card-glow border-t border-gray-100 max-h-[70dvh] flex flex-col">
+        <div class="flex justify-center pt-3">
+          <div class="w-10 h-1.5 bg-gray-200 rounded-full">
+          </div>
+        </div>
+        <div class="px-5 pt-3 pb-2 flex items-start justify-between">
+          <div>
+            <h2 id="zone-title" class="text-xl font-bold serif">
+              Williamsburg
+            </h2>
+            <p id="zone-sub" class="text-sm text-[#6b6880]">
+              0.6–1.4 miles away • 20 musicians nearby
+            </p>
+          </div>
+          <button class="text-gray-400 p-2 -mr-2"><i class="text-xl"><i class="fa-solid fa-xmark"></i></i></button>
+        </div>
+        <!-- Instrument category bundles -->
+        <div id="category-grid" class="px-5 pb-4 grid grid-cols-2 gap-3 overflow-y-auto custom-scrollbar">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+    <!-- CATEGORY DETAIL SHEET: list of profiles for selected instrument -->
+    <div id="category-sheet" class="fixed inset-x-0 bottom-0 z-50 translate-y-full sheet-transition">
+      <div class="bg-white rounded-t-3xl shadow-2xl map-card-glow border-t border-gray-100 max-h-[80dvh] flex flex-col">
+        <div class="flex justify-center pt-3">
+          <div class="w-10 h-1.5 bg-gray-200 rounded-full">
+          </div>
+        </div>
+        <div class="px-5 pt-3 pb-3 flex items-center justify-between">
+          <button class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-[#6b6880]">
+                    <i class="text-sm"><i class="fa-solid fa-arrow-left"></i></i>
+                </button>
+          <div class="text-center">
+            <h2 id="cat-title" class="text-lg font-bold">
+              Bass Players
+            </h2>
+            <p id="cat-zone" class="text-xs text-[#6b6880]">
+              Williamsburg
+            </p>
+          </div>
+          <div class="w-9">
+          </div>
+        </div>
+        <div id="profile-list" class="px-5 pb-6 space-y-3 overflow-y-auto custom-scrollbar">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+    <!-- Bottom Nav Fixed -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 sm:px-8 py-3 flex justify-between items-center z-30">
+      <button class="flex flex-col items-center gap-1 text-[#8a79ab] min-w-[44px] min-h-[44px] justify-center">
+            <i class="text-xl"><i class="fa-solid fa-map-location-dot"></i></i>
+            <span class="text-[10px] font-bold">Explore</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-gray-400 min-w-[44px] min-h-[44px] justify-center">
+      <div class="relative">
+        <i class="text-xl"><i class="fa-solid fa-comment-dots"></i></i>
+                <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#e6a5b8] rounded-full border-2 border-white"></span>
+      </div>
+      <span class="text-[10px] font-medium">Chat</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-gray-400 min-w-[44px] min-h-[44px] justify-center">
+            <i class="text-xl"><i class="fa-solid fa-calendar-check"></i></i>
+            <span class="text-[10px] font-medium">Jams</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-gray-400 min-w-[44px] min-h-[44px] justify-center">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" class="w-6 h-6 rounded-full border border-gray-200">
+            <span class="text-[10px] font-medium">Me</span>
+        </button>
+    </nav>
+    <!-- Instructional Toast -->
+    <div id="hint-toast" class="fixed top-24 left-1/2 -translate-x-1/2 z-40 w-max">
+      <div class="bg-[#3d3c4f]/90 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-medium shadow-2xl flex items-center gap-2">
+        <i class="animate-pulse"><i class="fa-solid fa-hand-pointer"></i></i>
+            Tap a zone to see who's playing
+      </div>
+    </div>
+  </body>
+</html>

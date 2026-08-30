@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Riff - Live Session
+    </title>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+  </head>
+  <body class="bg-black text-white h-[100dvh] flex flex-col w-full max-w-md mx-auto relative shadow-2xl overflow-hidden m-0 p-0 font-sans selection:bg-[#8a79ab] selection:text-white">
+    <!-- FULL BLEED BACKGROUND IMAGE -->
+    <div class="absolute inset-0 z-0">
+      <div class="h-full w-full overflow-hidden">
+        <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_0aeff6cba3_edfe6cd9320a6f1a.png" alt="dark concert stage photograph washed in blue and magenta lighting, atmospheric smoke, band silhouett">
+      </div>
+      <!-- Top and Bottom Gradients -->
+      <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/10 to-black/90 pointer-events-none">
+      </div>
+    </div>
+    <!-- DARK SCREEN HEADER -->
+    <header id="header" class="absolute top-0 left-0 w-full h-[56px] flex items-center justify-between px-4 z-20">
+      <div class="flex-1 flex justify-start">
+        <h1 class="font-serif font-bold text-[22px] text-white tracking-wide">
+          Riff
+        </h1>
+      </div>
+      <div class="flex gap-2">
+        <button class="w-9 h-9 flex items-center justify-center bg-white/12 text-white rounded-full shrink-0 backdrop-blur-md">
+                <i class="text-[14px]"><i class="fa-solid fa-share"></i></i>
+            </button>
+            <button class="w-9 h-9 flex items-center justify-center bg-white/12 text-white rounded-full shrink-0 backdrop-blur-md">
+                <i class="text-[16px]"><i class="fa-solid fa-xmark"></i></i>
+            </button>
+      </div>
+    </header>
+    <!-- MAIN CONTENT (OVERLAY) -->
+    <main id="main" class="flex-1 flex flex-col relative z-10 pt-[72px] pb-[84px] pointer-events-none">
+      <!-- BAND INFO ROW -->
+      <div class="px-4 flex items-center justify-between pointer-events-auto">
+        <div class="flex items-center gap-3">
+          <div class="relative shrink-0">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Lunar Resonance" class="w-[42px] h-[42px] rounded-full border-2 border-white object-cover">
+            <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-[#e5262f] rounded-[3px] px-1.5 py-0.5 flex items-center justify-center shadow-md">
+              <span class="text-white text-[8px] font-bold uppercase tracking-wider leading-none">Live</span>
+            </div>
+          </div>
+          <div class="flex flex-col">
+            <h2 class="font-serif font-bold text-[17px] text-white leading-tight">
+              Lunar Resonance
+            </h2>
+            <div class="flex items-center gap-1.5 text-white/70 mt-0.5">
+              <i class="text-[10px]"><i class="fa-solid fa-eye"></i></i>
+                        <span class="text-[12px] font-medium">8.4k watching</span>
+            </div>
+          </div>
+        </div>
+        <button class="px-4 py-1.5 rounded-full border border-white text-white text-[12px] font-semibold hover:bg-white/10 transition-colors">
+                Follow
+            </button>
+      </div>
+      <!-- GLASS PILLS (STACKED LEFT) -->
+      <div class="mt-6 px-4 flex flex-col gap-2 items-start pointer-events-auto">
+        <!-- Rating Pill -->
+        <div class="bg-black/40 backdrop-blur-md border border-white/10 rounded-full py-1.5 px-3 flex items-center gap-2">
+          <i class="text-[#facc15] text-[12px]"><i class="fa-solid fa-star"></i></i>
+                <span class="text-white text-[13px] font-bold">4.9</span>
+                <span class="text-white/50 text-[10.5px] uppercase tracking-wider ml-1">Session rating</span>
+        </div>
+        <!-- Reputation Pill -->
+        <div class="bg-black/40 backdrop-blur-md border border-white/10 rounded-full py-1.5 px-3 flex items-center gap-2">
+          <i class="text-[#8a79ab] text-[12px]"><i class="fa-solid fa-bolt"></i></i>
+                <span class="text-white text-[13px] font-bold">Legendary</span>
+                <span class="text-white/50 text-[10.5px] uppercase tracking-wider ml-1">Reputation</span>
+        </div>
+      </div>
+      <!-- SPACER TO PUSH CHAT DOWN -->
+      <div class="flex-1">
+      </div>
+      <!-- CHAT RAIL -->
+      <div class="px-4 flex flex-col gap-3 chat-mask pointer-events-auto max-h-[160px] overflow-y-auto hide-scrollbar mb-4">
+        <!-- Chat Row 1 -->
+        <div class="flex items-start gap-2.5">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-6 h-6 rounded-full border border-white/20 object-cover mt-0.5">
+          <div class="flex flex-col">
+            <span class="text-white/50 text-[10px] font-medium mb-0.5">marcus_c</span>
+            <p class="text-white text-[13px] leading-tight">
+              This groove is absolutely insane 🔥
+            </p>
+          </div>
+        </div>
+        <!-- Chat Row 2 -->
+        <div class="flex items-start gap-2.5">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" class="w-6 h-6 rounded-full border border-white/20 object-cover mt-0.5">
+          <div class="flex flex-col">
+            <span class="text-white/50 text-[10px] font-medium mb-0.5">sarah_j_bass</span>
+            <p class="text-white text-[13px] leading-tight">
+              Is that Leo on keys? Sounding huge.
+            </p>
+          </div>
+        </div>
+        <!-- Chat Row 3 -->
+        <div class="flex items-start gap-2.5">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" class="w-6 h-6 rounded-full border border-white/20 object-cover mt-0.5">
+          <div class="flex flex-col">
+            <span class="text-white/50 text-[10px] font-medium mb-0.5">brooklyn_beats</span>
+            <p class="text-white text-[13px] leading-tight">
+              yeah man, killing it
+            </p>
+          </div>
+        </div>
+        <!-- Chat Row 4 -->
+        <div class="flex items-start gap-2.5">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" class="w-6 h-6 rounded-full border border-white/20 object-cover mt-0.5">
+          <div class="flex flex-col">
+            <span class="text-white/50 text-[10px] font-medium mb-0.5">jazz_cat_99</span>
+            <p class="text-white text-[13px] leading-tight">
+              love the transition here
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- COMPOSER ROW (ABOVE TAB BAR) -->
+    <div class="absolute bottom-[76px] left-0 w-full px-4 pb-3 flex items-center gap-2 z-20">
+      <div class="flex-1 h-[40px] bg-white/10 backdrop-blur-md rounded-full border border-white/20 flex items-center px-4">
+        <span class="text-white/50 text-[14px]">Add a comment...</span>
+      </div>
+      <button class="w-[40px] h-[40px] rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center shrink-0">
+            <i class="text-[#facc15] text-[15px]"><i class="fa-solid fa-star"></i></i>
+        </button>
+        <button class="w-[40px] h-[40px] rounded-full bg-[#8a79ab] flex items-center justify-center shrink-0 shadow-lg">
+            <i class="text-white text-[15px]"><i class="fa-solid fa-heart"></i></i>
+        </button>
+    </div>
+    <!-- THE BOTTOM TAB BAR (DARK VARIANT) -->
+    <nav id="bottom-nav" class="absolute bottom-0 left-0 w-full h-[76px] bg-black/90 backdrop-blur-xl border-t border-white/10 flex justify-between items-center px-6 z-30 pb-4">
+      <!-- Map -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-white/50 hover:text-white/80 transition-colors">
+            <i class="text-[22px]"><i class="fa-regular fa-map"></i></i>
+            <span class="text-[10.5px] font-medium">MAP</span>
+        </a>
+
+        <!-- Discover -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-white/50 hover:text-white/80 transition-colors">
+            <i class="text-[22px]"><i class="fa-regular fa-compass"></i></i>
+            <span class="text-[10.5px] font-medium">DISCOVER</span>
+        </a>
+
+        <!-- Jams -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-white/50 hover:text-white/80 transition-colors">
+            <i class="text-[22px]"><i class="fa-solid fa-guitar"></i></i>
+            <span class="text-[10.5px] font-medium">JAMS</span>
+        </a>
+
+        <!-- Live (Active on dark) -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-white relative">
+      <div class="relative">
+        <i class="text-[22px]"><i class="fa-solid fa-tower-broadcast"></i></i>
+        <div class="absolute top-0 right-[-2px] w-[6px] h-[6px] bg-[#e6a5b8] rounded-full">
+        </div>
+      </div>
+      <span class="text-[10.5px] font-semibold">LIVE</span>
+        </a>
+
+        <!-- Me -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-white/50 hover:text-white/80 transition-colors">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="Me" class="w-[22px] h-[22px] rounded-full border border-white/50 object-cover opacity-80">
+            <span class="text-[10.5px] font-medium">ME</span>
+        </a>
+    </nav>
+  </body>
+</html>

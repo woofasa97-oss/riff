@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<!-- Riff reference screen — Discover
+     Route: /discover
+     Source: prototype screen #26 ("Discover", group "Riff 4")
+     Visual reference only. Do not copy this markup; see CLAUDE.md. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Riff 4 - Discover
+    </title>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+  </head>
+  <body class="m-0 p-0 min-h-[100dvh] flex flex-col bg-background text-foreground w-full max-w-full font-sans overflow-x-hidden">
+    <!-- TOP-LEVEL HEADER -->
+    <header id="main-header" class="h-[56px] w-full flex items-center justify-between px-4 bg-background z-20 shrink-0">
+      <h1 class="font-serif font-bold text-[22px] text-primary">
+        Riff 4
+      </h1>
+      <div class="flex items-center gap-2">
+        <button class="w-[36px] h-[36px] rounded-full bg-white border border-[#E4DFEE] flex items-center justify-center text-foreground shadow-sm">
+                <i class="text-[15px]"><i class="fa-solid fa-magnifying-glass"></i></i>
+            </button>
+            <button class="w-[36px] h-[36px] rounded-full bg-white border border-[#E4DFEE] flex items-center justify-center text-foreground shadow-sm">
+                <i class="text-[15px]"><i class="fa-solid fa-sliders"></i></i>
+            </button>
+      </div>
+    </header>
+    <!-- MAIN CONTENT -->
+    <main id="discover-feed" class="flex-1 w-full flex flex-col gap-5 pb-6 overflow-y-auto overflow-x-hidden">
+      <!-- Intent Chips Carousel -->
+      <div class="w-full px-4 pt-2 pb-1 overflow-x-auto no-scrollbar">
+        <div class="flex items-center gap-2 w-max">
+          <button class="px-4 h-[32px] rounded-full bg-primary text-white text-[13px] font-medium transition-colors">
+                    All
+                </button>
+                <button class="px-4 h-[32px] rounded-full bg-white border border-[#E4DFEE] text-[#3D3C4F] text-[13px] font-medium transition-colors">
+                    Casual Jam
+                </button>
+                <button class="px-4 h-[32px] rounded-full bg-white border border-[#E4DFEE] text-[#3D3C4F] text-[13px] font-medium transition-colors">
+                    Serious Project
+                </button>
+                <button class="px-4 h-[32px] rounded-full bg-white border border-[#E4DFEE] text-[#3D3C4F] text-[13px] font-medium transition-colors">
+                    Gigging
+                </button>
+        </div>
+      </div>
+      <!-- Lavender Banner Card -->
+      <div class="px-4">
+        <div class="w-full bg-[#EFEBF6] rounded-[16px] p-4 flex items-center justify-between shadow-sm cursor-pointer border border-[#E4DFEE]/50">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-[10px] bg-white flex items-center justify-center text-primary shadow-sm">
+              <i class="text-[18px]"><i class="fa-regular fa-calendar"></i></i>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-bold text-[15px] text-[#3D3C4F]">Who's free tonight?</span>
+                        <span class="text-[13px] text-[#6B6880]">12 musicians nearby ready to jam</span>
+            </div>
+          </div>
+          <i class="text-[#9C97A9] text-[14px]"><i class="fa-solid fa-chevron-right"></i></i>
+        </div>
+      </div>
+      <!-- Musician Cards Container -->
+      <div class="flex flex-col gap-4 px-4 w-full">
+        <!-- Musician Card 1: Marcus Chen -->
+        <article class="w-full bg-white rounded-[16px] border border-[#E4DFEE] p-4 flex flex-col shadow-sm relative">
+          <!-- Intent Pill -->
+          <div class="absolute top-4 right-4 bg-[#FDE7EC] text-[#E6A5B8] px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+            Casual Jam
+          </div>
+          <div class="flex items-start gap-3 mb-3">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="Marcus Chen" class="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover shrink-0">
+            <div class="flex flex-col pr-20">
+              <h2 class="font-serif font-bold text-[18px] text-[#3D3C4F] leading-tight">
+                Marcus Chen
+              </h2>
+              <span class="text-primary text-[10.5px] font-bold uppercase tracking-widest mt-0.5">DRUMMER · JAZZ / FUSION</span>
+            </div>
+          </div>
+          <!-- Reliability Row -->
+          <div class="flex items-center gap-1.5 mb-3">
+            <div class="w-4 h-4 rounded-full bg-[#2FBF71] flex items-center justify-center shrink-0">
+              <i class="text-white text-[9px]"><i class="fa-solid fa-check"></i></i>
+            </div>
+            <span class="text-[#3D3C4F] text-[12px] font-semibold">TOP RELIABILITY · <span class="text-[#6B6880] font-normal">12 repeat jams</span></span>
+          </div>
+          <!-- Audio Player -->
+          <div class="flex items-center justify-between bg-[#F8F7FA] rounded-[12px] p-2.5 border border-[#E4DFEE] mb-3">
+            <div class="flex items-center gap-2 w-full">
+              <button class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shadow-sm shrink-0">
+                            <i class="text-[12px] ml-0.5"><i class="fa-solid fa-play"></i></i>
+                        </button>
+              <div class="flex items-center gap-0.5 h-6 text-primary flex-1 overflow-hidden opacity-60">
+                <div class="w-1 bg-primary rounded-full h-3">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-5">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-8">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-4">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-6">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-2">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-5">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-7">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-3">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-4">
+                </div>
+              </div>
+              <span class="text-primary text-[12px] font-medium shrink-0 w-8 text-right">0:24</span>
+            </div>
+          </div>
+          <!-- Details Row -->
+          <div class="flex items-center gap-4 text-[#6B6880] text-[12px] mb-4">
+            <div class="flex items-center gap-1.5">
+              <i><i class="fa-solid fa-location-dot"></i></i>
+                        <span>Brooklyn, 1.2 mi</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <i><i class="fa-regular fa-calendar"></i></i>
+                        <span>Free Tue, Thu, Sun</span>
+            </div>
+          </div>
+          <!-- Actions -->
+          <div class="flex items-center gap-2 w-full mt-auto">
+            <button class="flex-1 h-[48px] rounded-[12px] bg-[#EFEBF6] text-[#3D3C4F] font-semibold text-[15px] transition-colors active:bg-[#E4DFEE]">
+                        View profile
+                    </button>
+                    <button class="flex-1 h-[48px] rounded-[12px] bg-primary text-white font-semibold text-[15px] shadow-sm transition-colors active:bg-primary/90">
+                        Request jam
+                    </button>
+          </div>
+        </article>
+        <!-- Musician Card 2: Sarah Jenkins -->
+        <article class="w-full bg-white rounded-[16px] border border-[#E4DFEE] p-4 flex flex-col shadow-sm relative">
+          <!-- Intent Pill -->
+          <div class="absolute top-4 right-4 bg-[#EFEBF6] text-primary px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+            Serious Project
+          </div>
+          <div class="flex items-start gap-3 mb-3">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Sarah Jenkins" class="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover shrink-0">
+            <div class="flex flex-col pr-24">
+              <h2 class="font-serif font-bold text-[18px] text-[#3D3C4F] leading-tight">
+                Sarah Jenkins
+              </h2>
+              <span class="text-primary text-[10.5px] font-bold uppercase tracking-widest mt-0.5">BASSIST · INDIE / ROCK</span>
+            </div>
+          </div>
+          <!-- Reliability Row -->
+          <div class="flex items-center gap-1.5 mb-3">
+            <div class="w-4 h-4 rounded-full bg-[#2FBF71] flex items-center justify-center shrink-0">
+              <i class="text-white text-[9px]"><i class="fa-solid fa-check"></i></i>
+            </div>
+            <span class="text-[#3D3C4F] text-[12px] font-semibold">VERIFIED · <span class="text-[#6B6880] font-normal">4 jams hosted</span></span>
+          </div>
+          <!-- Audio Player -->
+          <div class="flex items-center justify-between bg-[#F8F7FA] rounded-[12px] p-2.5 border border-[#E4DFEE] mb-3">
+            <div class="flex items-center gap-2 w-full">
+              <button class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shadow-sm shrink-0">
+                            <i class="text-[12px] ml-0.5"><i class="fa-solid fa-play"></i></i>
+                        </button>
+              <div class="flex items-center gap-0.5 h-6 text-primary flex-1 overflow-hidden opacity-60">
+                <div class="w-1 bg-primary rounded-full h-2">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-4">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-5">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-3">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-7">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-4">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-2">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-6">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-5">
+                </div>
+                <div class="w-1 bg-primary rounded-full h-3">
+                </div>
+              </div>
+              <span class="text-primary text-[12px] font-medium shrink-0 w-8 text-right">0:45</span>
+            </div>
+          </div>
+          <!-- Details Row -->
+          <div class="flex items-center gap-4 text-[#6B6880] text-[12px] mb-4">
+            <div class="flex items-center gap-1.5">
+              <i><i class="fa-solid fa-location-dot"></i></i>
+                        <span>Queens, 3.4 mi</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <i><i class="fa-regular fa-calendar"></i></i>
+                        <span>Free weekends</span>
+            </div>
+          </div>
+          <!-- Actions -->
+          <div class="flex items-center gap-2 w-full mt-auto">
+            <button class="flex-1 h-[48px] rounded-[12px] bg-[#EFEBF6] text-[#3D3C4F] font-semibold text-[15px] transition-colors active:bg-[#E4DFEE]">
+                        View profile
+                    </button>
+                    <button class="flex-1 h-[48px] rounded-[12px] bg-primary text-white font-semibold text-[15px] shadow-sm transition-colors active:bg-primary/90">
+                        Request jam
+                    </button>
+          </div>
+        </article>
+        <!-- Open Call Card -->
+        <article class="w-full bg-white rounded-[16px] border border-dashed border-[#CEC9D9] p-4 flex flex-col shadow-sm relative">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-primary text-[10.5px] font-bold uppercase tracking-widest">OPEN CALL</span>
+                    <span class="text-[#9C97A9] text-[11px]">Posted 2h ago</span>
+          </div>
+          <h2 class="font-serif font-bold text-[18px] text-[#3D3C4F] leading-tight mb-2 pr-4">
+            Looking for Keys for a Neo-Soul Session
+          </h2>
+          <p class="text-[#6B6880] text-[13px] italic mb-4">
+            "We have drums and bass locked in, just need someone to lay down some smooth chords. Come vibe with us."
+          </p>
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <div class="flex -space-x-2">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Leo" class="w-7 h-7 rounded-full border-2 border-white shadow-sm object-cover z-10">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Sam" class="w-7 h-7 rounded-full border-2 border-white shadow-sm object-cover z-0">
+              </div>
+              <span class="text-[#3D3C4F] text-[12px] font-medium">Hosted by Leo &amp; Sam</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="bg-[#EFEBF6] text-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase">THIS FRIDAY</span>
+                        <span class="bg-[#EFEBF6] text-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase">7:00 PM</span>
+            </div>
+          </div>
+          <button class="w-full h-[48px] rounded-[12px] bg-white border border-primary text-primary font-semibold text-[15px] transition-colors active:bg-[#EFEBF6]">
+                    Apply to join
+                </button>
+        </article>
+      </div>
+    </main>
+    <!-- BOTTOM TAB BAR -->
+    <nav id="bottom-tab-bar" class="w-full h-[76px] bg-white/96 backdrop-blur-md border-t border-[#E4DFEE] shrink-0 pb-safe z-50 flex items-center justify-around px-2 relative mt-auto">
+      <!-- Map -->
+        <button class="flex flex-col items-center justify-center w-[60px] h-full gap-1 text-[#9C97A9]">
+            <i class="text-[22px]"><i class="fa-regular fa-map"></i></i>
+            <span class="text-[10.5px] font-sans">MAP</span>
+        </button>
+
+        <!-- Discover (Active) -->
+        <button class="flex flex-col items-center justify-center w-[60px] h-full gap-1 text-primary">
+            <i class="text-[22px]"><i class="fa-regular fa-compass"></i></i>
+            <span class="text-[10.5px] font-sans font-semibold">DISCOVER</span>
+        </button>
+
+        <!-- Jams -->
+        <button class="flex flex-col items-center justify-center w-[60px] h-full gap-1 text-[#9C97A9]">
+            <i class="text-[22px]"><i class="fa-solid fa-guitar"></i></i>
+            <span class="text-[10.5px] font-sans">JAMS</span>
+        </button>
+
+        <!-- Live -->
+        <button class="flex flex-col items-center justify-center w-[60px] h-full gap-1 text-[#9C97A9] relative">
+      <div class="relative">
+        <i class="text-[22px]"><i class="fa-solid fa-tower-broadcast"></i></i>
+        <div class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#E6A5B8] border border-white">
+        </div>
+      </div>
+      <span class="text-[10.5px] font-sans">LIVE</span>
+        </button>
+
+        <!-- Me -->
+        <button class="flex flex-col items-center justify-center w-[60px] h-full gap-1 text-[#9C97A9]">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Me" class="w-[22px] h-[22px] rounded-full object-cover grayscale opacity-70">
+            <span class="text-[10.5px] font-sans">ME</span>
+        </button>
+    </nav>
+  </body>
+</html>

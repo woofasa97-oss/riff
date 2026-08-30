@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<!-- Riff reference screen — Step 1: Location
+     Route: /onboarding/location
+     Source: prototype screen #15 ("Step 1: Location", group "Riff 4")
+     Visual reference only. Do not copy this markup; see CLAUDE.md. -->
+<html lang="en">
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Riff 4 - Step 1: Location
+    </title>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+  </head>
+  <body class="m-0 p-0 min-h-[100dvh] flex flex-col relative bg-background text-foreground w-full max-w-full">
+    <!-- SUB SCREEN HEADER -->
+    <header id="sub-header" class="h-[56px] w-full flex items-center justify-between px-4 bg-background z-20 shrink-0">
+      <button class="w-9 h-9 flex items-center justify-center text-[#3D3C4F] shrink-0">
+            <i class="text-lg"><i class="fa-solid fa-chevron-left"></i></i>
+        </button>
+      <h1 class="font-serif font-bold text-[17px] text-[#3D3C4F] flex-1 text-center">
+        Step 1 of 4
+      </h1>
+      <div class="w-9 h-9 shrink-0">
+      </div>
+      <!-- Placeholder for right alignment -->
+    </header>
+    <!-- PROGRESS BAR -->
+    <div class="w-full h-[2px] bg-border shrink-0">
+      <div class="h-full bg-primary w-1/4">
+      </div>
+    </div>
+    <!-- MAIN SCROLLABLE CONTENT -->
+    <main id="onboarding-main" class="flex-1 flex flex-col px-5 py-6 pb-32 overflow-y-auto w-full max-w-md mx-auto">
+      <!-- Headers -->
+      <div class="mb-8">
+        <h2 class="font-serif font-bold text-[32px] leading-tight text-foreground mb-3">
+          Where do you play?
+        </h2>
+        <p class="font-sans text-[15px] text-muted-foreground leading-relaxed">
+          Riff only ever shows your neighbourhood, never your address.
+        </p>
+      </div>
+      <!-- Location Card -->
+      <div class="bg-card rounded-[16px] border border-border shadow-sm p-4 mb-8 w-full flex flex-col">
+        <div class="w-full h-[180px] rounded-[8px] overflow-hidden mb-4 relative bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+          <!-- Map representation (AI IMAGE as per instructions, or a placeholder if map logic isn't strictly an image, but context says "a soft lavender-and-rose gradient mini map of Brooklyn") -->
+          <div class="absolute inset-0 opacity-40 mix-blend-multiply" style="background-image: url('https://storage.googleapis.com/uxpilot-auth.appspot.com/default-placeholder.png'); background-size: cover; background-position: center;">
+          </div>
+          <!-- You Pin -->
+          <div class="relative z-10 flex flex-col items-center">
+            <div class="bg-[#3B82F6] w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md border-2 border-white">
+              <i><i class="fa-solid fa-location-dot"></i></i>
+            </div>
+            <div class="bg-white/90 px-2 py-0.5 rounded-full mt-1 text-[10px] font-medium text-foreground shadow-sm">
+              You
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between px-1">
+          <span class="font-serif font-bold text-[17px] text-foreground">Brooklyn, NY</span>
+                <button class="font-sans text-[13px] font-medium text-primary">Change</button>
+        </div>
+      </div>
+      <!-- Your Home Patch -->
+      <div class="mb-8 w-full">
+        <h3 class="font-sans text-[10.5px] uppercase tracking-widest text-primary font-semibold mb-3">
+          Your Home Patch
+        </h3>
+        <div class="flex flex-wrap gap-2">
+          <button class="h-9 px-4 rounded-full bg-primary text-primary-foreground text-[14px] font-medium border border-primary transition-colors">
+                    Williamsburg
+                </button>
+                <button class="h-9 px-4 rounded-full bg-card text-foreground text-[14px] font-medium border border-border transition-colors">
+                    Greenpoint
+                </button>
+                <button class="h-9 px-4 rounded-full bg-card text-foreground text-[14px] font-medium border border-border transition-colors">
+                    Bushwick
+                </button>
+                <button class="h-9 px-4 rounded-full bg-card text-foreground text-[14px] font-medium border border-border transition-colors">
+                    Bed-Stuy
+                </button>
+                <button class="h-9 px-4 rounded-full bg-card text-foreground text-[14px] font-medium border border-border transition-colors">
+                    Fort Greene
+                </button>
+        </div>
+      </div>
+      <!-- How far will you travel -->
+      <div class="mb-4 w-full">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-sans text-[10.5px] uppercase tracking-widest text-primary font-semibold">
+            How far will you travel
+          </h3>
+          <span class="font-sans text-[14px] font-semibold text-primary">3 miles</span>
+        </div>
+        <div class="relative w-full px-2">
+          <input type="range" min="1" max="10" value="3" class="w-full relative z-10" id="distance-slider">
+                <!-- Custom slider track active fill (mocked via absolute div) -->
+          <div class="absolute top-1/2 left-2 right-2 h-1 -mt-[2px] bg-border rounded-full z-0 pointer-events-none">
+            <div class="h-full bg-primary rounded-l-full" style="width: 25%;">
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-2 px-1">
+          <span class="font-sans text-[12px] text-muted-foreground font-medium">1 mi</span>
+                <span class="font-sans text-[12px] text-muted-foreground font-medium">10 mi</span>
+        </div>
+      </div>
+    </main>
+    <!-- STICKY BOTTOM BAR -->
+    <div id="sticky-bottom" class="fixed bottom-0 left-0 right-0 w-full bg-background border-t border-border px-5 py-4 z-30 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+      <div class="w-full max-w-md mx-auto flex gap-3">
+        <button class="flex-1 h-[48px] bg-secondary text-secondary-foreground font-semibold rounded-[12px] shadow-sm flex items-center justify-center transition-transform active:scale-95 text-[15px]">
+                Back
+            </button>
+            <button class="flex-1 h-[48px] bg-primary text-primary-foreground font-semibold rounded-[12px] shadow-sm flex items-center justify-center transition-transform active:scale-95 text-[15px]">
+                Continue
+            </button>
+      </div>
+    </div>
+    <!-- iOS safe area bottom padding adjustment helper -->
+  </body>
+</html>

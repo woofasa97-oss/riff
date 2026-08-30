@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>
+      window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Musicianmap 2
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Lora:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+            --primary: #8a79ab;
+            --secondary: #dfd9ec;
+            --accent: #e6a5b8;
+            --background: #f8f7fa;
+            --foreground: #3d3c4f;
+            --muted: #6b6880;
+            --font-sans: 'Geist', sans-serif;
+            --font-serif: "Lora", serif;
+        }
+        body { font-family: var(--font-sans); background-color: var(--background); color: var(--foreground); }
+        .serif { font-family: var(--font-serif); }
+
+        /* Themed Abstract Map Background */
+        .map-layer {
+            position: absolute;
+            inset: 0;
+            background-color: #f0eff5;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(138, 121, 171, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(230, 165, 184, 0.08) 0%, transparent 40%),
+                url("data:image/svg+xml,%3Csvg width='800' height='800' viewBox='0 0 800 800' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 100 Q 200 50 400 100 T 800 100' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3Cpath d='M0 300 Q 150 350 300 300 T 600 250 T 800 300' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3Cpath d='M0 500 Q 250 450 500 500 T 800 500' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3Cpath d='M100 0 Q 150 200 100 400 T 100 800' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3Cpath d='M400 0 Q 350 300 400 600 T 400 800' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3Cpath d='M700 0 Q 650 250 700 500 T 700 800' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3C/svg%3E");
+            background-size: cover;
+            filter: contrast(1.05);
+        }
+
+        /* Abstract "Zones" on the map */
+        .zone-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.4;
+            z-index: 1;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(.33); opacity: 0.8; }
+            80%, 100% { opacity: 0; transform: scale(2.5); }
+        }
+        .pulse-marker::before {
+            content: '';
+            position: absolute;
+            display: block;
+            width: 300%;
+            height: 300%;
+            box-sizing: border-box;
+            margin-left: -100%;
+            margin-top: -100%;
+            border-radius: 45px;
+            background-color: var(--accent);
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { display: none; }
+        .map-card-glow { box-shadow: 0 10px 25px -5px rgba(138, 121, 171, 0.25); }
+        .sheet-transition { transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+
+        .zone-highlight {
+            background: radial-gradient(circle, rgba(138, 121, 171, 0.15) 0%, transparent 70%);
+            width: 240px;
+            height: 240px;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+    </style>
+  </head>
+  <body class="overflow-hidden">
+    <!-- Top Header Overlay -->
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 px-4 py-4 flex items-center justify-between pointer-events-none">
+      <div class="pointer-events-auto bg-white/90 backdrop-blur-xl px-4 py-2.5 rounded-2xl border border-white/50 shadow-lg flex items-center gap-3">
+        <h1 class="text-lg font-black text-[#8a79ab] serif tracking-tight">
+          Musicianmap 2
+        </h1>
+        <div class="h-4 w-[1px] bg-gray-200">
+        </div>
+        <div class="flex items-center gap-2 text-xs font-semibold text-[#6b6880]">
+          <i class="text-[#8a79ab]"><i class="fa-solid fa-location-crosshairs"></i></i>
+                <span>Brooklyn, NY</span>
+        </div>
+      </div>
+      <div class="flex gap-2 pointer-events-auto">
+        <button class="w-11 h-11 bg-white/90 backdrop-blur-xl rounded-2xl border border-white/50 shadow-lg flex items-center justify-center text-[#6b6880] transition-transform active:scale-95">
+                <i><i class="fa-solid fa-sliders"></i></i>
+            </button>
+      </div>
+    </header>
+    <!-- Map View Container -->
+    <main id="map-view" class="w-full h-[100dvh] relative overflow-hidden bg-[#f0eff5]">
+      <!-- The Background Map Layer -->
+      <div class="map-layer">
+      </div>
+      <!-- Ambient Zone Visuals (Non-interactive visual cues) -->
+      <div class="zone-blob bg-[#8a79ab]" style="top: 15%; left: 10%; width: 300px; height: 300px;">
+      </div>
+      <div class="zone-blob bg-[#e6a5b8]" style="top: 35%; right: 5%; width: 250px; height: 250px;">
+      </div>
+      <div class="zone-blob bg-[#8a79ab]" style="bottom: 25%; left: 20%; width: 280px; height: 280px;">
+      </div>
+      <!-- Zone Interactive Markers -->
+        <!-- Williamsburg -->
+      <div class="zone-highlight" style="top: 22%; left: 22%;">
+      </div>
+      <button class="absolute top-[22%] left-[22%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
+      <div class="bg-white/95 backdrop-blur-md px-3.5 py-3 rounded-2xl border border-white shadow-xl flex flex-col items-center gap-1.5 min-w-[100px] transition-transform active:scale-90">
+        <span class="text-[11px] font-black text-[#3d3c4f]">Williamsburg</span>
+        <div class="flex -space-x-2 my-0.5">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-7 h-7 rounded-full border-2 border-white shadow-sm">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" class="w-7 h-7 rounded-full border-2 border-white shadow-sm">
+          <div class="w-7 h-7 rounded-full bg-[#dfd9ec] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#8a79ab] shadow-sm">
+            +18
+          </div>
+        </div>
+        <span class="text-[9px] font-black uppercase tracking-widest text-[#8a79ab]/70">20 Musicians</span>
+      </div>
+      <div class="w-5 h-5 bg-[#8a79ab] rounded-full border-4 border-white shadow-lg mt-2">
+      </div>
+      </button>
+
+        <!-- Greenpoint -->
+      <div class="zone-highlight" style="top: 40%; left: 75%;">
+      </div>
+      <button class="absolute top-[40%] left-[75%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
+      <div class="bg-white/95 backdrop-blur-md px-3.5 py-3 rounded-2xl border border-white shadow-xl flex flex-col items-center gap-1.5 min-w-[100px] transition-transform active:scale-90">
+        <span class="text-[11px] font-black text-[#3d3c4f]">Greenpoint</span>
+                <span class="text-[9px] font-bold text-white bg-[#e6a5b8] px-2 py-0.5 rounded-full shadow-sm">1 Jam Live</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-[#8a79ab]/70">9 Musicians</span>
+      </div>
+      <div class="relative flex items-center justify-center mt-2">
+        <div class="pulse-marker absolute w-4 h-4 bg-[#e6a5b8] rounded-full">
+        </div>
+        <div class="w-5 h-5 bg-[#e6a5b8] rounded-full border-4 border-white shadow-lg relative z-10">
+        </div>
+      </div>
+      </button>
+
+        <!-- Bushwick -->
+      <div class="zone-highlight" style="top: 68%; left: 35%;">
+      </div>
+      <button class="absolute top-[68%] left-[35%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
+      <div class="bg-white/95 backdrop-blur-md px-3.5 py-3 rounded-2xl border border-white shadow-xl flex flex-col items-center gap-1.5 min-w-[100px] transition-transform active:scale-90">
+        <span class="text-[11px] font-black text-[#3d3c4f]">Bushwick</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-[#8a79ab]/70">14 Musicians</span>
+      </div>
+      <div class="w-5 h-5 bg-[#8a79ab] rounded-full border-4 border-white shadow-lg mt-2 opacity-60">
+      </div>
+      </button>
+
+        <!-- Current User Position -->
+      <div class="absolute top-[52%] left-[55%] flex flex-col items-center z-20">
+        <div class="w-4 h-4 bg-blue-500 rounded-full border-4 border-white shadow-xl animate-bounce">
+        </div>
+        <span class="text-[10px] font-bold text-blue-600 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full shadow-sm mt-1">Me</span>
+      </div>
+    </main>
+    <!-- ZONE BUNDLE SHEET -->
+    <div id="zone-sheet" class="fixed inset-x-0 bottom-0 z-40 translate-y-full sheet-transition">
+      <div class="bg-white rounded-t-[2.5rem] shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.1)] max-h-[75dvh] flex flex-col">
+        <div class="flex justify-center pt-4 pb-1">
+          <div class="w-12 h-1.5 bg-gray-200 rounded-full">
+          </div>
+        </div>
+        <div class="px-6 pt-2 pb-3 flex items-start justify-between">
+          <div>
+            <h2 id="zone-title" class="text-2xl font-bold serif text-[#3d3c4f]">
+              Williamsburg
+            </h2>
+            <p id="zone-sub" class="text-sm text-[#6b6880] font-medium">
+              20 musicians nearby • 0.8 mi
+            </p>
+          </div>
+          <button class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400"><i><i class="fa-solid fa-xmark"></i></i></button>
+        </div>
+        <div id="category-grid" class="px-6 pb-24 grid grid-cols-2 gap-4 overflow-y-auto custom-scrollbar">
+          <!-- Data injected by JS -->
+        </div>
+      </div>
+    </div>
+    <!-- CATEGORY DETAIL SHEET -->
+    <div id="category-sheet" class="fixed inset-x-0 bottom-0 z-50 translate-y-full sheet-transition">
+      <div class="bg-white rounded-t-[2.5rem] shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.1)] max-h-[85dvh] flex flex-col">
+        <div class="flex justify-center pt-4 pb-1">
+          <div class="w-12 h-1.5 bg-gray-200 rounded-full">
+          </div>
+        </div>
+        <div class="px-6 pt-2 pb-4 flex items-center justify-between">
+          <button class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-[#8a79ab]">
+                    <i><i class="fa-solid fa-arrow-left"></i></i>
+                </button>
+          <div class="text-center">
+            <h2 id="cat-title" class="text-lg font-bold text-[#3d3c4f]">
+              Bass Players
+            </h2>
+            <p id="cat-zone" class="text-xs font-semibold text-[#8a79ab]">
+              Williamsburg
+            </p>
+          </div>
+          <div class="w-10">
+          </div>
+        </div>
+        <div id="profile-list" class="px-6 pb-32 space-y-4 overflow-y-auto custom-scrollbar">
+          <!-- Data injected by JS -->
+        </div>
+      </div>
+    </div>
+    <!-- Bottom Nav -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-gray-100 px-8 py-4 flex justify-between items-center z-[60] safe-area-bottom">
+      <button class="flex flex-col items-center gap-1 text-[#8a79ab]">
+      <div class="w-10 h-10 rounded-2xl bg-[#8a79ab]/10 flex items-center justify-center mb-0.5">
+        <i class="text-xl"><i class="fa-solid fa-map-location-dot"></i></i>
+      </div>
+      <span class="text-[10px] font-black uppercase tracking-tighter">Explore</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-gray-300">
+      <div class="w-10 h-10 flex items-center justify-center mb-0.5 relative">
+        <i class="text-xl"><i class="fa-solid fa-comment-dots"></i></i>
+        <div class="absolute top-1 right-1 w-2.5 h-2.5 bg-[#e6a5b8] rounded-full border-2 border-white">
+        </div>
+      </div>
+      <span class="text-[10px] font-bold uppercase tracking-tighter">Chat</span>
+        </button>
+      <div class="w-14 h-14 bg-[#8a79ab] rounded-2xl shadow-xl flex items-center justify-center text-white -mt-10 border-4 border-white">
+        <i class="text-xl"><i class="fa-solid fa-plus"></i></i>
+      </div>
+      <button class="flex flex-col items-center gap-1 text-gray-300">
+      <div class="w-10 h-10 flex items-center justify-center mb-0.5">
+        <i class="text-xl"><i class="fa-solid fa-calendar-check"></i></i>
+      </div>
+      <span class="text-[10px] font-bold uppercase tracking-tighter">Jams</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-gray-300">
+      <div class="w-10 h-10 flex items-center justify-center mb-0.5">
+        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" class="w-7 h-7 rounded-full filter grayscale opacity-60">
+      </div>
+      <span class="text-[10px] font-bold uppercase tracking-tighter">Me</span>
+        </button>
+    </nav>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+# The 6MB UX Pilot prototype export must never enter the repo or a session's context.
+riff-prototype.html
+prototype/
+
+node_modules/
+.next/
+out/
+dist/
+.env*.local
+.DS_Store
+*.log

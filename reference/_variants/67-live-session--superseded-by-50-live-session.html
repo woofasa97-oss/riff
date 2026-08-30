@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Live Session - Riff
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Lora:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+            --primary: #8a79ab;
+            --secondary: #dfd9ec;
+            --accent: #e6a5b8;
+            --background: #09090b;
+            --foreground: #ffffff;
+            --font-sans: 'Geist', sans-serif;
+            --font-serif: 'Lora', serif;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--background);
+            color: var(--foreground);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .serif { font-family: var(--font-serif); }
+
+        .glass-blur {
+            background: rgba(24, 24, 27, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .live-glow {
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) translateX(0px); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-120px) translateX(var(--drift)); opacity: 0; }
+        }
+
+        .heart-float {
+            position: absolute;
+            bottom: 80px;
+            right: 20px;
+            animation: float 2.5s ease-out forwards;
+            pointer-events: none;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .comment-gradient {
+            mask-image: linear-gradient(to top, black 85%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to top, black 85%, transparent 100%);
+        }
+    </style>
+  </head>
+  <body class="flex flex-col">
+    <!-- Hero / Video Section -->
+    <div id="video-container" class="relative w-full h-[100dvh]">
+      <!-- AI Generated Stream Background -->
+        <img class="w-full h-full object-cover" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_847cf1a584_c075d5b7583e5dc0.png" alt="dynamic stage performance of a modern synth-pop band with purple and blue neon stage lights, smoke m">
+
+        <!-- Top Overlay -->
+      <header id="header" class="absolute top-0 left-0 right-0 p-5 flex items-center justify-between z-40 bg-gradient-to-b from-black/60 to-transparent">
+        <div class="flex items-center gap-3">
+          <div class="relative">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" class="w-10 h-10 rounded-full border-2 border-white/20">
+            <div class="absolute -bottom-1 -right-1 bg-red-600 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter live-glow">
+              Live
+            </div>
+          </div>
+          <div>
+            <h1 class="font-bold text-sm leading-tight">
+              Lunar Resonance
+            </h1>
+            <div class="flex items-center gap-2 text-[10px] text-white/70">
+              <i class="text-[8px]"><i class="fa-solid fa-eye"></i></i>
+                        <span>8.4k watching</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="glass-blur px-4 py-2 rounded-full text-xs font-bold bg-white/10">Follow</button>
+                <button class="w-10 h-10 rounded-full glass-blur flex items-center justify-center">
+                    <i><i class="fa-solid fa-xmark"></i></i>
+                </button>
+        </div>
+      </header>
+      <!-- Rating & Reputation Stats -->
+      <div class="absolute top-24 left-5 flex flex-col gap-2 z-30">
+        <div class="glass-blur px-3 py-1.5 rounded-xl flex items-center gap-2">
+          <i class="text-yellow-400 text-xs"><i class="fa-solid fa-star"></i></i>
+                <span class="text-xs font-bold">4.9</span>
+                <span class="text-[10px] text-white/40 border-l border-white/10 pl-2">Session Rating</span>
+        </div>
+        <div class="glass-blur px-3 py-1.5 rounded-xl flex items-center gap-2">
+          <i class="text-[#8a79ab] text-xs"><i class="fa-solid fa-bolt"></i></i>
+                <span class="text-xs font-bold">Legendary</span>
+                <span class="text-[10px] text-white/40 border-l border-white/10 pl-2">Reputation</span>
+        </div>
+      </div>
+      <!-- Comments & Interaction Area -->
+      <div class="absolute bottom-0 left-0 right-0 p-5 pt-20 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end min-h-[40%]">
+        <!-- Real-time Comments -->
+        <div id="chat-container" class="space-y-3 mb-6 overflow-y-auto no-scrollbar comment-gradient max-h-48">
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">bass_master_99</span>
+              <p class="text-sm">
+                Incredible solo!
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">lexi_riff</span>
+              <p class="text-sm">
+                Riff is the best for finding talent like this.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">jazzcat</span>
+              <p class="text-sm">
+                Incredible solo!
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">lexi_riff</span>
+              <p class="text-sm">
+                Wish I could jam with them!
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">bass_master_99</span>
+              <p class="text-sm">
+                Riff is the best for finding talent like this.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">lexi_riff</span>
+              <p class="text-sm">
+                Riff is the best for finding talent like this.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">lexi_riff</span>
+              <p class="text-sm">
+                Love the synth sounds here.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">jazzcat</span>
+              <p class="text-sm">
+                Love the synth sounds here.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-9.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">lexi_riff</span>
+              <p class="text-sm">
+                Incredible solo!
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-9.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">jazzcat</span>
+              <p class="text-sm">
+                Love the synth sounds here.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">jazzcat</span>
+              <p class="text-sm">
+                Incredible solo!
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">jazzcat</span>
+              <p class="text-sm">
+                Wish I could jam with them!
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">indie_fan</span>
+              <p class="text-sm">
+                Wish I could jam with them!
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-9.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">jazzcat</span>
+              <p class="text-sm">
+                Riff is the best for finding talent like this.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-9.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">jazzcat</span>
+              <p class="text-sm">
+                Wish I could jam with them!
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">lexi_riff</span>
+              <p class="text-sm">
+                Riff is the best for finding talent like this.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-9.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">indie_fan</span>
+              <p class="text-sm">
+                Incredible solo!
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">indie_fan</span>
+              <p class="text-sm">
+                Love the synth sounds here.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 opacity-90 animate-fade-in transition-all duration-300">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-8 h-8 rounded-full border border-white/10 shrink-0">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold text-white/50">bass_master_99</span>
+              <p class="text-sm">
+                Incredible solo!
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- Bottom Interaction Bar -->
+        <div class="flex items-center gap-3">
+          <div class="flex-1 relative">
+            <input type="text" placeholder="Add a comment..." class="w-full glass-blur bg-white/5 border-none rounded-full py-3 px-5 text-sm focus:ring-2 focus:ring-[#8a79ab] outline-none">
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="star-btn" class="w-12 h-12 rounded-full glass-blur flex items-center justify-center text-yellow-400 text-lg hover:scale-110 active:scale-95 transition-all">
+                        <i><i class="fa-solid fa-star"></i></i>
+                    </button>
+                    <button id="heart-btn" class="w-12 h-12 rounded-full bg-[#8a79ab] flex items-center justify-center text-white text-lg shadow-lg shadow-[#8a79ab]/40 active:scale-90 transition-transform">
+                        <i><i class="fa-solid fa-heart"></i></i>
+                    </button>
+          </div>
+        </div>
+        <!-- Nav Bar Container (Integrated into UI) -->
+        <nav id="bottom-nav" class="flex justify-between items-center mt-6 px-4 py-2 border-t border-white/10">
+          <button class="flex flex-col items-center gap-1 text-white/50">
+                    <i class="text-lg"><i class="fa-solid fa-compass"></i></i>
+                    <span class="text-[8px] font-medium uppercase tracking-tighter">Discover</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 text-[#8a79ab]">
+                    <i class="text-lg"><i class="fa-solid fa-tower-broadcast"></i></i>
+                    <span class="text-[8px] font-bold uppercase tracking-tighter">Live</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 text-white/50">
+                    <i class="text-lg"><i class="fa-solid fa-calendar-check"></i></i>
+                    <span class="text-[8px] font-medium uppercase tracking-tighter">My Jams</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 text-white/50">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" class="w-5 h-5 rounded-full grayscale opacity-50">
+                    <span class="text-[8px] font-medium uppercase tracking-tighter">Profile</span>
+                </button>
+        </nav>
+      </div>
+    </div>
+    <!-- Rating Modal Overlay (Hidden by default) -->
+    <div id="rating-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+      <div class="w-full max-w-xs glass-blur rounded-3xl p-8 flex flex-col items-center text-center">
+        <div class="w-16 h-16 rounded-2xl bg-[#8a79ab]/20 flex items-center justify-center text-[#8a79ab] text-3xl mb-4">
+          <i><i class="fa-solid fa-star"></i></i>
+        </div>
+        <h3 class="text-xl font-bold serif mb-2">
+          Rate this Jam
+        </h3>
+        <p class="text-sm text-white/60 mb-6">
+          Your feedback helps musicians build their reputation on Riff.
+        </p>
+        <div class="flex gap-2 mb-8">
+          <i class="text-2xl text-yellow-400"><i class="fa-solid fa-star"></i></i>
+                <i class="text-2xl text-yellow-400"><i class="fa-solid fa-star"></i></i>
+                <i class="text-2xl text-yellow-400"><i class="fa-solid fa-star"></i></i>
+                <i class="text-2xl text-yellow-400"><i class="fa-solid fa-star"></i></i>
+                <i class="text-2xl text-white/20"><i class="fa-solid fa-star"></i></i>
+        </div>
+        <button class="w-full bg-[#8a79ab] py-3 rounded-full font-bold text-sm">Submit Rating</button>
+            <button class="mt-4 text-xs text-white/40 font-medium">Not now</button>
+      </div>
+    </div>
+  </body>
+</html>

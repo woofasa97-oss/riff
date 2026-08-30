@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Messages - Riff 2
+    </title>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+        body { font-family: var(--font-sans); background-color: var(--background); }
+        h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+    <style>
+      :root {
+          --background: #EFEBF6;
+          --foreground: #6B6880;
+          --card: #FFFFFF;
+          --card-foreground: #3D3C4F;
+          --primary: #8A79AB;
+          --primary-foreground: #FFFFFF;
+          --secondary: #E6A5B8;
+          --secondary-foreground: #3D3C4F;
+          --muted: #EFEBF6;
+          --muted-foreground: #6B6880;
+          --accent: #E6A5B8;
+          --accent-foreground: #3D3C4F;
+          --destructive: #DC2626;
+          --destructive-foreground: #FFFFFF;
+          --border: #DFD9EC;
+          --input: #DFD9EC;
+          --ring: #8A79AB;
+          --font-sans: Geist;
+          --font-serif: Lora;
+          --font-mono: JetBrains Mono, monospace;
+          --radius: 1rem;
+          --shadow: -2px 4px 12px 4px rgba(51,51,51,0.05);
+}
+    </style>
+  </head>
+  <body class="m-0 p-0 min-h-[100dvh] flex justify-center text-[var(--foreground)] relative">
+    <div class="w-full max-w-md min-h-[100dvh] bg-[var(--background)] relative flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.05)]">
+      <!-- Header -->
+      <header class="w-full px-5 py-4 flex items-center justify-between bg-[var(--background)] sticky top-0 z-20 pt-8 pb-2">
+        <h1 class="font-serif font-bold text-3xl text-[var(--card-foreground)]">
+          Messages
+        </h1>
+        <button class="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-sm transition-transform hover:scale-[0.98]">
+                <i class="text-sm"><i class="fa-solid fa-pen"></i></i>
+            </button>
+      </header>
+      <!-- Main Content -->
+      <main class="flex-1 overflow-y-auto hide-scrollbar flex flex-col pb-24">
+        <!-- Search -->
+        <div class="px-5 pt-2 pb-4">
+          <div class="relative w-full">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <i class="text-[var(--foreground)] text-sm opacity-60"><i class="fa-solid fa-magnifying-glass"></i></i>
+            </div>
+            <input type="text" class="w-full bg-[var(--card)] border border-[var(--border)] rounded-full py-3 pl-10 pr-4 text-sm text-[var(--card-foreground)] placeholder:text-[var(--foreground)] placeholder:opacity-70 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 shadow-sm transition-shadow" placeholder="Search jams and people">
+          </div>
+        </div>
+        <!-- Filter Chips -->
+        <div class="px-5 pb-5">
+          <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+            <button class="px-4 py-2 rounded-full bg-[var(--primary)] text-white text-sm font-semibold shadow-sm shrink-0">All</button>
+                    <button class="px-4 py-2 rounded-full bg-[var(--card)] text-[var(--card-foreground)] border border-[var(--border)] text-sm font-semibold shrink-0">Jams</button>
+                    <button class="px-4 py-2 rounded-full bg-[var(--card)] text-[var(--card-foreground)] border border-[var(--border)] text-sm font-semibold shrink-0">Requests</button>
+                    <button class="px-4 py-2 rounded-full bg-[var(--card)] text-[var(--card-foreground)] border border-[var(--border)] text-sm font-semibold shrink-0">Bands</button>
+          </div>
+        </div>
+        <!-- Message List -->
+        <div class="flex flex-col px-5 gap-3">
+          <!-- Thread 1: Neo-Soul Session -->
+          <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-[var(--shadow)] p-4 flex gap-3 cursor-pointer hover:bg-gray-50 transition-colors">
+            <!-- Avatar Stack -->
+            <div class="relative w-12 h-12 shrink-0">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" class="absolute top-0 left-0 w-8 h-8 rounded-full border-2 border-white object-cover z-20">
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="absolute top-1 left-2 w-8 h-8 rounded-full border-2 border-white object-cover z-10">
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" class="absolute bottom-0 right-0 w-8 h-8 rounded-full border-2 border-white object-cover z-0">
+                        <!-- Unread dot -->
+              <div class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[var(--primary)] rounded-full border-2 border-[var(--card)] z-30">
+              </div>
+            </div>
+            <div class="flex-1 min-w-0 flex flex-col justify-center">
+              <div class="flex items-center justify-between mb-0.5">
+                <h4 class="font-serif font-bold text-base text-[var(--card-foreground)] truncate pr-2">
+                  Neo-Soul Session
+                </h4>
+                <span class="text-[10px] font-semibold text-[var(--primary)] shrink-0">4m</span>
+              </div>
+              <p class="text-sm font-semibold text-[var(--card-foreground)] truncate mb-1.5">
+                Leo: Bringing the Rhodes
+              </p>
+              <div class="flex items-center">
+                <span class="px-2 py-0.5 rounded-md bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] font-bold uppercase tracking-wider">Neo-Soul Session - Fri</span>
+              </div>
+            </div>
+          </div>
+          <!-- Thread 2: Sarah Jenkins -->
+          <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-[var(--shadow)] p-4 flex gap-3 cursor-pointer hover:bg-gray-50 transition-colors">
+            <div class="relative w-12 h-12 shrink-0">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" class="w-full h-full rounded-full object-cover">
+            </div>
+            <div class="flex-1 min-w-0 flex flex-col justify-center">
+              <div class="flex items-center justify-between mb-0.5">
+                <h4 class="font-serif font-bold text-base text-[var(--card-foreground)] truncate pr-2">
+                  Sarah Jenkins
+                </h4>
+                <span class="text-[10px] font-medium text-[var(--foreground)] shrink-0">1h</span>
+              </div>
+              <p class="text-sm text-[var(--foreground)] truncate mb-1.5">
+                Sounds good, see you Tuesday
+              </p>
+              <div class="flex items-center">
+                <span class="px-2 py-0.5 rounded-md bg-[var(--secondary)]/10 text-[var(--secondary)] text-[10px] font-bold uppercase tracking-wider">Jam request</span>
+              </div>
+            </div>
+          </div>
+          <!-- Thread 3: Marcus Chen -->
+          <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-[var(--shadow)] p-4 flex gap-3 cursor-pointer hover:bg-gray-50 transition-colors">
+            <div class="relative w-12 h-12 shrink-0">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-full h-full rounded-full object-cover">
+            </div>
+            <div class="flex-1 min-w-0 flex flex-col justify-center">
+              <div class="flex items-center justify-between mb-0.5">
+                <h4 class="font-serif font-bold text-base text-[var(--card-foreground)] truncate pr-2">
+                  Marcus Chen
+                </h4>
+                <span class="text-[10px] font-medium text-[var(--foreground)] shrink-0">Yesterday</span>
+              </div>
+              <p class="text-sm text-[var(--foreground)] truncate mb-1.5">
+                Thanks for the vouch!
+              </p>
+              <div class="flex items-center">
+                <span class="px-2 py-0.5 rounded-md bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] font-bold uppercase tracking-wider">Neo-Soul Session - Fri</span>
+              </div>
+            </div>
+          </div>
+          <!-- Thread 4: The Attic -->
+          <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-[var(--shadow)] p-4 flex gap-3 cursor-pointer hover:bg-gray-50 transition-colors">
+            <div class="relative w-12 h-12 shrink-0 flex items-center justify-center bg-[var(--card-foreground)] rounded-full">
+              <i class="text-white text-lg"><i class="fa-solid fa-building"></i></i>
+            </div>
+            <div class="flex-1 min-w-0 flex flex-col justify-center">
+              <div class="flex items-center justify-between mb-0.5">
+                <h4 class="font-serif font-bold text-base text-[var(--card-foreground)] truncate pr-2">
+                  The Attic
+                </h4>
+                <span class="text-[10px] font-medium text-[var(--foreground)] shrink-0">Tue</span>
+              </div>
+              <p class="text-sm text-[var(--foreground)] truncate mb-1.5">
+                Your room is confirmed for Sunday
+              </p>
+              <div class="flex items-center">
+                <span class="px-2 py-0.5 rounded-md bg-[var(--card-foreground)]/10 text-[var(--card-foreground)] text-[10px] font-bold uppercase tracking-wider">Battle: The Neon Echoes</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+      <!-- Bottom Navigation -->
+      <nav class="absolute bottom-0 w-full bg-[var(--card)] border-t border-[var(--border)] px-6 py-4 pb-8 z-30 flex justify-between items-center shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
+        <button class="flex flex-col items-center gap-1 text-[var(--foreground)] hover:text-[var(--primary)] transition-colors">
+                <i class="text-xl"><i class="fa-solid fa-compass"></i></i>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-[var(--primary)] transition-colors">
+                <i class="text-xl"><i class="fa-solid fa-comment"></i></i>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-[var(--foreground)] hover:text-[var(--primary)] transition-colors">
+                <i class="text-xl"><i class="fa-solid fa-calendar-days"></i></i>
+            </button>
+            <button class="flex flex-col items-center gap-1 transition-transform hover:scale-105">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Profile" class="w-7 h-7 rounded-full object-cover border border-[var(--border)]">
+            </button>
+      </nav>
+    </div>
+  </body>
+</html>

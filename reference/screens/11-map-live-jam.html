@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<!-- Riff reference screen — Map — live jam sheet
+     Route: /map (live-jam sheet open)
+     Source: prototype screen #68 ("Map", group "Unlabelled")
+     Visual reference only. Do not copy this markup; see CLAUDE.md. -->
+<html lang="en">
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>
+      Map - Riff
+    </title>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+  </head>
+  <body class="h-full w-full overflow-hidden flex flex-col items-center justify-center m-0 p-0 bg-background">
+    <!-- Main Container - Mobile Constrained -->
+    <main id="map-screen" class="relative w-full h-full max-w-md mx-auto flex flex-col bg-background overflow-hidden sm:shadow-2xl sm:border sm:border-border sm:rounded-[32px] sm:h-[844px] sm:my-auto">
+      <!-- HEADER -->
+      <header id="top-header" class="w-full h-[56px] flex items-center justify-between px-4 bg-background z-20 shrink-0">
+        <div class="font-serif font-bold text-[22px] text-primary">
+          Riff
+        </div>
+        <div class="flex gap-2">
+          <button class="w-[36px] h-[36px] rounded-full bg-white border border-border flex items-center justify-center text-foreground hover:bg-gray-50 active:bg-gray-100 transition-colors" aria-label="Search">
+                    <i class="font-light text-[14px]"><i class="fa-solid fa-magnifying-glass"></i></i>
+                </button>
+                <button class="w-[36px] h-[36px] rounded-full bg-white border border-border flex items-center justify-center text-foreground hover:bg-gray-50 active:bg-gray-100 transition-colors" aria-label="Filter">
+                    <i class="font-light text-[14px]"><i class="fa-solid fa-sliders"></i></i>
+                </button>
+        </div>
+      </header>
+      <!-- FILTERS -->
+      <div id="filters" class="w-full overflow-x-auto hide-scrollbar bg-background z-20 pb-3 pt-1 shrink-0">
+        <div class="flex px-4 gap-2 min-w-max">
+          <button class="px-4 py-1.5 rounded-full bg-primary text-white text-[13px] font-medium border border-primary whitespace-nowrap">Tonight</button>
+                <button class="px-4 py-1.5 rounded-full bg-white text-foreground text-[13px] font-medium border border-border whitespace-nowrap">All musicians</button>
+                <button class="px-4 py-1.5 rounded-full bg-white text-foreground text-[13px] font-medium border border-border whitespace-nowrap">Bass</button>
+                <button class="px-4 py-1.5 rounded-full bg-white text-foreground text-[13px] font-medium border border-border whitespace-nowrap">Drums</button>
+                <button class="px-4 py-1.5 rounded-full bg-white text-foreground text-[13px] font-medium border border-border whitespace-nowrap">Keys</button>
+        </div>
+      </div>
+      <!-- MAP AREA -->
+      <div id="map-area" class="relative flex-1 w-full bg-[#f4f2f8] map-bg z-0 overflow-hidden">
+        <!-- Map overlay gradient for dimming -->
+        <div class="absolute inset-0 bg-background/40 pointer-events-none z-0">
+        </div>
+        <!-- User Location (Me) -->
+        <div class="absolute top-[40%] left-[30%] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10 opacity-70">
+          <div class="w-4 h-4 rounded-full bg-[#4A90E2] border-[3px] border-white shadow-sm">
+          </div>
+        </div>
+        <!-- Greenpoint Area Pin (Live) - Center Focus -->
+        <div class="absolute top-[45%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-20">
+          <div class="w-4 h-4 rounded-full bg-accent mt-2 shadow-md border-2 border-white relative z-0 halo-animation">
+          </div>
+        </div>
+        <!-- BOTTOM SHEET -->
+        <div id="bottom-sheet" class="absolute bottom-0 left-0 w-full bg-white rounded-t-[24px] shadow-2xl border-t border-border z-30 transform transition-transform duration-300 translate-y-0">
+          <!-- Grab Handle -->
+          <div class="w-full flex justify-center pt-3 pb-1">
+            <div class="w-12 h-1.5 bg-muted rounded-full">
+            </div>
+          </div>
+          <!-- Sheet Content -->
+          <div class="p-6 pt-2 flex flex-col gap-4">
+            <!-- Header Area -->
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-accent animate-pulse">
+                </div>
+                <span class="text-[10.5px] font-bold text-accent tracking-wider uppercase">LIVE JAM</span>
+              </div>
+              <h2 class="font-serif font-bold text-[24px] text-foreground">
+                Sonic Basement
+              </h2>
+              <p class="text-[13px] text-muted-foreground font-medium">
+                Greenpoint · 0.9 mi · started 20 min ago
+              </p>
+            </div>
+            <!-- Avatars -->
+            <div class="flex items-center gap-6 mt-2">
+              <div class="flex flex-col items-center gap-1">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-[52px] h-[52px] rounded-full border-2 border-white shadow-sm object-cover" alt="Marcus Chen">
+                            <span class="text-[12px] font-serif font-semibold text-foreground">Marcus</span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" class="w-[52px] h-[52px] rounded-full border-2 border-white shadow-sm object-cover" alt="Sarah Jenkins">
+                            <span class="text-[12px] font-serif font-semibold text-foreground">Sarah</span>
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-[52px] h-[52px] rounded-full border-2 border-white shadow-sm object-cover" alt="Leo Rossi">
+                            <span class="text-[12px] font-serif font-semibold text-foreground">Leo</span>
+              </div>
+            </div>
+            <!-- Audio Strip -->
+            <div class="bg-background rounded-[12px] p-3 border border-border flex items-center justify-between mt-2">
+              <div class="flex items-center gap-3">
+                <button class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shrink-0 hover:bg-primary/90 transition-colors">
+                                <i class="text-[12px] ml-0.5"><i class="fa-solid fa-play"></i></i>
+                            </button>
+                <div class="flex flex-col">
+                  <span class="text-[11px] font-semibold text-primary uppercase tracking-wide">Listening in · 34</span>
+                                <!-- Simulated Waveform -->
+                  <div class="flex items-center gap-0.5 mt-1 h-3 opacity-60">
+                    <div class="w-0.5 h-1.5 bg-primary rounded-full">
+                    </div>
+                    <div class="w-0.5 h-2.5 bg-primary rounded-full">
+                    </div>
+                    <div class="w-0.5 h-1 bg-primary rounded-full">
+                    </div>
+                    <div class="w-0.5 h-3 bg-primary rounded-full">
+                    </div>
+                    <div class="w-0.5 h-1.5 bg-primary rounded-full">
+                    </div>
+                    <div class="w-0.5 h-2 bg-primary rounded-full">
+                    </div>
+                    <div class="w-0.5 h-1.5 bg-primary rounded-full">
+                    </div>
+                    <div class="w-0.5 h-1 bg-primary rounded-full">
+                    </div>
+                    <div class="w-0.5 h-2.5 bg-primary rounded-full">
+                    </div>
+                    <div class="w-0.5 h-1.5 bg-primary rounded-full">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Actions -->
+            <div class="flex gap-3 mt-3 pb-2">
+              <button class="flex-1 h-[48px] rounded-[12px] bg-[#EFEBF6] text-foreground font-medium text-[15px] hover:bg-[#e4dfee] transition-colors">
+                            Get directions
+                        </button>
+                        <button class="flex-1 h-[48px] rounded-[12px] bg-primary text-white font-medium text-[15px] hover:bg-primary/90 transition-colors">
+                            Watch live
+                        </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- BOTTOM TAB BAR -->
+      <nav id="bottom-tab-bar" class="w-full h-[76px] bg-white/96 backdrop-blur border-t border-border flex justify-between items-start px-2 pt-3 pb-safe z-40 shrink-0">
+        <!-- Map (Active) -->
+            <button class="flex-1 flex flex-col items-center gap-1 min-w-[64px]" aria-label="Map">
+                <i class="text-[22px] text-primary"><i class="fa-regular fa-map"></i></i>
+                <span class="text-[10.5px] font-semibold text-primary">MAP</span>
+            </button>
+
+            <!-- Discover -->
+            <button class="flex-1 flex flex-col items-center gap-1 min-w-[64px]" aria-label="Discover">
+                <i class="text-[22px] text-[#9C97A9]"><i class="fa-regular fa-compass"></i></i>
+                <span class="text-[10.5px] font-medium text-[#9C97A9]">DISCOVER</span>
+            </button>
+
+            <!-- Jams -->
+            <button class="flex-1 flex flex-col items-center gap-1 min-w-[64px]" aria-label="Jams">
+                <i class="text-[22px] text-[#9C97A9]"><i class="fa-solid fa-guitar"></i></i>
+                <span class="text-[10.5px] font-medium text-[#9C97A9]">JAMS</span>
+            </button>
+
+            <!-- Live -->
+            <button class="flex-1 flex flex-col items-center gap-1 min-w-[64px] relative" aria-label="Live">
+        <div class="relative">
+          <i class="text-[22px] text-[#9C97A9]"><i class="fa-solid fa-tower-broadcast"></i></i>
+          <div class="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-accent border border-white">
+          </div>
+        </div>
+        <span class="text-[10.5px] font-medium text-[#9C97A9]">LIVE</span>
+            </button>
+
+            <!-- Me -->
+            <button class="flex-1 flex flex-col items-center gap-1 min-w-[64px]" aria-label="Me">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" class="w-[22px] h-[22px] rounded-full border border-border object-cover grayscale opacity-70" alt="Me">
+                <span class="text-[10.5px] font-medium text-[#9C97A9]">ME</span>
+            </button>
+      </nav>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+  </head>
+  <body class="m-0 p-0 min-h-[100dvh] flex flex-col w-full max-w-md mx-auto relative overflow-hidden bg-[#110e17] text-white">
+    <!-- Background Base & Texture -->
+    <div class="absolute inset-0 z-0 bg-[#0a080d]">
+      <div class="absolute inset-0 bg-gradient-to-b from-[#1a1428] via-[#110e17] to-black opacity-80">
+      </div>
+    </div>
+    <!-- Header -->
+    <header class="h-[56px] px-4 flex items-center justify-between z-10 relative pt-2">
+      <div class="flex items-center gap-2">
+        <h1 class="font-serif font-bold text-[22px] text-white tracking-wide">
+          Riff
+        </h1>
+        <div class="bg-[#E5262F] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-[4px] uppercase tracking-wider">
+          LIVE
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="bg-white/10 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-2">
+          <i class="text-[11px] text-white/80"><i class="fa-solid fa-user-group"></i></i>
+                <span class="font-sans font-medium text-[12px] text-white">14.2k watching</span>
+        </div>
+        <button class="w-[36px] h-[36px] rounded-full flex items-center justify-center bg-white/12 text-white backdrop-blur-md" aria-label="Share">
+                <i class="text-[15px]"><i class="fa-solid fa-arrow-up-from-bracket"></i></i>
+            </button>
+      </div>
+    </header>
+    <!-- Main Content -->
+    <main class="flex-1 relative z-10 flex flex-col px-4 pb-[84px] pt-4 gap-6 overflow-y-auto">
+      <!-- Header Info -->
+      <div class="flex flex-col gap-1 text-center mt-2">
+        <h2 class="font-serif font-bold text-[28px] text-white leading-tight">
+          Battle of the Bands: Finals
+        </h2>
+        <p class="font-sans text-[13px] text-white/60 font-medium tracking-wide">
+          Stage 04 · Grand Ballroom vs. Warehouse 7
+        </p>
+      </div>
+      <!-- Challenger Card -->
+      <div class="rounded-[20px] overflow-hidden relative min-h-[220px] border border-white/10 shadow-xl flex flex-col justify-end p-5">
+        <div class="absolute inset-0 z-0">
+          <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&amp;w=1000&amp;auto=format&amp;fit=crop" class="w-full h-full object-cover" alt="Stage performance in blue and purple light">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+          </div>
+        </div>
+        <div class="relative z-10 flex flex-col gap-1">
+          <span class="font-sans text-[10.5px] uppercase tracking-[0.1em] text-white/70 font-semibold mb-1">Challenger A</span>
+          <h3 class="font-serif font-bold text-[26px] text-white leading-none">
+            The Neon Echoes
+          </h3>
+          <p class="font-sans text-[13px] italic text-white/70">
+            Indie Rock · Brooklyn, NY
+          </p>
+          <button class="absolute bottom-1 right-0 bg-[#8a79ab] text-white font-sans text-[13px] font-semibold px-5 py-2 rounded-full hover:bg-[#786699] transition-colors shadow-lg">
+                    Vote A
+                </button>
+        </div>
+      </div>
+      <!-- Vote Bar Row -->
+      <div class="flex flex-col gap-2 mt-2">
+        <div class="flex justify-between items-end px-1">
+          <span class="font-serif font-bold text-[22px] text-[#8a79ab]">48%</span>
+                <span class="font-sans text-[12px] italic text-white/50 mb-1">VS</span>
+                <span class="font-serif font-bold text-[22px] text-[#E6A5B8]">52%</span>
+        </div>
+        <div class="h-3 w-full rounded-full bg-white/10 flex overflow-hidden">
+          <div class="h-full bg-[#8a79ab]" style="width: 48%">
+          </div>
+          <div class="h-full bg-[#E6A5B8]" style="width: 52%">
+          </div>
+        </div>
+      </div>
+      <!-- Chat / Crowd Card -->
+      <div class="rounded-[20px] overflow-hidden relative min-h-[180px] border border-white/10 shadow-xl flex flex-col justify-end p-4 mt-2">
+        <div class="absolute inset-0 z-0">
+          <img src="https://images.unsplash.com/photo-1540039155732-68746868d22c?q=80&amp;w=1000&amp;auto=format&amp;fit=crop" class="w-full h-full object-cover opacity-60 mix-blend-luminosity" alt="Crowd bathed in red light">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+          </div>
+        </div>
+        <div class="relative z-10 flex flex-col gap-3">
+          <!-- Chat Messages Floating -->
+          <div class="flex flex-col gap-2 mask-image:linear-gradient(to_bottom,transparent,black_10%) mb-2">
+            <div class="flex items-center gap-2">
+              <div class="bg-black/50 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/5 max-w-[85%]">
+                <span class="font-sans text-[11px] text-white/60 font-medium mr-1">sarah_j</span>
+                            <span class="font-sans text-[13px] text-white">They need to turn up the bass</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="bg-black/50 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/5 max-w-[85%]">
+                <span class="font-sans text-[11px] text-[#E6A5B8]/80 font-medium mr-1">mike_r</span>
+                            <span class="font-sans text-[13px] text-white">Vote B immediately 🔥</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="bg-black/50 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/5 max-w-[85%]">
+                <span class="font-sans text-[11px] text-white/60 font-medium mr-1">jax_m</span>
+                            <span class="font-sans text-[13px] text-white">Neon Echoes is carrying tonight ngl</span>
+              </div>
+            </div>
+          </div>
+          <!-- Composer -->
+          <div class="flex items-center gap-2 w-full mt-1">
+            <div class="flex-1 bg-white/10 backdrop-blur-md rounded-full px-4 py-2.5 flex items-center border border-white/10">
+              <input type="text" placeholder="Say something…" class="bg-transparent border-none outline-none text-white font-sans text-[13px] w-full placeholder:text-white/50">
+            </div>
+            <button class="w-[38px] h-[38px] rounded-full bg-gradient-to-tr from-[#8a79ab] to-[#E6A5B8] flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <i class="text-white text-[14px]"><i class="fa-solid fa-arrow-up"></i></i>
+                    </button>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- Bottom Tab Bar -->
+    <nav class="fixed bottom-0 w-full max-w-md bg-black/90 backdrop-blur-md border-t border-white/10 h-[76px] pb-5 pt-2 px-6 flex justify-between items-center z-40">
+      <a href="#" class="flex flex-col items-center justify-center w-12 text-[#9C97A9]">
+            <i class="text-[22px] mb-1"><i class="fa-solid fa-map-location-dot"></i></i>
+            <span class="text-[10.5px] font-sans font-medium">Map</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center w-12 text-[#9C97A9]">
+            <i class="text-[22px] mb-1"><i class="fa-regular fa-compass"></i></i>
+            <span class="text-[10.5px] font-sans font-medium">Discover</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center w-12 text-[#9C97A9]">
+            <i class="text-[22px] mb-1"><i class="fa-solid fa-guitar"></i></i>
+            <span class="text-[10.5px] font-sans font-medium">Jams</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center w-12 text-white relative">
+      <div class="absolute -top-0.5 right-2 w-2 h-2 rounded-full bg-[#E6A5B8]">
+      </div>
+      <i class="text-[22px] mb-1"><i class="fa-solid fa-tower-broadcast"></i></i>
+            <span class="text-[10.5px] font-sans font-semibold">Live</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center w-12 text-[#9C97A9]">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Me" class="w-6 h-6 rounded-full border border-[#9C97A9] mb-1 object-cover opacity-70">
+            <span class="text-[10.5px] font-sans font-medium">Me</span>
+        </a>
+    </nav>
+  </body>
+</html>

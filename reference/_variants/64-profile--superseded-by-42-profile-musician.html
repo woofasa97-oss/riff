@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Profile - Riff
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8a79ab',
+                        secondary: '#dfd9ec',
+                        accent: '#e6a5b8',
+                        background: '#f8f7fa',
+                        foreground: '#3d3c4f',
+                        muted: '#6b6880',
+                        border: '#cec9d9',
+                    },
+                    fontFamily: {
+                        sans: ['Geist', 'sans-serif'],
+                        serif: ['Lora', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Lora:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  </head>
+  <body class="bg-background text-foreground font-sans pb-24">
+    <!-- Top Header -->
+    <header id="header" class="sticky top-0 z-50 bg-background/80 backdrop-blur-md px-4 py-4 flex items-center justify-between border-b border-border/50">
+      <div class="flex items-center gap-3">
+        <button class="w-8 h-8 flex items-center justify-center text-muted">
+                <i class="fa-solid fa-chevron-left"></i><!-- <i class="fa-solid fa-chevron-left"></i> Font Awesome fontawesome.com -->
+            </button>
+        <h1 class="text-xl font-bold font-serif text-primary">
+          Riff
+        </h1>
+      </div>
+      <div class="flex gap-4">
+        <button class="w-10 h-10 rounded-full bg-white border border-border flex items-center justify-center shadow-sm">
+                <i class="fa-solid fa-share-nodes text-muted"></i><!-- <i class="fa-solid fa-share-nodes text-muted"></i> Font Awesome fontawesome.com -->
+            </button>
+            <button class="w-10 h-10 rounded-full bg-white border border-border flex items-center justify-center shadow-sm">
+                <i class="fa-solid fa-gear text-muted"></i><!-- <i class="fa-solid fa-gear text-muted"></i> Font Awesome fontawesome.com -->
+            </button>
+      </div>
+    </header>
+    <main class="max-w-md mx-auto">
+      <!-- Profile Hero Section -->
+      <section id="profile-hero" class="relative px-4 pt-6 pb-4">
+        <div class="flex flex-col items-center">
+          <div class="relative mb-4">
+            <div class="w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Profile" class="w-full h-full object-cover">
+            </div>
+            <div class="absolute bottom-1 right-1 w-7 h-7 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
+              <i class="fa-solid fa-bolt text-[10px] text-white"></i><!-- <i class="fa-solid fa-bolt text-[10px] text-white"></i> Font Awesome fontawesome.com -->
+            </div>
+          </div>
+          <h2 class="text-2xl font-bold font-serif">
+            Marcus Chen
+          </h2>
+          <p class="text-primary font-semibold text-sm tracking-wide uppercase mt-1">
+            Drums • Jazz / Neo-Soul / Fusion
+          </p>
+          <!-- Trust Badges -->
+          <div class="flex gap-3 mt-4">
+            <div class="bg-secondary/50 px-3 py-1.5 rounded-full flex items-center gap-2 border border-secondary">
+              <i class="fa-solid fa-calendar-check text-primary text-xs"></i><!-- <i class="fa-solid fa-calendar-check text-primary text-xs"></i> Font Awesome fontawesome.com -->
+                        <span class="text-xs font-bold text-foreground">98% Reliability</span>
+            </div>
+            <div class="bg-accent/20 px-3 py-1.5 rounded-full flex items-center gap-2 border border-accent/30">
+              <i class="fa-solid fa-repeat text-accent text-xs"></i><!-- <i class="fa-solid fa-repeat text-accent text-xs"></i> Font Awesome fontawesome.com -->
+                        <span class="text-xs font-bold text-accent-foreground">15 Repeats</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Battle of the Bands Ranking -->
+      <section id="battle-ranking" class="px-4 mt-4">
+        <div class="rank-gradient p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
+          <div class="absolute top-0 right-0 p-4 opacity-20">
+            <i class="fa-solid fa-trophy text-6xl"></i><!-- <i class="fa-solid fa-trophy text-6xl"></i> Font Awesome fontawesome.com -->
+          </div>
+          <div class="relative z-10">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-xs font-bold uppercase tracking-widest opacity-80">Battle of the Bands Ranking</span>
+                        <span class="text-xs bg-white/20 px-2 py-1 rounded">Season 4</span>
+            </div>
+            <div class="flex items-end gap-2">
+              <span class="text-4xl font-bold">#14</span>
+                        <span class="text-sm mb-1 opacity-90">in Brooklyn Jazz Scene</span>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/20 flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-arrow-trend-up text-green-300"></i><!-- <i class="fa-solid fa-arrow-trend-up text-green-300"></i> Font Awesome fontawesome.com -->
+                            <span class="text-xs font-medium">+3 spots this week</span>
+              </div>
+              <button class="text-xs font-bold underline">View Leaderboard</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Past Jams (Playable Sessions) -->
+      <section id="live-jams" class="px-4 mt-8 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-bold font-serif">
+            Past Jams
+          </h3>
+          <button class="text-primary text-xs font-bold">View All <i class="fa-solid fa-arrow-right ml-1"></i><!-- <i class="fa-solid fa-arrow-right ml-1"></i> Font Awesome fontawesome.com --></button>
+        </div>
+        <div class="space-y-4">
+          <!-- Jam Session 1 -->
+          <div class="bg-white rounded-xl p-4 border border-border shadow-sm space-y-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-sm">
+                  Late Night Fusion @ The Attic
+                </h4>
+                <p class="text-[10px] text-muted font-medium uppercase mt-0.5">
+                  Oct 12 • 42 mins
+                </p>
+              </div>
+              <div class="flex -space-x-2">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" class="w-6 h-6 rounded-full border-2 border-white">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" class="w-6 h-6 rounded-full border-2 border-white">
+                <div class="w-6 h-6 rounded-full bg-secondary border-2 border-white flex items-center justify-center text-[8px] font-bold text-primary">
+                  +2
+                </div>
+              </div>
+            </div>
+            <div class="bg-background rounded-lg p-3 flex items-center gap-3">
+              <button class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-md">
+                            <i class="fa-solid fa-play ml-1"></i><!-- <i class="fa-solid fa-play ml-1"></i> Font Awesome fontawesome.com -->
+                        </button>
+              <div class="flex-1">
+                <div class="audio-wave w-full opacity-60">
+                </div>
+                <div class="flex justify-between mt-1">
+                  <span class="text-[8px] font-mono text-muted">14:20</span>
+                                <span class="text-[8px] font-mono text-muted">42:15</span>
+                </div>
+              </div>
+              <button class="text-muted p-2"><i class="fa-solid fa-ellipsis-vertical"></i><!-- <i class="fa-solid fa-ellipsis-vertical"></i> Font Awesome fontawesome.com --></button>
+            </div>
+          </div>
+          <!-- Jam Session 2 -->
+          <div class="bg-white rounded-xl p-4 border border-border shadow-sm space-y-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-sm">
+                  Experimental Blues Vol. 2
+                </h4>
+                <p class="text-[10px] text-muted font-medium uppercase mt-0.5">
+                  Sep 28 • 1h 05m
+                </p>
+              </div>
+              <div class="flex -space-x-2">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-6 h-6 rounded-full border-2 border-white">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" class="w-6 h-6 rounded-full border-2 border-white">
+              </div>
+            </div>
+            <div class="bg-background rounded-lg p-3 flex items-center gap-3">
+              <button class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-md">
+                            <i class="fa-solid fa-play ml-1"></i><!-- <i class="fa-solid fa-play ml-1"></i> Font Awesome fontawesome.com -->
+                        </button>
+              <div class="flex-1">
+                <div class="audio-wave w-full opacity-30">
+                </div>
+                <div class="flex justify-between mt-1">
+                  <span class="text-[8px] font-mono text-muted">0:00</span>
+                                <span class="text-[8px] font-mono text-muted">1:05:00</span>
+                </div>
+              </div>
+              <button class="text-muted p-2"><i class="fa-solid fa-ellipsis-vertical"></i><!-- <i class="fa-solid fa-ellipsis-vertical"></i> Font Awesome fontawesome.com --></button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Musician Vouches (Reputation & Reviews) -->
+      <section id="vouches" class="px-4 mt-8 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-bold font-serif">
+            Collaboration Vouches
+          </h3>
+          <span class="text-[10px] font-bold text-muted uppercase tracking-widest">24 Vouches</span>
+        </div>
+        <div class="space-y-3">
+          <!-- Vouch 1 -->
+          <div class="bg-white rounded-xl p-4 border border-border shadow-sm">
+            <div class="flex items-center gap-3 mb-3">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" class="w-8 h-8 rounded-full">
+              <div>
+                <div class="flex items-center gap-1">
+                  <h4 class="text-sm font-bold">
+                    Sarah Jenkins
+                  </h4>
+                  <span class="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-primary">Bassist</span>
+                </div>
+                <p class="text-[10px] text-muted">
+                  2 sessions together
+                </p>
+              </div>
+            </div>
+            <p class="text-xs text-foreground italic leading-relaxed">
+              "Marcus has incredible pocket. He doesn't just play the drums; he listens to everyone else and finds exactly where to sit. 100% reliable."
+            </p>
+            <div class="flex gap-2 mt-3">
+              <span class="text-[10px] font-bold text-primary bg-secondary/30 px-2 py-1 rounded">#GreatPocket</span>
+                        <span class="text-[10px] font-bold text-primary bg-secondary/30 px-2 py-1 rounded">#ListenFirst</span>
+            </div>
+          </div>
+          <!-- Vouch 2 -->
+          <div class="bg-white rounded-xl p-4 border border-border shadow-sm">
+            <div class="flex items-center gap-3 mb-3">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-8 h-8 rounded-full">
+              <div>
+                <div class="flex items-center gap-1">
+                  <h4 class="text-sm font-bold">
+                    Leo Rossi
+                  </h4>
+                  <span class="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-primary">Keys</span>
+                </div>
+                <p class="text-[10px] text-muted">
+                  1 session together
+                </p>
+              </div>
+            </div>
+            <p class="text-xs text-foreground italic leading-relaxed">
+              "Showed up early, set up fast, and brought such a positive vibe to the room. Can't wait for the next one."
+            </p>
+            <div class="flex gap-2 mt-3">
+              <span class="text-[10px] font-bold text-primary bg-secondary/30 px-2 py-1 rounded">#EarlyBird</span>
+                        <span class="text-[10px] font-bold text-primary bg-secondary/30 px-2 py-1 rounded">#ProVibe</span>
+            </div>
+          </div>
+        </div>
+        <button class="w-full py-2.5 border border-border rounded-lg text-xs font-bold text-muted">See All Collaborator Feedback</button>
+      </section>
+      <!-- Availability (Reputation signaling) -->
+      <section id="availability" class="px-4 mt-8 pb-8">
+        <h3 class="text-lg font-bold font-serif mb-4">
+          Availability
+        </h3>
+        <div class="grid grid-cols-7 gap-1">
+          <div class="text-center py-2 bg-primary text-white rounded-md">
+            <p class="text-[8px] uppercase font-bold">
+              Mon
+            </p>
+            <div class="w-1.5 h-1.5 bg-white rounded-full mx-auto mt-1">
+            </div>
+          </div>
+          <div class="text-center py-2 bg-secondary/50 rounded-md">
+            <p class="text-[8px] uppercase font-bold text-muted">
+              Tue
+            </p>
+          </div>
+          <div class="text-center py-2 bg-primary text-white rounded-md">
+            <p class="text-[8px] uppercase font-bold">
+              Wed
+            </p>
+            <div class="w-1.5 h-1.5 bg-white rounded-full mx-auto mt-1">
+            </div>
+          </div>
+          <div class="text-center py-2 bg-secondary/50 rounded-md">
+            <p class="text-[8px] uppercase font-bold text-muted">
+              Thu
+            </p>
+          </div>
+          <div class="text-center py-2 bg-secondary/50 rounded-md">
+            <p class="text-[8px] uppercase font-bold text-muted">
+              Fri
+            </p>
+          </div>
+          <div class="text-center py-2 bg-primary text-white rounded-md">
+            <p class="text-[8px] uppercase font-bold">
+              Sat
+            </p>
+            <div class="w-1.5 h-1.5 bg-white rounded-full mx-auto mt-1">
+            </div>
+          </div>
+          <div class="text-center py-2 bg-primary text-white rounded-md">
+            <p class="text-[8px] uppercase font-bold">
+              Sun
+            </p>
+            <div class="w-1.5 h-1.5 bg-white rounded-full mx-auto mt-1">
+            </div>
+          </div>
+        </div>
+        <p class="text-[10px] text-muted mt-3 text-center italic">
+          Usually free evenings after 7 PM
+        </p>
+      </section>
+    </main>
+    <!-- Call to Action Floating Button (Matching Engine) -->
+    <div class="fixed bottom-24 right-4 z-40">
+      <button class="bg-primary text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center animate-bounce">
+            <i class="fa-solid fa-bolt-lightning text-xl"></i><!-- <i class="fa-solid fa-bolt-lightning text-xl"></i> Font Awesome fontawesome.com -->
+        </button>
+    </div>
+    <!-- Bottom Navigation -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-border px-6 py-3 flex justify-between items-center z-50">
+      <button class="flex flex-col items-center gap-1 text-muted">
+            <i class="fa-solid fa-compass text-xl"></i><!-- <i class="fa-solid fa-compass text-xl"></i> Font Awesome fontawesome.com -->
+            <span class="text-[10px] font-medium">Discover</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-muted">
+      <div class="relative">
+        <i class="fa-solid fa-message text-xl"></i><!-- <i class="fa-solid fa-message text-xl"></i> Font Awesome fontawesome.com -->
+                <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-accent rounded-full border border-white"></span>
+      </div>
+      <span class="text-[10px] font-medium">Messages</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-muted">
+            <i class="fa-solid fa-guitar text-xl"></i><!-- <i class="fa-solid fa-guitar text-xl"></i> Font Awesome fontawesome.com -->
+            <span class="text-[10px] font-medium">My Jams</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-primary">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-6 h-6 rounded-full border border-primary">
+            <span class="text-[10px] font-bold">Profile</span>
+        </button>
+    </nav>
+  </body>
+</html>

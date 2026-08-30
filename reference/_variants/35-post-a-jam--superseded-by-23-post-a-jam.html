@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Post a jam - Riff 3
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Lora:wght@500;600;700&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+          --background: #F2EFF8;
+          --foreground: #6B6880;
+          --card: #FFFFFF;
+          --card-foreground: #3D3C4F;
+          --primary: #8A79AB;
+          --primary-foreground: #FFFFFF;
+          --secondary: #EFEBF6;
+          --secondary-foreground: #3D3C4F;
+          --muted: #F2EFF8;
+          --muted-foreground: #6B6880;
+          --accent: #EFEBF6;
+          --accent-foreground: #8A79AB;
+          --destructive: #DC2626;
+          --destructive-foreground: #FFFFFF;
+          --border: #E4DFEE;
+          --input: #E4DFEE;
+          --ring: #8A79AB;
+          --font-sans: Geist;
+          --font-serif: Lora;
+          --font-mono: JetBrains Mono, monospace;
+          --radius: 1rem;
+          --shadow: -2px 4px 12px 4px rgba(51,51,51,0.05);
+}
+    </style>
+  </head>
+  <body class="bg-[#F8F7FA] text-foreground flex justify-center min-h-[100dvh]">
+    <main class="w-full max-w-md bg-[#F8F7FA] flex flex-col relative h-[100dvh] shadow-xl overflow-hidden" id="app-container">
+      <!-- Header -->
+      <header id="header" class="w-full bg-[#F8F7FA] pt-14 pb-4 px-6 flex flex-col gap-4 z-10 sticky top-0">
+        <div class="flex items-center justify-between w-full">
+          <button class="w-10 h-10 flex items-center justify-center rounded-full text-foreground hover:bg-secondary transition-colors" aria-label="Go back">
+                    <i class="text-lg"><i class="fa-solid fa-chevron-left"></i></i>
+                </button>
+          <h1 class="font-serif text-xl font-bold text-card-foreground">
+            Post a jam
+          </h1>
+          <div class="w-10 h-10">
+          </div>
+        </div>
+        <!-- Segmented Control -->
+        <div class="bg-card p-1 rounded-full border border-border shadow-sm flex items-center justify-between w-full mt-2">
+          <button class="flex-1 bg-primary text-primary-foreground font-sans text-sm font-semibold py-2.5 rounded-full transition-all">
+                    Open call
+                </button>
+                <button class="flex-1 text-foreground font-sans text-sm font-medium py-2.5 rounded-full transition-all">
+                    Private invite
+                </button>
+        </div>
+      </header>
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-y-auto px-6 pb-32 pt-2 flex flex-col gap-4">
+        <!-- What are you looking for -->
+        <div class="w-full bg-card rounded-[16px] border border-border shadow-sm p-4 flex flex-col gap-3">
+          <span class="text-[10px] uppercase tracking-[0.1em] font-bold text-primary">WHAT ARE YOU LOOKING FOR</span>
+          <div class="flex flex-wrap gap-2">
+            <button class="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium border border-primary">Keys</button>
+                    <button class="px-4 py-2 bg-card text-card-foreground rounded-full text-sm font-medium border border-border">Drums</button>
+                    <button class="px-4 py-2 bg-card text-card-foreground rounded-full text-sm font-medium border border-border">Bass</button>
+                    <button class="px-4 py-2 bg-card text-card-foreground rounded-full text-sm font-medium border border-border">Guitar</button>
+          </div>
+        </div>
+        <!-- Vibe -->
+        <div class="w-full bg-card rounded-[16px] border border-border shadow-sm p-4 flex flex-col gap-3">
+          <span class="text-[10px] uppercase tracking-[0.1em] font-bold text-primary">VIBE</span>
+          <div class="flex flex-wrap gap-2">
+            <button class="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium border border-primary">Casual Jam</button>
+                    <button class="px-4 py-2 bg-card text-card-foreground rounded-full text-sm font-medium border border-border">Serious Project</button>
+                    <button class="px-4 py-2 bg-card text-card-foreground rounded-full text-sm font-medium border border-border">Gigging</button>
+          </div>
+        </div>
+        <!-- When -->
+        <div class="w-full bg-card rounded-[16px] border border-border shadow-sm p-4 flex flex-col gap-3">
+          <span class="text-[10px] uppercase tracking-[0.1em] font-bold text-primary">WHEN</span>
+          <div class="flex gap-3">
+            <div class="flex flex-col items-center justify-center bg-secondary w-16 h-16 rounded-[12px]">
+              <span class="text-xs font-medium text-foreground">Fri</span>
+                        <span class="text-xl font-bold text-card-foreground font-serif">14</span>
+            </div>
+            <div class="flex flex-col justify-center gap-2 flex-1">
+              <div class="px-4 py-2 bg-card text-card-foreground rounded-full text-sm font-medium border border-border flex items-center justify-between">
+                <span>7:00 PM</span>
+                            <i class="text-muted-foreground"><i class="fa-regular fa-clock"></i></i>
+              </div>
+              <div class="px-4 py-2 bg-card text-card-foreground rounded-full text-sm font-medium border border-border flex items-center justify-between">
+                <span>2 hrs</span>
+                            <i class="text-muted-foreground"><i class="fa-solid fa-hourglass-half"></i></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Where -->
+        <div class="w-full bg-card rounded-[16px] border border-border shadow-sm p-4 flex flex-col gap-3">
+          <span class="text-[10px] uppercase tracking-[0.1em] font-bold text-primary">WHERE</span>
+          <div class="w-full bg-[#EFEBF6] rounded-[12px] p-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-primary/20 rounded-[8px] flex items-center justify-center text-primary">
+                <i><i class="fa-solid fa-map-location-dot"></i></i>
+              </div>
+              <div class="flex flex-col">
+                <span class="font-serif font-bold text-card-foreground text-sm">Sonic Basement</span>
+                            <span class="font-sans text-xs text-foreground">Greenpoint - 0.9 mi</span>
+              </div>
+            </div>
+            <button class="text-primary text-sm font-medium">Change</button>
+          </div>
+        </div>
+        <!-- Who is already in -->
+        <div class="w-full bg-card rounded-[16px] border border-border shadow-sm p-4 flex flex-col gap-3">
+          <span class="text-[10px] uppercase tracking-[0.1em] font-bold text-primary">WHO IS ALREADY IN</span>
+          <div class="flex gap-4 items-center">
+            <div class="flex flex-col items-center gap-1">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Leo Rossi" class="w-12 h-12 rounded-full object-cover">
+                        <span class="text-[10px] font-medium text-foreground">Leo Rossi - keys</span>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="Sam" class="w-12 h-12 rounded-full object-cover">
+                        <span class="text-[10px] font-medium text-foreground">Sam - bass</span>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <div class="w-12 h-12 rounded-full border-2 border-dashed border-primary flex items-center justify-center text-primary">
+                <i><i class="fa-solid fa-plus"></i></i>
+              </div>
+              <span class="text-[10px] font-medium text-foreground">Open</span>
+            </div>
+          </div>
+        </div>
+        <!-- Message -->
+        <div class="w-full bg-card rounded-[16px] border border-border shadow-sm p-4 flex flex-col gap-3 mb-6">
+          <span class="text-[10px] uppercase tracking-[0.1em] font-bold text-primary">MESSAGE</span>
+          <textarea class="w-full h-24 bg-card text-sm text-card-foreground font-sans resize-none border-none focus:ring-0 p-0" placeholder="We have a drummer and bassist. Just looking for some tasty Rhodes/Synth textures to fill out the sound. Very casual.">
+            We have a drummer and bassist. Just looking for some tasty Rhodes/Synth textures to fill out the sound. Very casual.
+          </textarea>
+        </div>
+      </div>
+      <!-- Sticky Bottom Bar -->
+      <div class="absolute bottom-0 left-0 w-full bg-[#F8F7FA] border-t border-border px-6 py-6 pb-8 z-20 flex gap-4">
+        <button class="flex-1 bg-secondary text-secondary-foreground font-semibold px-4 py-3.5 rounded-[12px] shadow-sm hover:opacity-90 transition-opacity font-sans text-sm">
+                Save draft
+            </button>
+            <button class="flex-[2] bg-primary text-primary-foreground font-semibold px-6 py-3.5 rounded-[12px] shadow-sm hover:opacity-90 transition-opacity font-sans text-base">
+                Post open call
+            </button>
+      </div>
+    </main>
+  </body>
+</html>

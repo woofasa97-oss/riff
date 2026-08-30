@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Band Profile - Riff 2
+    </title>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+        body { font-family: var(--font-sans); background-color: var(--background); }
+        h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+    <style>
+      :root {
+          --background: #EFEBF6;
+          --foreground: #6B6880;
+          --card: #FFFFFF;
+          --card-foreground: #3D3C4F;
+          --primary: #8A79AB;
+          --primary-foreground: #FFFFFF;
+          --secondary: #E6A5B8;
+          --secondary-foreground: #3D3C4F;
+          --muted: #EFEBF6;
+          --muted-foreground: #6B6880;
+          --accent: #E6A5B8;
+          --accent-foreground: #3D3C4F;
+          --destructive: #DC2626;
+          --destructive-foreground: #FFFFFF;
+          --border: #DFD9EC;
+          --input: #DFD9EC;
+          --ring: #8A79AB;
+          --font-sans: Geist;
+          --font-serif: Lora;
+          --font-mono: JetBrains Mono, monospace;
+          --radius: 1rem;
+          --shadow: -2px 4px 12px 4px rgba(51,51,51,0.05);
+}
+    </style>
+  </head>
+  <body class="m-0 p-0 min-h-[100dvh] flex justify-center text-[var(--foreground)] relative bg-[#F8F7FA]">
+    <div class="w-full max-w-md min-h-[100dvh] bg-[#F8F7FA] relative flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.05)] pb-24">
+      <!-- Dark Hero Section -->
+      <div class="w-full bg-gradient-to-b from-[#1a142c] to-[#2d2442] pt-12 pb-8 px-5 relative flex flex-col items-center">
+        <header class="w-full flex items-center justify-between absolute top-4 left-0 px-5 z-20">
+          <button class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white shadow-sm transition-transform hover:scale-[0.98]">
+                    <i class="text-sm"><i class="fa-solid fa-chevron-left"></i></i>
+                </button>
+          <div class="w-10">
+          </div>
+        </header>
+        <div class="mt-8 flex flex-col items-center text-center">
+          <div class="mb-4">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="Band Avatar" class="w-24 h-24 rounded-full object-cover border-4 border-white/10 shadow-lg">
+          </div>
+          <h1 class="font-serif font-bold text-3xl text-white mb-1">
+            The Neon Echoes
+          </h1>
+          <p class="text-white/70 text-sm font-medium mb-3">
+            Indie Rock - Brooklyn, NY
+          </p>
+          <div class="px-3 py-1 bg-[#E5262F] text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-md mb-6 flex items-center gap-1.5">
+            <div class="w-1.5 h-1.5 rounded-full bg-white animate-pulse">
+            </div>
+            Season 4 - Quarter Finalist
+          </div>
+          <div class="flex items-center justify-center gap-3 w-full max-w-xs">
+            <button class="flex-1 py-3 bg-[var(--primary)] text-white text-sm font-bold rounded-[12px] shadow-sm transition-transform hover:scale-[0.98]">
+                        Follow
+                    </button>
+                    <button class="flex-1 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-bold rounded-[12px] shadow-sm transition-transform hover:scale-[0.98]">
+                        Message
+                    </button>
+          </div>
+        </div>
+      </div>
+      <main class="flex-1 flex flex-col px-5 -mt-4 relative z-10 gap-6">
+        <!-- Stat Tiles -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-sm p-4 flex flex-col items-center text-center">
+            <span class="font-serif font-bold text-xl text-[var(--card-foreground)]">12</span>
+                    <span class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider mt-1">Sessions</span>
+          </div>
+          <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-sm p-4 flex flex-col items-center text-center">
+            <div class="flex items-center gap-1">
+              <span class="font-serif font-bold text-xl text-[var(--card-foreground)]">4.8</span>
+                        <i class="text-[#FACC15] text-xs -mt-1"><i class="fa-solid fa-star"></i></i>
+            </div>
+            <span class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider mt-1">Rating</span>
+          </div>
+          <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-sm p-4 flex flex-col items-center text-center">
+            <span class="font-serif font-bold text-xl text-[var(--card-foreground)]">2.1k</span>
+                    <span class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider mt-1">Followers</span>
+          </div>
+        </div>
+        <!-- Members Section -->
+        <section class="flex flex-col gap-3">
+          <h3 class="font-serif font-bold text-lg text-[var(--card-foreground)]">
+            Members
+          </h3>
+          <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-sm overflow-hidden">
+            <div class="p-3 border-b border-[var(--border)] flex items-center gap-4">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1 min-w-0">
+                <h4 class="font-serif font-bold text-sm text-[var(--card-foreground)] truncate">
+                  Sarah Jenkins
+                </h4>
+                <p class="text-xs text-[var(--foreground)] truncate">
+                  Bassist
+                </p>
+              </div>
+              <div class="px-2 py-1 bg-[var(--muted)] rounded-md text-[11px] font-semibold text-[var(--primary)]">
+                98% Rel
+              </div>
+            </div>
+            <div class="p-3 border-b border-[var(--border)] flex items-center gap-4">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1 min-w-0">
+                <h4 class="font-serif font-bold text-sm text-[var(--card-foreground)] truncate">
+                  Marcus Chen
+                </h4>
+                <p class="text-xs text-[var(--foreground)] truncate">
+                  Drums
+                </p>
+              </div>
+              <div class="px-2 py-1 bg-[var(--muted)] rounded-md text-[11px] font-semibold text-[var(--primary)]">
+                99% Rel
+              </div>
+            </div>
+            <div class="p-3 border-b border-[var(--border)] flex items-center gap-4">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1 min-w-0">
+                <h4 class="font-serif font-bold text-sm text-[var(--card-foreground)] truncate">
+                  Leo Rossi
+                </h4>
+                <p class="text-xs text-[var(--foreground)] truncate">
+                  Keys
+                </p>
+              </div>
+              <div class="px-2 py-1 bg-[var(--muted)] rounded-md text-[11px] font-semibold text-[var(--primary)]">
+                92% Rel
+              </div>
+            </div>
+            <div class="p-4 border-2 border-dashed border-[var(--primary)]/30 bg-[var(--muted)]/50 flex items-center justify-between gap-4 rounded-b-[16px]">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-[var(--border)] flex items-center justify-center text-[var(--foreground)]">
+                  <i class="text-sm"><i class="fa-solid fa-plus"></i></i>
+                </div>
+                <h4 class="font-serif font-bold text-sm text-[var(--card-foreground)]">
+                  Open seat - Keys
+                </h4>
+              </div>
+              <button class="px-4 py-1.5 bg-[var(--primary)] text-white text-xs font-bold rounded-[8px] shadow-sm transition-transform hover:scale-[0.98]">
+                            Apply
+                        </button>
+            </div>
+          </div>
+        </section>
+        <!-- Listen Section -->
+        <section class="flex flex-col gap-3">
+          <h3 class="font-serif font-bold text-lg text-[var(--card-foreground)]">
+            Listen
+          </h3>
+          <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-sm p-4 flex flex-col gap-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-serif font-bold text-base text-[var(--card-foreground)]">
+                  Midnight Jam at Sonic Basement
+                </h4>
+                <p class="text-xs text-[var(--foreground)] mt-0.5">
+                  Oct 12 • Williamsburg
+                </p>
+              </div>
+              <button class="w-8 h-8 rounded-full bg-[var(--muted)] text-[var(--primary)] flex items-center justify-center">
+                            <i class="text-xs"><i class="fa-solid fa-play"></i></i>
+                        </button>
+            </div>
+            <div class="w-full h-8 bg-[var(--muted)] rounded-md flex items-center px-2 overflow-hidden gap-1">
+              <div class="h-4 w-1 bg-[var(--primary)] rounded-full opacity-60">
+              </div>
+              <div class="h-6 w-1 bg-[var(--primary)] rounded-full opacity-80">
+              </div>
+              <div class="h-3 w-1 bg-[var(--primary)] rounded-full opacity-50">
+              </div>
+              <div class="h-7 w-1 bg-[var(--primary)] rounded-full">
+              </div>
+              <div class="h-5 w-1 bg-[var(--primary)] rounded-full opacity-70">
+              </div>
+              <div class="h-2 w-1 bg-[var(--primary)] rounded-full opacity-40">
+              </div>
+              <div class="h-6 w-1 bg-[var(--primary)] rounded-full opacity-90">
+              </div>
+              <div class="h-4 w-1 bg-[var(--primary)] rounded-full opacity-60">
+              </div>
+              <div class="h-7 w-1 bg-[var(--primary)] rounded-full opacity-80">
+              </div>
+              <div class="h-3 w-1 bg-[var(--border)] rounded-full">
+              </div>
+              <div class="h-5 w-1 bg-[var(--border)] rounded-full">
+              </div>
+              <div class="h-2 w-1 bg-[var(--border)] rounded-full">
+              </div>
+              <div class="h-6 w-1 bg-[var(--border)] rounded-full">
+              </div>
+              <div class="h-4 w-1 bg-[var(--border)] rounded-full">
+              </div>
+              <div class="h-7 w-1 bg-[var(--border)] rounded-full">
+              </div>
+            </div>
+          </div>
+          <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-sm p-4 flex flex-col gap-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-serif font-bold text-base text-[var(--card-foreground)]">
+                  Live Set: The Attic
+                </h4>
+                <p class="text-xs text-[var(--foreground)] mt-0.5">
+                  Sep 28 • Bushwick
+                </p>
+              </div>
+              <button class="w-8 h-8 rounded-full bg-[var(--muted)] text-[var(--primary)] flex items-center justify-center">
+                            <i class="text-xs"><i class="fa-solid fa-play"></i></i>
+                        </button>
+            </div>
+            <div class="w-full h-8 bg-[var(--muted)] rounded-md flex items-center px-2 overflow-hidden gap-1">
+              <div class="h-3 w-1 bg-[var(--primary)] rounded-full opacity-60">
+              </div>
+              <div class="h-5 w-1 bg-[var(--primary)] rounded-full opacity-80">
+              </div>
+              <div class="h-2 w-1 bg-[var(--primary)] rounded-full opacity-50">
+              </div>
+              <div class="h-6 w-1 bg-[var(--primary)] rounded-full">
+              </div>
+              <div class="h-8 w-1 bg-[var(--primary)] rounded-full opacity-70">
+              </div>
+              <div class="h-4 w-1 bg-[var(--primary)] rounded-full opacity-40">
+              </div>
+              <div class="h-7 w-1 bg-[var(--primary)] rounded-full opacity-90">
+              </div>
+              <div class="h-3 w-1 bg-[var(--primary)] rounded-full opacity-60">
+              </div>
+              <div class="h-6 w-1 bg-[var(--primary)] rounded-full opacity-80">
+              </div>
+              <div class="h-4 w-1 bg-[var(--border)] rounded-full">
+              </div>
+              <div class="h-2 w-1 bg-[var(--border)] rounded-full">
+              </div>
+              <div class="h-7 w-1 bg-[var(--border)] rounded-full">
+              </div>
+              <div class="h-5 w-1 bg-[var(--border)] rounded-full">
+              </div>
+              <div class="h-3 w-1 bg-[var(--border)] rounded-full">
+              </div>
+              <div class="h-6 w-1 bg-[var(--border)] rounded-full">
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- Battle History -->
+        <section class="flex flex-col gap-3 mb-6">
+          <h3 class="font-serif font-bold text-lg text-[var(--card-foreground)]">
+            Battle History
+          </h3>
+          <div class="bg-[var(--card)] rounded-[16px] border border-[var(--border)] shadow-sm overflow-hidden">
+            <div class="p-3 border-b border-[var(--border)] flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-[var(--muted)] flex items-center justify-center">
+                  <i class="text-[var(--foreground)] text-xs"><i class="fa-solid fa-bolt"></i></i>
+                </div>
+                <h4 class="font-serif font-bold text-sm text-[var(--card-foreground)]">
+                  The Blue Notes
+                </h4>
+              </div>
+              <div class="flex flex-col items-end gap-1">
+                <span class="px-2 py-0.5 rounded bg-[#2FBF71]/10 text-[#2FBF71] text-[10px] font-bold uppercase">Won</span>
+                            <span class="text-[10px] text-[var(--foreground)] font-medium">68% / 32%</span>
+              </div>
+            </div>
+            <div class="p-3 flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-[var(--muted)] flex items-center justify-center">
+                  <i class="text-[var(--foreground)] text-xs"><i class="fa-solid fa-bolt"></i></i>
+                </div>
+                <h4 class="font-serif font-bold text-sm text-[var(--card-foreground)]">
+                  Electric Static
+                </h4>
+              </div>
+              <div class="flex flex-col items-end gap-1">
+                <span class="px-2 py-0.5 rounded bg-[var(--foreground)]/10 text-[var(--foreground)] text-[10px] font-bold uppercase">Lost</span>
+                            <span class="text-[10px] text-[var(--foreground)] font-medium">45% / 55%</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <!-- Bottom Navigation -->
+      <nav class="fixed bottom-0 w-full max-w-md bg-[var(--card)] border-t border-[var(--border)] px-6 py-4 pb-8 z-40 flex justify-between items-center shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+        <button class="flex flex-col items-center gap-1 text-[var(--primary)] transition-colors">
+                <i class="text-xl"><i class="fa-solid fa-compass"></i></i>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-[var(--foreground)] hover:text-[var(--primary)] transition-colors">
+                <i class="text-xl"><i class="fa-solid fa-comment"></i></i>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-[var(--foreground)] hover:text-[var(--primary)] transition-colors">
+                <i class="text-xl"><i class="fa-solid fa-calendar-days"></i></i>
+            </button>
+            <button class="flex flex-col items-center gap-1 transition-transform hover:scale-105 border-2 border-[var(--foreground)] rounded-full p-0.5">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Profile" class="w-6 h-6 rounded-full object-cover">
+            </button>
+      </nav>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Riff - Me
+    </title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Lora:wght@400;500;600;700&display=swap');
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+  </head>
+  <body class="bg-[#F8F7FA] text-[#3d3c4f] h-[100dvh] flex flex-col w-full max-w-md mx-auto relative shadow-2xl overflow-hidden m-0 p-0 font-sans antialiased selection:bg-[#8a79ab] selection:text-white">
+    <!-- HEADER -->
+    <header id="header" class="w-full h-[56px] flex items-center justify-between px-4 shrink-0 bg-[#F8F7FA] z-30">
+      <div class="font-serif font-bold text-[22px] text-[#8A79AB]">
+        Riff
+      </div>
+      <div class="flex gap-2">
+        <button class="w-[36px] h-[36px] flex items-center justify-center bg-white text-[#3D3C4F] rounded-full shrink-0 border border-[#E4DFEE] relative">
+                <i class="text-[16px]"><i class="fa-regular fa-bell"></i></i>
+        <div class="absolute top-0 right-0 w-[8px] h-[8px] bg-[#E6A5B8] rounded-full border-2 border-white">
+        </div>
+        </button>
+            <button class="w-[36px] h-[36px] flex items-center justify-center bg-white text-[#3D3C4F] rounded-full shrink-0 border border-[#E4DFEE]">
+                <i class="text-[16px]"><i class="fa-solid fa-gear"></i></i>
+            </button>
+      </div>
+    </header>
+    <!-- MAIN CONTENT AREA -->
+    <main id="main" class="flex-1 flex flex-col relative z-10 overflow-y-auto hide-scrollbar pb-[100px]">
+      <!-- PLAYER CARD -->
+      <div class="px-4 pt-6 pb-8 flex flex-col items-center">
+        <div class="relative mb-4">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" class="w-[120px] h-[120px] rounded-full border-[2px] border-white shadow-sm object-cover">
+          <div class="absolute bottom-0 right-0 bg-[#2FBF71] text-white w-[28px] h-[28px] rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+            <i class="text-[12px]"><i class="fa-solid fa-bolt"></i></i>
+          </div>
+        </div>
+        <h1 class="font-serif font-bold text-[28px] text-[#3D3C4F] mb-1">
+          Marcus Chen
+        </h1>
+        <div class="text-[#8A79AB] text-[12px] font-bold uppercase tracking-wide mb-2">
+          DRUMS · JAZZ / NEO-SOUL / FUSION
+        </div>
+        <div class="text-[#9C97A9] text-[13px] font-medium">
+          Williamsburg · Brooklyn
+        </div>
+      </div>
+      <!-- STATS -->
+      <div class="px-4 flex justify-between gap-3 mb-6">
+        <div class="bg-white flex-1 rounded-[16px] border border-[#E4DFEE] p-3 flex flex-col items-center justify-center shadow-sm">
+          <span class="font-serif font-bold text-[22px] text-[#3D3C4F] mb-0.5">98%</span>
+                <span class="uppercase text-[9px] tracking-wide font-bold text-[#9C97A9]">RELIABILITY</span>
+        </div>
+        <div class="bg-white flex-1 rounded-[16px] border border-[#E4DFEE] p-3 flex flex-col items-center justify-center shadow-sm">
+          <span class="font-serif font-bold text-[22px] text-[#3D3C4F] mb-0.5">15</span>
+                <span class="uppercase text-[9px] tracking-wide font-bold text-[#9C97A9]">REPEAT JAMS</span>
+        </div>
+        <div class="bg-white flex-1 rounded-[16px] border border-[#E4DFEE] p-3 flex flex-col items-center justify-center shadow-sm">
+          <span class="font-serif font-bold text-[22px] text-[#3D3C4F] mb-0.5">24</span>
+                <span class="uppercase text-[9px] tracking-wide font-bold text-[#9C97A9]">VOUCHES</span>
+        </div>
+      </div>
+      <!-- EDIT BUTTON -->
+      <div class="px-4 mb-8">
+        <button class="w-full bg-[#EFEBF6] text-[#3D3C4F] h-[48px] rounded-[12px] font-semibold text-[14px]">
+                Edit your player card
+            </button>
+      </div>
+      <!-- YOUR CLIP -->
+      <div class="px-4 mb-8">
+        <div class="flex justify-between items-end mb-3 px-1">
+          <h2 class="uppercase text-[10.5px] tracking-wide font-bold text-[#8A79AB]">
+            YOUR CLIP
+          </h2>
+          <a href="#" class="text-[12px] text-[#8A79AB] font-semibold">Replace clip</a>
+        </div>
+        <div class="bg-white rounded-[16px] border border-[#E4DFEE] p-4 shadow-sm flex items-center gap-3">
+          <button class="w-[40px] h-[40px] rounded-full bg-[#8A79AB] text-white flex items-center justify-center shrink-0">
+                    <i class="text-[14px] ml-1"><i class="fa-solid fa-play"></i></i>
+                </button>
+          <div class="flex-1 h-[24px] flex items-center overflow-hidden gap-0.5">
+            <!-- Fake waveform bars -->
+            <div class="w-[3px] h-[60%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[40%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[80%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[100%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[70%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[30%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[50%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[90%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[60%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[40%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[20%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[50%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[80%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[100%] bg-[#8A79AB] rounded-full">
+            </div>
+            <div class="w-[3px] h-[40%] bg-[#E4DFEE] rounded-full">
+            </div>
+            <div class="w-[3px] h-[60%] bg-[#E4DFEE] rounded-full">
+            </div>
+            <div class="w-[3px] h-[30%] bg-[#E4DFEE] rounded-full">
+            </div>
+            <div class="w-[3px] h-[70%] bg-[#E4DFEE] rounded-full">
+            </div>
+            <div class="w-[3px] h-[50%] bg-[#E4DFEE] rounded-full">
+            </div>
+            <div class="w-[3px] h-[90%] bg-[#E4DFEE] rounded-full">
+            </div>
+          </div>
+          <div class="text-[12px] font-medium text-[#9C97A9] shrink-0">
+            0:24
+          </div>
+        </div>
+      </div>
+      <!-- YOUR AVAILABILITY -->
+      <div class="px-4 mb-8">
+        <div class="flex justify-between items-end mb-3 px-1">
+          <h2 class="uppercase text-[10.5px] tracking-wide font-bold text-[#8A79AB]">
+            YOUR AVAILABILITY
+          </h2>
+          <a href="#" class="text-[12px] text-[#8A79AB] font-semibold">Edit</a>
+        </div>
+        <div class="flex justify-between gap-1 mb-2">
+          <div class="flex-1 bg-white border border-[#E4DFEE] text-[#9C97A9] h-[36px] rounded-[8px] flex items-center justify-center text-[11px] font-bold shadow-sm">
+            MON
+          </div>
+          <div class="flex-1 bg-white border border-[#E4DFEE] text-[#9C97A9] h-[36px] rounded-[8px] flex items-center justify-center text-[11px] font-bold shadow-sm">
+            TUE
+          </div>
+          <div class="flex-1 bg-white border border-[#E4DFEE] text-[#9C97A9] h-[36px] rounded-[8px] flex items-center justify-center text-[11px] font-bold shadow-sm">
+            WED
+          </div>
+          <div class="flex-1 bg-[#8A79AB] border border-[#8A79AB] text-white h-[36px] rounded-[8px] flex items-center justify-center text-[11px] font-bold shadow-sm">
+            THU
+          </div>
+          <div class="flex-1 bg-[#8A79AB] border border-[#8A79AB] text-white h-[36px] rounded-[8px] flex items-center justify-center text-[11px] font-bold shadow-sm">
+            FRI
+          </div>
+          <div class="flex-1 bg-[#8A79AB] border border-[#8A79AB] text-white h-[36px] rounded-[8px] flex items-center justify-center text-[11px] font-bold shadow-sm">
+            SAT
+          </div>
+          <div class="flex-1 bg-white border border-[#E4DFEE] text-[#9C97A9] h-[36px] rounded-[8px] flex items-center justify-center text-[11px] font-bold shadow-sm">
+            SUN
+          </div>
+        </div>
+        <div class="text-[13px] text-[#9C97A9] italic px-1">
+          Usually free evenings after 7 PM
+        </div>
+      </div>
+      <!-- THIS SEASON -->
+      <div class="px-4 mb-8">
+        <div class="flex justify-between items-end mb-3 px-1">
+          <h2 class="uppercase text-[10.5px] tracking-wide font-bold text-[#8A79AB]">
+            THIS SEASON
+          </h2>
+          <a href="#" class="text-[12px] text-[#8A79AB] font-semibold">View leaderboard</a>
+        </div>
+        <div class="bg-[#F2EFF7] rounded-[16px] border border-[#E4DFEE] p-4 shadow-sm">
+          <div class="font-serif font-bold text-[16px] text-[#3D3C4F] mb-1">
+            #14 in Brooklyn Jazz Scene
+          </div>
+          <div class="text-[13px] text-[#8A79AB] font-medium">
+            +3 spots this week
+          </div>
+        </div>
+      </div>
+      <!-- SETTINGS LIST -->
+      <div class="px-4 mb-8">
+        <div class="bg-white rounded-[16px] border border-[#E4DFEE] shadow-sm overflow-hidden">
+          <a href="#" class="flex items-center justify-between p-4 border-b border-[#E4DFEE]/50">
+                    <span class="text-[15px] font-medium text-[#3D3C4F]">Your bands</span>
+                    <i class="text-[14px] text-[#9C97A9]"><i class="fa-solid fa-chevron-right"></i></i>
+                </a>
+                <a href="#" class="flex items-center justify-between p-4 border-b border-[#E4DFEE]/50">
+                    <span class="text-[15px] font-medium text-[#3D3C4F]">Saved musicians</span>
+                    <i class="text-[14px] text-[#9C97A9]"><i class="fa-solid fa-chevron-right"></i></i>
+                </a>
+                <a href="#" class="flex items-center justify-between p-4 border-b border-[#E4DFEE]/50">
+                    <span class="text-[15px] font-medium text-[#3D3C4F]">Past jams</span>
+                    <i class="text-[14px] text-[#9C97A9]"><i class="fa-solid fa-chevron-right"></i></i>
+                </a>
+                <a href="#" class="flex items-center justify-between p-4 border-b border-[#E4DFEE]/50">
+                    <span class="text-[15px] font-medium text-[#3D3C4F]">Settings and privacy</span>
+                    <i class="text-[14px] text-[#9C97A9]"><i class="fa-solid fa-chevron-right"></i></i>
+                </a>
+                <a href="#" class="flex items-center justify-between p-4">
+                    <span class="text-[15px] font-medium text-[#3D3C4F]">Safety centre</span>
+                    <i class="text-[14px] text-[#9C97A9]"><i class="fa-solid fa-chevron-right"></i></i>
+                </a>
+        </div>
+      </div>
+    </main>
+    <!-- THE BOTTOM TAB BAR -->
+    <nav id="bottom-nav" class="absolute bottom-0 left-0 w-full h-[76px] bg-white/96 backdrop-blur-xl border-t border-[#E4DFEE] flex justify-between items-center px-6 z-30 pb-4 shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
+      <!-- Map -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-[#9C97A9] hover:text-[#8A79AB] transition-colors">
+            <i class="text-[22px]"><i class="fa-regular fa-map"></i></i>
+            <span class="text-[10.5px] font-medium font-sans">MAP</span>
+        </a>
+
+        <!-- Discover -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-[#9C97A9] hover:text-[#8A79AB] transition-colors">
+            <i class="text-[22px]"><i class="fa-regular fa-compass"></i></i>
+            <span class="text-[10.5px] font-medium font-sans">DISCOVER</span>
+        </a>
+
+        <!-- Jams -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-[#9C97A9] hover:text-[#8A79AB] transition-colors">
+            <i class="text-[22px]"><i class="fa-solid fa-guitar"></i></i>
+            <span class="text-[10.5px] font-medium font-sans">JAMS</span>
+        </a>
+
+        <!-- Live -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-[#9C97A9] hover:text-[#8A79AB] transition-colors relative">
+      <div class="relative">
+        <i class="text-[22px]"><i class="fa-solid fa-tower-broadcast"></i></i>
+        <div class="absolute top-0 right-[-2px] w-[6px] h-[6px] bg-[#e6a5b8] rounded-full border border-white">
+        </div>
+      </div>
+      <span class="text-[10.5px] font-medium font-sans">LIVE</span>
+        </a>
+
+        <!-- Me (Active) -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-[#8A79AB]">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="Me" class="w-[22px] h-[22px] rounded-full border-2 border-[#8A79AB] object-cover">
+            <span class="text-[10.5px] font-semibold font-sans">ME</span>
+        </a>
+    </nav>
+  </body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Riff 6 - Notifications
+    </title>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+  </head>
+  <body class="bg-[#f8f7fa] text-[#3d3c4f] h-[100dvh] flex flex-col w-full max-w-md mx-auto relative shadow-2xl overflow-hidden m-0 p-0 font-sans">
+    <!-- SUB-SCREEN HEADER -->
+    <header id="header" class="h-[56px] flex items-center justify-between px-4 shrink-0 bg-[#f8f7fa] z-10">
+      <button class="w-8 h-8 flex items-center justify-start text-[#3d3c4f]">
+            <i><i class="fa-solid fa-chevron-left"></i></i>
+        </button>
+      <div class="flex-1 flex justify-center">
+        <h1 class="font-serif font-bold text-[17px] text-[#3d3c4f]">
+          Notifications
+        </h1>
+      </div>
+      <button class="w-9 h-9 flex items-center justify-center text-[#3d3c4f] rounded-full shrink-0">
+            <i class="text-[14px]"><i class="fa-solid fa-check-double"></i></i>
+        </button>
+    </header>
+    <!-- TABS -->
+    <div class="flex border-b border-[#e4dfee] bg-[#f8f7fa] px-4 shrink-0">
+      <button class="flex-1 py-3 text-[14px] font-semibold text-[#8a79ab] border-b-2 border-[#8a79ab]">All</button>
+        <button class="flex-1 py-3 text-[14px] font-medium text-[#9c97a9]">Requests</button>
+    </div>
+    <!-- MAIN CONTENT (ACTIVITY FEED) -->
+    <main id="main" class="flex-1 overflow-y-auto hide-scrollbar flex flex-col pb-[92px]">
+      <!-- Section: TODAY -->
+      <div class="px-4 py-3">
+        <h2 class="text-[#8a79ab] text-[10.5px] font-bold uppercase tracking-wider mb-2">
+          TODAY
+        </h2>
+        <div class="flex flex-col gap-2">
+          <!-- Notification 1 (Unread) -->
+          <div class="bg-[#f2eff8] border border-[#e4dfee] rounded-[16px] p-4 flex gap-3 relative shadow-sm">
+            <div class="absolute top-4 right-4 w-2 h-2 bg-[#8a79ab] rounded-full">
+            </div>
+            <div class="relative shrink-0">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Sarah Jenkins" class="w-10 h-10 rounded-full border-2 border-white object-cover">
+              <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-[#2fbf71] border-[1.5px] border-white rounded-full flex items-center justify-center text-white text-[8px]">
+                <i><i class="fa-solid fa-check"></i></i>
+              </div>
+            </div>
+            <div class="flex-1 pr-6">
+              <p class="text-[14px] text-[#3d3c4f] leading-snug">
+                <span class="font-serif font-bold text-[#3d3c4f]">Sarah Jenkins</span> accepted your jam request
+              </p>
+              <p class="text-[12px] text-[#6b6880] mt-1">
+                Tue 12 Nov, 7:00 PM
+              </p>
+            </div>
+            <span class="text-[12px] text-[#9c97a9] shrink-0 mt-0.5">12m</span>
+          </div>
+          <!-- Notification 2 (Unread) -->
+          <div class="bg-[#f2eff8] border border-[#e4dfee] rounded-[16px] p-4 flex gap-3 relative shadow-sm">
+            <div class="absolute top-4 right-4 w-2 h-2 bg-[#8a79ab] rounded-full">
+            </div>
+            <div class="relative shrink-0">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Leo Rossi" class="w-10 h-10 rounded-full border-2 border-white object-cover">
+              <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-[#8a79ab] border-[1.5px] border-white rounded-full flex items-center justify-center text-white text-[8px]">
+                <i><i class="fa-solid fa-handshake"></i></i>
+              </div>
+            </div>
+            <div class="flex-1 pr-6">
+              <p class="text-[14px] text-[#3d3c4f] leading-snug">
+                <span class="font-serif font-bold text-[#3d3c4f]">Leo Rossi</span> vouched for you
+              </p>
+              <p class="text-[12px] text-[#8a79ab] mt-1 font-medium">
+                #GreatPocket #ListenFirst
+              </p>
+            </div>
+            <span class="text-[12px] text-[#9c97a9] shrink-0 mt-0.5">1h</span>
+          </div>
+          <!-- Notification 3 (Read) -->
+          <div class="bg-white border border-[#e4dfee] rounded-[16px] p-4 flex gap-3 relative shadow-sm">
+            <div class="relative shrink-0">
+              <div class="w-10 h-10 rounded-full bg-[#f8f7fa] border-2 border-[#e4dfee] flex items-center justify-center text-[#8a79ab]">
+                <i class="text-[16px]"><i class="fa-solid fa-user"></i></i>
+              </div>
+              <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-[#e6a5b8] border-[1.5px] border-white rounded-full flex items-center justify-center text-white text-[8px]">
+                <i><i class="fa-solid fa-envelope"></i></i>
+              </div>
+            </div>
+            <div class="flex-1">
+              <p class="text-[14px] text-[#3d3c4f] leading-snug">
+                Someone applied to your open call
+              </p>
+              <p class="text-[12px] text-[#6b6880] mt-1">
+                Looking for Keys
+              </p>
+            </div>
+            <span class="text-[12px] text-[#9c97a9] shrink-0 mt-0.5">3h</span>
+          </div>
+        </div>
+      </div>
+      <!-- Section: EARLIER -->
+      <div class="px-4 py-3">
+        <h2 class="text-[#8a79ab] text-[10.5px] font-bold uppercase tracking-wider mb-2">
+          EARLIER
+        </h2>
+        <div class="flex flex-col gap-2">
+          <!-- Notification 4 -->
+          <div class="bg-white border border-[#e4dfee] rounded-[16px] p-4 flex gap-3 relative shadow-sm">
+            <div class="relative shrink-0">
+              <div class="w-10 h-10 rounded-full bg-[#f8f7fa] border-2 border-[#e4dfee] flex items-center justify-center text-[#8a79ab]">
+                <i class="text-[16px]"><i class="fa-solid fa-arrow-trend-up"></i></i>
+              </div>
+              <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-[#facc15] border-[1.5px] border-white rounded-full flex items-center justify-center text-white text-[8px]">
+                <i><i class="fa-solid fa-trophy"></i></i>
+              </div>
+            </div>
+            <div class="flex-1">
+              <p class="text-[14px] text-[#3d3c4f] leading-snug">
+                You moved up 3 spots to #14 in <span class="font-serif font-bold text-[#3d3c4f]">Brooklyn Jazz Scene</span>
+              </p>
+            </div>
+            <span class="text-[12px] text-[#9c97a9] shrink-0 mt-0.5">Yesterday</span>
+          </div>
+          <!-- Notification 5 -->
+          <div class="bg-white border border-[#e4dfee] rounded-[16px] p-4 flex gap-3 relative shadow-sm">
+            <div class="relative shrink-0">
+              <div class="w-10 h-10 rounded-full bg-[#f8f7fa] border-2 border-[#e4dfee] flex items-center justify-center text-[#8a79ab]">
+                <i class="text-[16px]"><i class="fa-solid fa-music"></i></i>
+              </div>
+              <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-[#e5262f] border-[1.5px] border-white rounded-full flex items-center justify-center text-white text-[8px]">
+                <i><i class="fa-solid fa-play"></i></i>
+              </div>
+            </div>
+            <div class="flex-1">
+              <p class="text-[14px] text-[#3d3c4f] leading-snug">
+                <span class="font-serif font-bold text-[#3d3c4f]">Lunar Resonance</span> went live at Sonic Basement
+              </p>
+            </div>
+            <span class="text-[12px] text-[#9c97a9] shrink-0 mt-0.5">2d</span>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- THE BOTTOM TAB BAR -->
+    <nav id="bottom-nav" class="absolute bottom-0 left-0 w-full h-[76px] bg-white/96 backdrop-blur-md border-t border-[#e4dfee] flex justify-between items-center px-6 z-30 pb-4">
+      <!-- Map -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-[#9c97a9]">
+            <i class="text-[22px]"><i class="fa-regular fa-map"></i></i>
+            <span class="text-[10.5px] font-medium">MAP</span>
+        </a>
+
+        <!-- Discover -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-[#9c97a9]">
+            <i class="text-[22px]"><i class="fa-regular fa-compass"></i></i>
+            <span class="text-[10.5px] font-medium">DISCOVER</span>
+        </a>
+
+        <!-- Jams (Active) -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-[#8a79ab]">
+            <i class="text-[22px]"><i class="fa-solid fa-guitar"></i></i>
+            <span class="text-[10.5px] font-semibold">JAMS</span>
+        </a>
+
+        <!-- Live -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-[#9c97a9] relative">
+      <div class="relative">
+        <i class="text-[22px]"><i class="fa-solid fa-tower-broadcast"></i></i>
+      </div>
+      <span class="text-[10.5px] font-medium">LIVE</span>
+        </a>
+
+        <!-- Me -->
+        <a href="#" class="flex flex-col items-center justify-center gap-1 min-w-[56px] text-[#9c97a9]">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="Me" class="w-[22px] h-[22px] rounded-full border border-[#9c97a9] object-cover opacity-80">
+            <span class="text-[10.5px] font-medium">ME</span>
+        </a>
+    </nav>
+  </body>
+</html>

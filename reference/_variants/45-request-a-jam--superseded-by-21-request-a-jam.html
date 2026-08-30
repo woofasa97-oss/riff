@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>
+      Request a Jam - Riff
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&amp;family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Geist:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+  </head>
+  <body class="h-full w-full overflow-hidden flex flex-col items-center justify-center m-0 p-0 bg-background font-sans">
+    <!-- Main Container - Mobile Constrained -->
+    <main id="request-jam-screen" class="relative w-full h-full max-w-md mx-auto flex flex-col bg-black overflow-hidden sm:shadow-2xl sm:border sm:border-border sm:rounded-[32px] sm:h-[844px] sm:my-auto">
+      <!-- DIMMED BACKGROUND WITH DISCOVER FEED VISIBLE -->
+      <div class="absolute inset-0 z-0 opacity-40 pointer-events-none">
+        <header class="w-full h-[56px] flex items-center justify-between px-4 bg-background border-b border-border">
+          <div class="font-serif font-bold text-[22px] text-primary">
+            Riff
+          </div>
+          <div class="flex gap-2">
+            <div class="w-[36px] h-[36px] rounded-full bg-white border border-border flex items-center justify-center text-foreground">
+              <i class="font-light text-[14px]"><i class="fa-solid fa-magnifying-glass"></i></i>
+            </div>
+            <div class="w-[36px] h-[36px] rounded-full bg-white border border-border flex items-center justify-center text-foreground">
+              <i class="font-light text-[14px]"><i class="fa-solid fa-sliders"></i></i>
+            </div>
+          </div>
+        </header>
+        <div class="p-4 flex flex-col gap-4 bg-background h-full">
+          <div class="w-full bg-white rounded-[16px] p-4 border border-border h-[200px]">
+          </div>
+          <div class="w-full bg-white rounded-[16px] p-4 border border-border h-[200px]">
+          </div>
+        </div>
+        <nav class="absolute bottom-0 w-full h-[76px] bg-white border-t border-border flex justify-between px-2 pt-3">
+        </nav>
+      </div>
+      <!-- MODAL BOTTOM SHEET -->
+      <div class="absolute bottom-0 w-full bg-background rounded-t-[24px] shadow-2xl z-50 flex flex-col max-h-[90vh]">
+        <!-- Handle -->
+        <div class="w-full flex justify-center pt-3 pb-2 shrink-0">
+          <div class="w-12 h-1.5 bg-[#cec9d9] rounded-full">
+          </div>
+        </div>
+        <!-- Scrollable Content -->
+        <div class="w-full overflow-y-auto hide-scrollbar px-5 pb-8 flex flex-col">
+          <!-- Profile Header -->
+          <div class="flex flex-col items-center mt-2 mb-6 text-center">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Marcus Chen" class="w-[72px] h-[72px] rounded-full border-[2px] border-white shadow-sm object-cover mb-3">
+            <h2 class="font-serif font-bold text-[22px] text-foreground leading-tight">
+              Marcus Chen
+            </h2>
+            <p class="text-[14px] text-muted-foreground mt-1">
+              Drummer · Jazz / Fusion
+            </p>
+            <div class="mt-3 bg-[#EFEBF6] rounded-full px-3 py-1 flex items-center gap-1.5 border border-primary/20">
+              <i class="text-primary text-[10px]"><i class="fa-solid fa-star"></i></i>
+                        <span class="text-[12px] font-semibold text-primary">98% reliability</span>
+            </div>
+          </div>
+          <div class="w-full h-px bg-border mb-6">
+          </div>
+          <!-- Pick a Vibe -->
+          <div class="mb-6">
+            <h3 class="text-[10.5px] font-bold text-primary tracking-wide uppercase mb-3">
+              PICK A VIBE
+            </h3>
+            <div class="flex gap-2 flex-wrap">
+              <button class="px-4 py-2 rounded-[12px] bg-primary text-white text-[14px] font-medium border border-primary transition-colors">Casual Jam</button>
+                        <button class="px-4 py-2 rounded-[12px] bg-white text-foreground text-[14px] font-medium border border-border transition-colors hover:bg-gray-50">Serious Project</button>
+                        <button class="px-4 py-2 rounded-[12px] bg-white text-foreground text-[14px] font-medium border border-border transition-colors hover:bg-gray-50">Gigging</button>
+            </div>
+          </div>
+          <!-- Suggest a Time -->
+          <div class="mb-6">
+            <h3 class="text-[10.5px] font-bold text-primary tracking-wide uppercase mb-3">
+              SUGGEST A TIME
+            </h3>
+            <div class="flex overflow-x-auto hide-scrollbar gap-3 pb-2 -mx-5 px-5">
+              <!-- Selected Time -->
+              <div class="min-w-[140px] bg-white border-2 border-primary rounded-[16px] p-3 flex flex-col relative shadow-sm cursor-pointer shrink-0">
+                <div class="absolute top-3 right-3 text-[#2FBF71] bg-white rounded-full leading-none">
+                  <i class="text-[18px]"><i class="fa-solid fa-circle-check"></i></i>
+                </div>
+                <span class="text-[13px] font-bold text-foreground mt-1">Tue 12 Nov</span>
+                            <span class="text-[15px] text-foreground mb-3">7:00 PM</span>
+                <div class="flex items-center gap-1.5 mt-auto">
+                  <div class="w-1.5 h-1.5 rounded-full bg-[#2FBF71]">
+                  </div>
+                  <span class="text-[11px] text-muted-foreground">He is free</span>
+                </div>
+              </div>
+              <!-- Unselected Time 1 -->
+              <div class="min-w-[140px] bg-white border border-border rounded-[16px] p-3 flex flex-col relative shadow-sm cursor-pointer shrink-0 hover:border-[#cec9d9]">
+                <div class="absolute top-3 right-3 text-border bg-white rounded-full leading-none">
+                  <i class="text-[18px]"><i class="fa-regular fa-circle"></i></i>
+                </div>
+                <span class="text-[13px] font-medium text-foreground mt-1">Thu 14 Nov</span>
+                            <span class="text-[15px] text-foreground mb-3">8:00 PM</span>
+                <div class="flex items-center gap-1.5 mt-auto">
+                  <div class="w-1.5 h-1.5 rounded-full bg-[#2FBF71]">
+                  </div>
+                  <span class="text-[11px] text-muted-foreground">He is free</span>
+                </div>
+              </div>
+              <!-- Unselected Time 2 -->
+              <div class="min-w-[140px] bg-white border border-border rounded-[16px] p-3 flex flex-col relative shadow-sm cursor-pointer shrink-0 hover:border-[#cec9d9]">
+                <div class="absolute top-3 right-3 text-border bg-white rounded-full leading-none">
+                  <i class="text-[18px]"><i class="fa-regular fa-circle"></i></i>
+                </div>
+                <span class="text-[13px] font-medium text-foreground mt-1">Sun 17 Nov</span>
+                            <span class="text-[15px] text-foreground mb-3">4:00 PM</span>
+                <div class="flex items-center gap-1.5 mt-auto">
+                  <div class="w-1.5 h-1.5 rounded-full bg-[#2FBF71]">
+                  </div>
+                  <span class="text-[11px] text-muted-foreground">He is free</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Where -->
+          <div class="mb-6">
+            <h3 class="text-[10.5px] font-bold text-primary tracking-wide uppercase mb-3">
+              WHERE
+            </h3>
+            <div class="flex gap-2 flex-wrap">
+              <button class="px-4 py-2 rounded-[12px] bg-primary text-white text-[14px] font-medium border border-primary transition-colors flex items-center gap-2">
+                            Sonic Basement
+                            <i class="text-[12px]"><i class="fa-solid fa-check"></i></i>
+                        </button>
+                        <button class="px-4 py-2 rounded-[12px] bg-white text-foreground text-[14px] font-medium border border-border transition-colors hover:bg-gray-50">The Attic</button>
+                        <button class="px-4 py-2 rounded-[12px] bg-transparent text-primary text-[14px] font-medium border border-dashed border-primary/50 transition-colors hover:bg-primary/5">
+                            <i class="text-[12px] mr-1"><i class="fa-solid fa-plus"></i></i> Suggest a place
+                        </button>
+            </div>
+          </div>
+          <!-- Message -->
+          <div class="mb-6">
+            <textarea class="w-full h-[80px] bg-white border border-border rounded-[16px] p-4 text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none shadow-sm" placeholder="Say hi and what you want to play">
+            </textarea>
+          </div>
+          <!-- Confirmation Notice -->
+          <div class="bg-[#EFEBF6] rounded-[12px] p-3 flex items-start gap-3 mb-6">
+            <i class="text-primary text-[14px] mt-0.5"><i class="fa-solid fa-shield-halved"></i></i>
+            <p class="text-[13px] text-primary leading-snug">
+              Nothing is confirmed until Marcus accepts.
+            </p>
+          </div>
+          <!-- Primary Action -->
+                <button class="w-full h-[48px] rounded-[12px] bg-primary text-white font-medium text-[16px] hover:bg-primary/90 transition-colors shadow-sm flex justify-center items-center">
+                    Send jam request
+                </button>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Onboarding - Riff 3
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Lora:wght@500;600;700&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+          --background: #F2EFF8;
+          --foreground: #6B6880;
+          --card: #FFFFFF;
+          --card-foreground: #3D3C4F;
+          --primary: #8A79AB;
+          --primary-foreground: #FFFFFF;
+          --secondary: #EFEBF6;
+          --secondary-foreground: #3D3C4F;
+          --muted: #F2EFF8;
+          --muted-foreground: #6B6880;
+          --accent: #EFEBF6;
+          --accent-foreground: #8A79AB;
+          --destructive: #DC2626;
+          --destructive-foreground: #FFFFFF;
+          --border: #E4DFEE;
+          --input: #E4DFEE;
+          --ring: #8A79AB;
+          --font-sans: Geist;
+          --font-serif: Lora;
+          --font-mono: JetBrains Mono, monospace;
+          --radius: 1rem;
+          --shadow: -2px 4px 12px 4px rgba(51,51,51,0.05);
+}
+    </style>
+  </head>
+  <body class="bg-background text-foreground flex justify-center min-h-[100dvh]">
+    <main class="w-full max-w-md bg-background flex flex-col relative h-[100dvh] shadow-xl overflow-hidden" id="app-container">
+      <!-- Header -->
+      <header id="header" class="w-full bg-background pt-14 pb-4 px-6 flex flex-col gap-4 z-10 sticky top-0">
+        <div class="flex items-center justify-between w-full">
+          <button class="w-10 h-10 flex items-center justify-center rounded-full text-foreground hover:bg-secondary transition-colors" aria-label="Go back">
+                    <i class="text-lg"><i class="fa-solid fa-chevron-left"></i></i>
+                </button>
+                <span class="text-sm font-medium text-muted-foreground font-sans tracking-wide">Step 2 of 4</span>
+          <div class="w-10 h-10">
+          </div>
+          <!-- Spacer for centering -->
+        </div>
+        <!-- Progress Bar -->
+        <div class="w-full h-1 bg-border rounded-full overflow-hidden">
+          <div class="h-full bg-primary w-1/2 rounded-full transition-all duration-300">
+          </div>
+        </div>
+      </header>
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-y-auto px-6 pb-32 pt-2">
+        <!-- Hero Title -->
+        <div class="mb-8">
+          <h1 class="font-serif text-3xl font-bold text-foreground mb-2">
+            What do you play?
+          </h1>
+          <p class="text-muted-foreground font-sans text-base">
+            This is how people find you.
+          </p>
+        </div>
+        <!-- Instruments Section -->
+        <section class="mb-10" id="section-instruments">
+          <h2 class="text-[10px] uppercase tracking-[0.1em] font-bold text-primary mb-4">
+            Instruments
+          </h2>
+          <div class="flex flex-wrap gap-2.5">
+            <button class="px-5 py-2.5 rounded-full border border-primary bg-primary text-primary-foreground font-medium text-sm transition-colors shadow-sm">Drums</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Bass</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Keys</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Guitar</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Vocals</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Sax</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Synth</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Percussion</button>
+          </div>
+        </section>
+        <!-- Genre Lanes Section -->
+        <section class="mb-10" id="section-genres">
+          <h2 class="text-[10px] uppercase tracking-[0.1em] font-bold text-primary mb-4">
+            Genre Lanes
+          </h2>
+          <div class="flex flex-wrap gap-2.5">
+            <button class="px-5 py-2.5 rounded-full border border-primary bg-primary text-primary-foreground font-medium text-sm transition-colors shadow-sm">Jazz</button>
+                    <button class="px-5 py-2.5 rounded-full border border-primary bg-primary text-primary-foreground font-medium text-sm transition-colors shadow-sm">Neo-Soul</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Fusion</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Indie</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Rock</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Funk</button>
+                    <button class="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium text-sm hover:border-primary/50 transition-colors">Hip-Hop</button>
+          </div>
+        </section>
+        <!-- Intent Section -->
+        <section class="mb-4" id="section-intent">
+          <h2 class="text-[10px] uppercase tracking-[0.1em] font-bold text-primary mb-4">
+            What are you looking for
+          </h2>
+          <div class="flex flex-col gap-3">
+            <!-- Option 1: Casual Jam -->
+            <div class="relative w-full rounded-[16px] border border-border bg-card p-4 transition-all cursor-pointer">
+              <h3 class="font-serif font-bold text-foreground text-lg mb-1">
+                Casual Jam
+              </h3>
+              <p class="font-sans text-sm text-muted-foreground leading-relaxed">
+                Play for the joy of it, no pressure
+              </p>
+            </div>
+            <!-- Option 2: Serious Project (Selected) -->
+            <div class="relative w-full rounded-[16px] border-[2px] border-primary bg-[#F9F7FC] p-4 transition-all cursor-pointer shadow-sm">
+              <h3 class="font-serif font-bold text-primary text-lg mb-1">
+                Serious Project
+              </h3>
+              <p class="font-sans text-sm text-muted-foreground leading-relaxed pr-8">
+                Building something with regular people
+              </p>
+              <div class="absolute top-4 right-4 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                <i class="text-white text-xs"><i class="fa-solid fa-check"></i></i>
+              </div>
+            </div>
+            <!-- Option 3: Gigging -->
+            <div class="relative w-full rounded-[16px] border border-border bg-card p-4 transition-all cursor-pointer">
+              <h3 class="font-serif font-bold text-foreground text-lg mb-1">
+                Gigging
+              </h3>
+              <p class="font-sans text-sm text-muted-foreground leading-relaxed">
+                Ready to play paid shows
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+      <!-- Sticky Bottom Bar -->
+      <div class="absolute bottom-0 left-0 w-full bg-card border-t border-border p-6 pb-8 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)] z-20 flex gap-3">
+        <button class="flex-1 bg-secondary text-secondary-foreground font-semibold py-4 rounded-[12px] transition-colors font-sans text-base">
+                Back
+            </button>
+            <button class="flex-1 bg-primary text-primary-foreground font-semibold py-4 rounded-[12px] shadow-sm hover:opacity-90 transition-opacity font-sans text-base">
+                Continue
+            </button>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<!-- Riff reference screen — Step 3: When are you free
+     Route: /onboarding/availability
+     Source: prototype screen #13 ("Step 3: When are you free", group "Riff 4")
+     Visual reference only. Do not copy this markup; see CLAUDE.md. -->
+<html lang="en">
+  <head>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Riff 4 - Step 3: When are you free
+    </title>
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+  </head>
+  <body class="m-0 p-0 min-h-[100dvh] flex flex-col relative bg-background text-foreground w-full max-w-full">
+    <!-- SUB SCREEN HEADER -->
+    <header id="sub-header" class="h-[56px] w-full flex items-center justify-between px-4 bg-background z-20 shrink-0">
+      <button class="w-9 h-9 flex items-center justify-center text-[#3D3C4F] shrink-0">
+            <i class="text-lg"><i class="fa-solid fa-chevron-left"></i></i>
+        </button>
+      <h1 class="font-serif font-bold text-[17px] text-[#3D3C4F] flex-1 text-center">
+        Step 3 of 4
+      </h1>
+      <div class="w-9 h-9 shrink-0">
+      </div>
+    </header>
+    <!-- PROGRESS BAR -->
+    <div class="w-full h-[2px] bg-border shrink-0">
+      <div class="h-full bg-primary w-3/4">
+      </div>
+    </div>
+    <!-- MAIN SCROLLABLE CONTENT -->
+    <main id="onboarding-main" class="flex-1 flex flex-col px-5 py-6 pb-32 overflow-y-auto w-full max-w-md mx-auto">
+      <!-- Headers -->
+      <div class="mb-8 text-center">
+        <h2 class="font-serif font-bold text-[32px] leading-tight text-foreground mb-3">
+          When are you free?
+        </h2>
+        <p class="font-sans text-[15px] text-muted-foreground leading-relaxed">
+          People send fewer pointless requests when they can see this.
+        </p>
+      </div>
+      <!-- Availability Grid Card -->
+      <div class="bg-card rounded-[16px] border border-border shadow-sm p-4 mb-6 w-full">
+        <div class="w-full">
+          <!-- Column Headers (Days) -->
+          <div class="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_1fr] gap-2 mb-2 items-end">
+            <div class="w-[60px]">
+            </div>
+            <!-- Spacer for row labels -->
+            <div class="text-center font-sans text-[10.5px] uppercase tracking-wider text-muted-foreground font-semibold">
+              M
+            </div>
+            <div class="text-center font-sans text-[10.5px] uppercase tracking-wider text-muted-foreground font-semibold">
+              T
+            </div>
+            <div class="text-center font-sans text-[10.5px] uppercase tracking-wider text-muted-foreground font-semibold">
+              W
+            </div>
+            <div class="text-center font-sans text-[10.5px] uppercase tracking-wider text-muted-foreground font-semibold">
+              T
+            </div>
+            <div class="text-center font-sans text-[10.5px] uppercase tracking-wider text-muted-foreground font-semibold">
+              F
+            </div>
+            <div class="text-center font-sans text-[10.5px] uppercase tracking-wider text-muted-foreground font-semibold">
+              S
+            </div>
+            <div class="text-center font-sans text-[10.5px] uppercase tracking-wider text-muted-foreground font-semibold">
+              S
+            </div>
+          </div>
+          <!-- Row: Morning -->
+          <div class="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_1fr] gap-2 mb-2 items-center">
+            <div class="w-[60px] font-sans text-[10px] uppercase text-muted-foreground font-medium text-right pr-2">
+              Morn
+            </div>
+            <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell unselected w-full"></button>
+          </div>
+          <!-- Row: Afternoon -->
+          <div class="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_1fr] gap-2 mb-2 items-center">
+            <div class="w-[60px] font-sans text-[10px] uppercase text-muted-foreground font-medium text-right pr-2">
+              Aft
+            </div>
+            <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell selected w-full"></button> <!-- Sat Aft -->
+                    <button class="grid-cell unselected w-full"></button>
+          </div>
+          <!-- Row: Evening -->
+          <div class="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_1fr] gap-2 items-center">
+            <div class="w-[60px] font-sans text-[10px] uppercase text-muted-foreground font-medium text-right pr-2">
+              Eve
+            </div>
+            <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell selected w-full"></button> <!-- Tue Eve -->
+                    <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell selected w-full"></button> <!-- Thu Eve -->
+                    <button class="grid-cell unselected w-full"></button>
+                    <button class="grid-cell selected w-full"></button> <!-- Sat Eve -->
+                    <button class="grid-cell selected w-full"></button> <!-- Sun Eve -->
+          </div>
+        </div>
+        <!-- Summary below grid -->
+        <div class="mt-5 flex items-center justify-between border-t border-border pt-4">
+          <span class="font-sans text-[14px] text-muted-foreground">Usually free evenings after 7 PM</span>
+                <button class="font-sans text-[14px] text-primary font-medium">Edit</button>
+        </div>
+      </div>
+      <!-- Toggle Row Card -->
+      <div class="bg-card rounded-[16px] border border-border shadow-sm p-4 w-full flex items-center justify-between">
+        <div class="flex flex-col">
+          <span class="font-sans text-[16px] font-medium text-foreground">Show me as available tonight</span>
+                <span class="font-sans text-[13px] text-muted-foreground mt-1">Turns itself off at midnight.</span>
+        </div>
+        <!-- Custom Toggle Switch (Active state) -->
+            <button class="w-[50px] h-[30px] bg-primary rounded-full relative transition-colors duration-200 shrink-0">
+        <div class="absolute right-[2px] top-[2px] bg-white w-[26px] h-[26px] rounded-full shadow-sm transition-transform duration-200">
+        </div>
+        </button>
+      </div>
+    </main>
+    <!-- STICKY BOTTOM BAR -->
+    <div id="sticky-bottom" class="fixed bottom-0 left-0 right-0 w-full bg-background border-t border-border px-5 py-4 z-30 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+      <div class="w-full max-w-md mx-auto flex gap-3">
+        <button class="flex-1 h-[48px] bg-secondary text-secondary-foreground font-semibold rounded-[12px] shadow-sm flex items-center justify-center transition-transform active:scale-95 text-[15px]">
+                Back
+            </button>
+            <button class="flex-1 h-[48px] bg-primary text-primary-foreground font-semibold rounded-[12px] shadow-sm flex items-center justify-center transition-transform active:scale-95 text-[15px]">
+                Continue
+            </button>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<!-- Riff reference screen — Map
+     Route: /map
+     Source: prototype screen #32 ("Map", group "Riff 4")
+     Visual reference only. Do not copy this markup; see CLAUDE.md. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Riff 4 - Map
+    </title>
+    <script>
+      window.FontAwesomeConfig = { autoReplaceSvg: "nest"};
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+      // tailwind.config (IMPORTANT FOR STYLES)
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "border": "var(--border)",
+        "input": "var(--input)",
+        "ring": "var(--ring)",
+        "background": "var(--background)",
+        "foreground": "var(--foreground)",
+        "primary": { "DEFAULT": "var(--primary)", "foreground": "var(--primary-foreground)" },
+        "secondary": { "DEFAULT": "var(--secondary)", "foreground": "var(--secondary-foreground)" },
+        "destructive": { "DEFAULT": "var(--destructive)", "foreground": "var(--destructive-foreground)" },
+        "muted": { "DEFAULT": "var(--muted)", "foreground": "var(--muted-foreground)" },
+        "accent": { "DEFAULT": "var(--accent)", "foreground": "var(--accent-foreground)" },
+        "popover": { "DEFAULT": "var(--popover)", "foreground": "var(--popover-foreground)" },
+        "card": { "DEFAULT": "var(--card)", "foreground": "var(--card-foreground)" },
+        "sidebar": {
+          "DEFAULT": "var(--sidebar)", "foreground": "var(--sidebar-foreground)",
+          "primary": "var(--sidebar-primary)", "primary-foreground": "var(--sidebar-primary-foreground)",
+          "accent": "var(--sidebar-accent)", "accent-foreground": "var(--sidebar-accent-foreground)",
+          "border": "var(--sidebar-border)", "ring": "var(--sidebar-ring)"
+        },
+        "chart": { "1": "var(--chart-1)", "2": "var(--chart-2)", "3": "var(--chart-3)", "4": "var(--chart-4)", "5": "var(--chart-5)" }
+      },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },
+      fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"], mono: ["var(--font-mono)"] },
+      boxShadow: {
+        "2xs": "var(--shadow-2xs)", xs: "var(--shadow-xs)", sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)", md: "var(--shadow-md)", lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)", "2xl": "var(--shadow-2xl)"
+      }
+    }
+  }
+}
+    </script>
+    <style>
+      :root {
+          --background: #f8f7fa;
+          --foreground: #3d3c4f;
+          --card: #ffffff;
+          --card-foreground: #3d3c4f;
+          --popover: #ffffff;
+          --popover-foreground: #3d3c4f;
+          --primary: #8a79ab;
+          --primary-foreground: #f8f7fa;
+          --secondary: #dfd9ec;
+          --secondary-foreground: #3d3c4f;
+          --muted: #dcd9e3;
+          --muted-foreground: #6b6880;
+          --accent: #e6a5b8;
+          --accent-foreground: #4b2e36;
+          --destructive: #d95c5c;
+          --destructive-foreground: #f8f7fa;
+          --border: #cec9d9;
+          --input: #eae7f0;
+          --ring: #8a79ab;
+          --chart-1: #8a79ab;
+          --chart-2: #e6a5b8;
+          --chart-3: #77b8a1;
+          --chart-4: #f0c88d;
+          --chart-5: #a0bbe3;
+          --sidebar: #f1eff5;
+          --sidebar-foreground: #3d3c4f;
+          --sidebar-primary: #8a79ab;
+          --sidebar-primary-foreground: #f8f7fa;
+          --sidebar-accent: #e6a5b8;
+          --sidebar-accent-foreground: #4b2e36;
+          --sidebar-border: #d7d2e0;
+          --sidebar-ring: #8a79ab;
+          --font-sans: Geist, sans-serif;
+          --font-serif: "Lora", Georgia, serif;
+          --font-mono: "Fira Code", "Courier New", monospace;
+          --radius: 0.5rem;
+          --shadow-x: 1px;
+          --shadow-y: 2px;
+          --shadow-blur: 5px;
+          --shadow-spread: 1px;
+          --shadow-opacity: 0.06;
+          --shadow-color: hsl(0 0% 0%);
+          --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
+          --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
+          --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
+          --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
+          --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
+          --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+          --tracking-normal: 0em;
+          --spacing: 0.25rem;
+}
+    </style>
+  </head>
+  <body class="m-0 p-0 min-h-[100dvh] flex flex-col relative bg-background text-foreground w-full max-w-full font-sans">
+    <!-- TOP-LEVEL HEADER -->
+    <header id="main-header" class="h-[56px] w-full flex items-center justify-between px-4 bg-background z-20 shrink-0">
+      <h1 class="font-serif font-bold text-[22px] text-primary">
+        Riff 4
+      </h1>
+      <div class="flex items-center gap-2">
+        <button class="w-[36px] h-[36px] rounded-full bg-white border border-[#E4DFEE] flex items-center justify-center text-foreground shadow-sm">
+                <i class="text-[15px]"><i class="fa-solid fa-magnifying-glass"></i></i>
+            </button>
+            <button class="w-[36px] h-[36px] rounded-full bg-white border border-[#E4DFEE] flex items-center justify-center text-foreground shadow-sm">
+                <i class="text-[15px]"><i class="fa-solid fa-sliders"></i></i>
+            </button>
+      </div>
+    </header>
+    <!-- FILTER CHIPS -->
+    <div class="w-full bg-background z-20 shrink-0 pb-3 pt-1 border-b border-border/50">
+      <div class="flex items-center gap-2 px-4 overflow-x-auto no-scrollbar pb-1">
+        <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-medium border border-primary bg-primary text-white shadow-sm transition-colors">
+                Tonight
+            </button>
+            <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-medium border border-[#E4DFEE] bg-white text-[#3D3C4F] shadow-sm transition-colors">
+                All musicians
+            </button>
+            <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-medium border border-[#E4DFEE] bg-white text-[#3D3C4F] shadow-sm transition-colors">
+                Bass
+            </button>
+            <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-medium border border-[#E4DFEE] bg-white text-[#3D3C4F] shadow-sm transition-colors">
+                Drums
+            </button>
+            <button class="whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-medium border border-[#E4DFEE] bg-white text-[#3D3C4F] shadow-sm transition-colors">
+                Keys
+            </button>
+      </div>
+    </div>
+    <!-- MAIN MAP AREA -->
+    <main id="map-view" class="flex-1 w-full relative map-bg">
+      <div class="map-contours">
+      </div>
+      <!-- ZONE CARD: Williamsburg -->
+      <div class="absolute top-[12%] left-[10%] z-10 flex flex-col items-center">
+        <div class="bg-white rounded-[16px] border border-[#E4DFEE] shadow-md p-3 flex flex-col gap-2 min-w-[140px] relative">
+          <h3 class="font-serif font-bold text-[15px] text-[#3D3C4F] text-center">
+            Williamsburg
+          </h3>
+          <div class="flex items-center justify-center">
+            <div class="flex -space-x-2">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="Avatar" class="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm">
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Avatar" class="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm">
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Avatar" class="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm">
+            </div>
+            <span class="ml-2 text-[12px] font-semibold text-[#3D3C4F]">+18</span>
+          </div>
+          <div class="bg-primary/10 rounded-lg py-1 mt-1">
+            <p class="text-[10px] uppercase tracking-wider text-primary font-bold text-center">
+              20 MUSICIANS
+            </p>
+          </div>
+        </div>
+        <!-- Pin -->
+        <div class="w-1.5 h-6 bg-primary/40 mt-1 relative">
+          <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary shadow-sm border border-white">
+          </div>
+        </div>
+      </div>
+      <!-- ZONE CARD: Greenpoint -->
+      <div class="absolute top-[35%] right-[8%] z-10 flex flex-col items-center">
+        <div class="bg-white rounded-[16px] border border-[#E4DFEE] shadow-md p-3 flex flex-col gap-2 min-w-[130px] relative">
+          <h3 class="font-serif font-bold text-[15px] text-[#3D3C4F] text-center">
+            Greenpoint
+          </h3>
+          <div class="flex justify-center">
+            <div class="bg-[#E6A5B8] text-[#4b2e36] px-2 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1 shadow-sm">
+              <div class="w-1.5 h-1.5 rounded-full bg-white animate-pulse">
+              </div>
+              1 Jam Live
+            </div>
+          </div>
+          <p class="text-[10px] uppercase tracking-wider text-primary font-bold text-center mt-1">
+            9 MUSICIANS
+          </p>
+        </div>
+        <!-- Pin with halo -->
+        <div class="w-1.5 h-6 bg-[#E6A5B8]/40 mt-1 relative">
+          <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#E6A5B8] shadow-sm border border-white z-10">
+          </div>
+          <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#E6A5B8] pulse-halo z-0">
+          </div>
+        </div>
+      </div>
+      <!-- ZONE CARD: Bushwick -->
+      <div class="absolute bottom-[28%] left-[20%] z-10 flex flex-col items-center">
+        <div class="bg-white rounded-[16px] border border-[#E4DFEE] shadow-md p-3 flex flex-col gap-1.5 min-w-[120px] relative">
+          <h3 class="font-serif font-bold text-[15px] text-[#3D3C4F] text-center">
+            Bushwick
+          </h3>
+          <p class="text-[10px] uppercase tracking-wider text-primary font-bold text-center mt-1">
+            14 MUSICIANS
+          </p>
+        </div>
+        <!-- Pin -->
+        <div class="w-1.5 h-6 bg-primary/40 mt-1 relative">
+          <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary shadow-sm border border-white">
+          </div>
+        </div>
+      </div>
+      <!-- User Pin (Me) -->
+      <div class="absolute top-[55%] left-[45%] z-20 flex flex-col items-center transform -translate-x-1/2 -translate-y-1/2">
+        <div class="bg-white text-[#3D3C4F] font-bold text-[12px] px-2.5 py-1 rounded-full shadow-md border border-[#E4DFEE] mb-1">
+          Me
+        </div>
+        <div class="w-4 h-4 rounded-full bg-[#2FBF71] shadow-lg border-2 border-white relative z-10">
+          <div class="absolute inset-0 rounded-full bg-[#2FBF71] opacity-40 animate-ping">
+          </div>
+        </div>
+      </div>
+      <!-- Floating Status Pill -->
+      <div class="absolute bottom-[20px] left-1/2 transform -translate-x-1/2 z-20">
+        <div class="bg-white/95 backdrop-blur-sm rounded-full px-5 py-2 shadow-md border border-[#E4DFEE]">
+          <p class="text-[13px] font-medium text-[#3D3C4F]">
+            20 musicians nearby · <span class="text-muted-foreground">0.6–1.4 miles away</span>
+          </p>
+        </div>
+      </div>
+    </main>
+    <!-- BOTTOM TAB BAR -->
+    <nav id="bottom-tab-bar" class="w-full h-[76px] bg-white/96 backdrop-blur-md border-t border-[#E4DFEE] shrink-0 pb-safe z-30 flex items-center justify-around px-2 relative">
+      <!-- Map (Active) -->
+        <button class="flex flex-col items-center justify-center w-[60px] h-full gap-1 text-primary">
+            <i class="text-[22px]"><i class="fa-regular fa-map"></i></i>
+            <span class="text-[10.5px] font-sans font-semibold">MAP</span>
+        </button>
+
+        <!-- Discover -->
+        <button class="flex flex-col items-center justify-center w-[60px] h-full gap-1 text-[#9C97A9]">
+            <i class="text-[22px]"><i class="fa-regular fa-compass"></i></i>
+            <span class="text-[10.5px] font-sans">DISCOVER</span>
+        </button>
+
+        <!-- Jams -->
+        <button class="flex flex-col items-center justify-center w-[60px] h-full gap-1 text-[#9C97A9]">
+            <i class="text-[22px]"><i class="fa-solid fa-guitar"></i></i>
+            <span class="text-[10.5px] font-sans">JAMS</span>
+        </button>
+
+        <!-- Live -->
+        <button class="flex flex-col items-center justify-center w-[60px] h-full gap-1 text-[#9C97A9] relative">
+      <div class="relative">
+        <i class="text-[22px]"><i class="fa-solid fa-tower-broadcast"></i></i>
+        <div class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#E6A5B8] border border-white">
+        </div>
+      </div>
+      <span class="text-[10.5px] font-sans">LIVE</span>
+        </button>
+
+        <!-- Me -->
+        <button class="flex flex-col items-center justify-center w-[60px] h-full gap-1 text-[#9C97A9]">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Me" class="w-[22px] h-[22px] rounded-full object-cover grayscale opacity-70">
+            <span class="text-[10.5px] font-sans">ME</span>
+        </button>
+    </nav>
+  </body>
+</html>

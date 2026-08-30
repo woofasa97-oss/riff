@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<!-- Riff reference screen — Musicianmap 2
+     Route: — (alt design, reference only)
+     Source: prototype screen #49 ("Musicianmap 2", group "Musicianmap")
+     Visual reference only. Do not copy this markup; see CLAUDE.md. -->
+<html lang="en">
+  <head>
+    <script>
+      window.FontAwesomeConfig = {
+          autoReplaceSvg: 'nest'
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Musicianmap 2
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=Lora:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet">
+    <style>
+      :root {
+            --primary: #8a79ab;
+            --secondary: #dfd9ec;
+            --accent: #e6a5b8;
+            --background: #f8f7fa;
+            --foreground: #3d3c4f;
+            --muted: #6b6880;
+            --font-sans: 'Geist', sans-serif;
+            --font-serif: "Lora", serif;
+        }
+        body { font-family: var(--font-sans); background-color: var(--background); color: var(--foreground); -webkit-tap-highlight-color: transparent; }
+        .serif { font-family: var(--font-serif); }
+
+        /* Themed Abstract Map Background */
+        .map-layer {
+            position: absolute;
+            inset: 0;
+            background-color: #f0eff5;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(138, 121, 171, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(230, 165, 184, 0.08) 0%, transparent 40%),
+                url("data:image/svg+xml,%3Csvg width='800' height='800' viewBox='0 0 800 800' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 100 Q 200 50 400 100 T 800 100' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3Cpath d='M0 300 Q 150 350 300 300 T 600 250 T 800 300' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3Cpath d='M0 500 Q 250 450 500 500 T 800 500' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3Cpath d='M100 0 Q 150 200 100 400 T 100 800' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3Cpath d='M400 0 Q 350 300 400 600 T 400 800' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3Cpath d='M700 0 Q 650 250 700 500 T 700 800' fill='none' stroke='%23d1d1e0' stroke-width='1'/%3E%3C/svg%3E");
+            background-size: cover;
+            filter: contrast(1.05);
+        }
+
+        .zone-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.4;
+            z-index: 1;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(.33); opacity: 0.8; }
+            80%, 100% { opacity: 0; transform: scale(2.5); }
+        }
+        .pulse-marker::before {
+            content: '';
+            position: absolute;
+            display: block;
+            width: 300%;
+            height: 300%;
+            box-sizing: border-box;
+            margin-left: -100%;
+            margin-top: -100%;
+            border-radius: 45px;
+            background-color: var(--accent);
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { display: none; }
+        .sheet-transition { transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+
+        .zone-highlight {
+            background: radial-gradient(circle, rgba(138, 121, 171, 0.15) 0%, transparent 70%);
+            width: 240px;
+            height: 240px;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* Video/Live placeholder style */
+        .live-glow {
+            box-shadow: 0 0 15px rgba(230, 165, 184, 0.5);
+        }
+    </style>
+  </head>
+  <body class="overflow-hidden bg-[#f0eff5]">
+    <!-- Top Header Overlay -->
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 px-4 py-4 flex items-center justify-between pointer-events-none">
+      <div class="pointer-events-auto glass-panel px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-3">
+        <h1 class="text-lg font-black text-[#8a79ab] serif tracking-tight">
+          Musicianmap 2
+        </h1>
+        <div class="h-4 w-[1px] bg-gray-200">
+        </div>
+        <div class="flex items-center gap-2 text-xs font-semibold text-[#6b6880]">
+          <i class="text-[#8a79ab]"><i class="fa-solid fa-location-crosshairs"></i></i>
+                <span>Brooklyn, NY</span>
+        </div>
+      </div>
+      <div class="flex gap-2 pointer-events-auto">
+        <button class="w-11 h-11 glass-panel rounded-2xl shadow-lg flex items-center justify-center text-[#6b6880] active:scale-95 transition-transform">
+                <i><i class="fa-solid fa-sliders"></i></i>
+            </button>
+      </div>
+    </header>
+    <!-- Map View Container -->
+    <main id="map-view" class="w-full h-screen relative overflow-hidden">
+      <div class="map-layer">
+      </div>
+      <!-- Ambient Zone Visuals -->
+      <div class="zone-blob bg-[#8a79ab]" style="top: 15%; left: 10%; width: 300px; height: 300px;">
+      </div>
+      <div class="zone-blob bg-[#e6a5b8]" style="top: 35%; right: 5%; width: 250px; height: 250px;">
+      </div>
+      <!-- Live Jam Session Marker (Greenpoint) -->
+      <div class="zone-highlight" style="top: 40%; left: 75%;">
+      </div>
+      <button class="absolute top-[40%] left-[75%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
+      <div class="bg-white/95 backdrop-blur-md px-3.5 py-3 rounded-2xl border border-white shadow-xl flex flex-col items-center gap-1.5 min-w-[120px] active:scale-90 transition-transform">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-[#e6a5b8] animate-ping">
+          </div>
+          <span class="text-[10px] font-black uppercase text-[#e6a5b8]">Live Jam</span>
+        </div>
+        <span class="text-[11px] font-black text-[#3d3c4f]">Sonic Basement</span>
+        <div class="flex -space-x-2 my-0.5">
+          <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg" class="w-6 h-6 rounded-full border-2 border-white">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" class="w-6 h-6 rounded-full border-2 border-white">
+        </div>
+      </div>
+      <div class="relative flex items-center justify-center mt-2">
+        <div class="pulse-marker absolute w-4 h-4 bg-[#e6a5b8] rounded-full">
+        </div>
+        <div class="w-5 h-5 bg-[#e6a5b8] rounded-full border-4 border-white shadow-lg relative z-10">
+        </div>
+      </div>
+      </button>
+
+        <!-- Static Zone (Williamsburg) -->
+      <div class="zone-highlight" style="top: 22%; left: 22%;">
+      </div>
+      <button class="absolute top-[22%] left-[22%] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
+      <div class="glass-panel px-3.5 py-3 rounded-2xl shadow-xl flex flex-col items-center gap-1.5 min-w-[100px] active:scale-90 transition-transform">
+        <span class="text-[11px] font-black text-[#3d3c4f]">Williamsburg</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-[#8a79ab]/70">20 Musicians</span>
+      </div>
+      <div class="w-5 h-5 bg-[#8a79ab] rounded-full border-4 border-white shadow-lg mt-2">
+      </div>
+      </button>
+
+        <!-- Current User Position -->
+      <div class="absolute top-[55%] left-[50%] flex flex-col items-center z-20">
+        <div class="w-4 h-4 bg-[#8a79ab] rounded-full border-4 border-white shadow-xl animate-bounce">
+        </div>
+        <span class="text-[10px] font-bold text-[#8a79ab] bg-white/90 px-2 py-0.5 rounded-full shadow-sm mt-1">Me</span>
+      </div>
+    </main>
+    <!-- LIVE SESSION SHEET -->
+    <div id="live-jam-sheet" class="fixed inset-x-0 bottom-0 z-[100] translate-y-full sheet-transition">
+      <div class="bg-white rounded-t-[2.5rem] shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.2)] max-h-[92dvh] flex flex-col overflow-hidden">
+        <div class="absolute top-4 right-6 z-50">
+          <button class="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white active:scale-95">
+                    <i><i class="fa-solid fa-xmark"></i></i>
+                </button>
+        </div>
+        <!-- Video Player Area -->
+        <div class="relative w-full aspect-[9/12] bg-gray-900 overflow-hidden shrink-0">
+          <img class="w-full h-full object-cover opacity-80" src="https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_fde8b7da38_a589ab9001adb945.png" alt="dynamic band practice session in a cozy studio, musicians playing instruments, warm lighting, cinema">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30">
+          </div>
+          <!-- Overlay Content -->
+          <div class="absolute top-6 left-6 flex flex-col gap-1">
+            <div class="flex items-center gap-2 bg-[#e6a5b8] px-3 py-1 rounded-full w-fit">
+              <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                        <span class="text-[10px] font-black text-white uppercase tracking-wider">Live Practice</span>
+            </div>
+            <h2 class="text-white text-2xl font-bold serif mt-2">
+              The Velvet Echoes
+            </h2>
+            <p class="text-white/70 text-xs font-medium">
+              <i class="mr-1"><i class="fa-solid fa-location-dot"></i></i> Greenpoint Sound Lab
+            </p>
+          </div>
+          <!-- Stats & Rating Overlay -->
+          <div class="absolute right-6 bottom-32 flex flex-col items-center gap-6">
+            <div class="flex flex-col items-center gap-1">
+              <button class="w-12 h-12 bg-white/10 backdrop-blur-lg rounded-full flex items-center justify-center text-white active:scale-90">
+                            <i class="text-xl"><i class="fa-solid fa-heart"></i></i>
+                        </button>
+                        <span class="text-[11px] font-black text-white">2.4k</span>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <button class="w-12 h-12 bg-white/10 backdrop-blur-lg rounded-full flex items-center justify-center text-white active:scale-90">
+                            <i class="text-xl text-yellow-400"><i class="fa-solid fa-star"></i></i>
+                        </button>
+                        <span class="text-[11px] font-black text-white">4.9</span>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <button class="w-12 h-12 bg-white/10 backdrop-blur-lg rounded-full flex items-center justify-center text-white active:scale-90">
+                            <i class="text-xl"><i class="fa-solid fa-share"></i></i>
+                        </button>
+                        <span class="text-[11px] font-black text-white">Share</span>
+            </div>
+          </div>
+          <!-- Live Comments Scroll -->
+          <div class="absolute bottom-6 left-6 right-20 max-h-32 overflow-hidden flex flex-col-reverse gap-3 pointer-events-none">
+            <div class="flex items-start gap-2 bg-black/30 backdrop-blur-sm p-2 rounded-xl border border-white/10 w-fit max-w-full">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" class="w-6 h-6 rounded-full">
+              <div>
+                <p class="text-[10px] font-black text-white">
+                  Sarah J.
+                </p>
+                <p class="text-[11px] text-white/90">
+                  That bass tone is incredible! 🔥
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2 bg-black/30 backdrop-blur-sm p-2 rounded-xl border border-white/10 w-fit max-w-full">
+              <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" class="w-6 h-6 rounded-full">
+              <div>
+                <p class="text-[10px] font-black text-white">
+                  Marcus
+                </p>
+                <p class="text-[11px] text-white/90">
+                  Are you guys looking for a synth player?
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Comment Input / Interaction -->
+        <div class="p-6 bg-white flex-1 border-t border-gray-100">
+          <div class="flex items-center gap-4 mb-6">
+            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" class="w-10 h-10 rounded-full border-2 border-[#8a79ab]">
+            <div class="flex-1 bg-gray-50 rounded-2xl px-4 py-3 flex items-center gap-3">
+              <input type="text" placeholder="Say something nice..." class="bg-transparent border-none outline-none flex-1 text-sm text-[#3d3c4f]">
+                        <button class="text-[#8a79ab]"><i><i class="fa-solid fa-paper-plane"></i></i></button>
+            </div>
+          </div>
+          <div class="flex items-center justify-between px-2">
+            <div class="flex items-center gap-2">
+              <div class="flex -space-x-3">
+                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold border-2 border-white">
+                  🎸
+                </div>
+                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold border-2 border-white">
+                  🥁
+                </div>
+                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold border-2 border-white">
+                  🎤
+                </div>
+              </div>
+              <span class="text-[11px] font-bold text-[#6b6880] ml-2">Open Jam Slot: 7:00 PM</span>
+            </div>
+            <button class="bg-[#8a79ab] text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg shadow-[#8a79ab]/20 active:scale-95 transition-transform">
+                        REQUEST TO JOIN
+                    </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ZONE BUNDLE SHEET (Standard) -->
+    <div id="zone-sheet" class="fixed inset-x-0 bottom-0 z-[90] translate-y-full sheet-transition">
+      <div class="bg-white rounded-t-[2.5rem] shadow-[0_-20px_50px_-15px_rgba(0,0,0,0.1)] max-h-[75dvh] flex flex-col">
+        <div class="flex justify-center pt-4 pb-1">
+          <div class="w-12 h-1.5 bg-gray-200 rounded-full">
+          </div>
+        </div>
+        <div class="px-6 pt-2 pb-3 flex items-start justify-between">
+          <div>
+            <h2 id="zone-title" class="text-2xl font-bold serif text-[#3d3c4f]">
+              Williamsburg
+            </h2>
+            <p id="zone-sub" class="text-sm text-[#6b6880] font-medium">
+              20 musicians nearby • 0.8 mi
+            </p>
+          </div>
+          <button class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400"><i><i class="fa-solid fa-xmark"></i></i></button>
+        </div>
+        <div id="category-grid" class="px-6 pb-24 grid grid-cols-2 gap-4 overflow-y-auto custom-scrollbar">
+        </div>
+      </div>
+    </div>
+    <!-- Bottom Nav -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-gray-100 px-8 py-4 flex justify-between items-center z-[110] safe-area-bottom">
+      <button class="flex flex-col items-center gap-1 text-[#8a79ab]">
+      <div class="w-10 h-10 rounded-2xl bg-[#8a79ab]/10 flex items-center justify-center mb-0.5">
+        <i class="text-xl"><i class="fa-solid fa-map-location-dot"></i></i>
+      </div>
+      <span class="text-[10px] font-black uppercase tracking-tighter">Explore</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-gray-300">
+      <div class="w-10 h-10 flex items-center justify-center mb-0.5 relative">
+        <i class="text-xl"><i class="fa-solid fa-comment-dots"></i></i>
+        <div class="absolute top-1 right-1 w-2.5 h-2.5 bg-[#e6a5b8] rounded-full border-2 border-white">
+        </div>
+      </div>
+      <span class="text-[10px] font-bold uppercase tracking-tighter">Chat</span>
+        </button>
+      <div class="w-14 h-14 bg-[#8a79ab] rounded-2xl shadow-xl flex items-center justify-center text-white -mt-10 border-4 border-white active:scale-90 transition-transform">
+        <i class="text-xl"><i class="fa-solid fa-plus"></i></i>
+      </div>
+      <button class="flex flex-col items-center gap-1 text-gray-300">
+      <div class="w-10 h-10 flex items-center justify-center mb-0.5">
+        <i class="text-xl"><i class="fa-solid fa-calendar-check"></i></i>
+      </div>
+      <span class="text-[10px] font-bold uppercase tracking-tighter">Jams</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-gray-300">
+      <div class="w-10 h-10 flex items-center justify-center mb-0.5">
+        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" class="w-7 h-7 rounded-full filter grayscale opacity-60">
+      </div>
+      <span class="text-[10px] font-bold uppercase tracking-tighter">Me</span>
+        </button>
+    </nav>
+<!-- NOTE — stripped runtime script.
+     The zone bottom sheet on this screen was populated at runtime from a `zoneData`
+     object, and its open/close buttons carried inline onclick handlers. Both are gone.
+     The sheet content is kept here so no design information was lost:
+
+     Williamsburg — 20 musicians • 0.8 miles away
+       · Bassists 5 (Funk / Jazz)  [fa-guitar]
+       · Drummers 4 (Rock / Neo)  [fa-drum]
+       · Vocalists 3 (Soul / R&B)  [fa-microphone]
+       · Keys 8 (Jazz / Fusion)  [fa-keyboard]
+-->
+
+  </body>
+</html>
