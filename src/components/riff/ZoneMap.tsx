@@ -203,8 +203,9 @@ export function ZoneMap({
                 </button>`,
             }),
             keyboard: false,
-            // Above the circles, below the place pins and the "you" marker.
-            zIndexOffset: 100,
+            // The neighbourhood label sits ABOVE the place pins so its text is never obscured
+            // when a studio/busker pin lands near the zone centre; only the "you" dot outranks it.
+            zIndexOffset: 300,
           })
           pill.on('click', () => {
             if (hasLive) selectLiveRef.current(liveSessionIds[0])
@@ -226,7 +227,8 @@ export function ZoneMap({
                 </div>`,
             }),
             keyboard: false,
-            zIndexOffset: 200,
+            // Topmost — the viewer's own dot outranks every label and pin.
+            zIndexOffset: 400,
             interactive: false,
           }).addTo(layerGroup)
         }

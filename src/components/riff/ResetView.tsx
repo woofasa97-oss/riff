@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { ChevronLeft, Check } from 'lucide-react'
 import { Button, buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { cn } from '@/lib/cn'
+import { isValidEmail, isValidPassword, isValidUsername } from '@/lib/validation'
 
 const FIELD =
   'w-full rounded-[12px] border border-border-subtle bg-background px-4 py-3 text-[14px] text-foreground placeholder:text-foreground-dim focus:outline-none focus:ring-1 focus:ring-ring'
@@ -29,9 +31,23 @@ export function ResetView() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [touched, setTouched] = useState({ username: false, email: false, password: false })
+  const touch = (field: keyof typeof touched) =>
+    setTouched((t) => (t[field] ? t : { ...t, [field]: true }))
+
+  // Mirror the server's rules so the button reflects real validity, not just non-emptiness.
+  const usernameOk = isValidUsername(username)
+  const emailOk = isValidEmail(email)
+  const passwordOk = isValidPassword(password)
+  const requestValid = usernameOk && emailOk
+  const resetValid = token.trim().length > 0 && passwordOk
 
   const requestCode = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!requestValid) {
+      setTouched((t) => ({ ...t, username: true, email: true }))
+      return
+    }
     setBusy(true)
     setError(null)
     setMessage(null)
@@ -62,6 +78,10 @@ export function ResetView() {
 
   const setNewPassword = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!resetValid) {
+      setTouched((t) => ({ ...t, password: true }))
+      return
+    }
     setBusy(true)
     setError(null)
     try {
@@ -143,14 +163,21 @@ export function ResetView() {
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
+                      onBlur={() => touch('username')}
                       placeholder="marcusdrums"
                       autoComplete="username"
                       autoCapitalize="none"
                       autoCorrect="off"
                       spellCheck={false}
+                      aria-invalid={touched.username && !usernameOk}
                       className={`${FIELD} pl-9`}
                     />
                   </div>
+                  {touched.username && !usernameOk && (
+                    <p className="mt-1.5 text-[12px] text-destructive">
+                      Enter your username (3–20 characters, a–z, 0–9 and _).
+                    </p>
+                  )}
 
                   <label
                     htmlFor="reset-email"
@@ -163,15 +190,24 @@ export function ResetView() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onBlur={() => touch('email')}
                     placeholder="you@example.com"
                     autoComplete="email"
                     autoCapitalize="none"
                     autoCorrect="off"
                     spellCheck={false}
+                    aria-invalid={touched.email && !emailOk}
                     className={FIELD}
                   />
-                  <p className="mt-1.5 text-[12px] text-foreground-dim">
-                    The email you signed up with — that&apos;s how we know it&apos;s you.
+                  <p
+                    className={cn(
+                      'mt-1.5 text-[12px]',
+                      touched.email && !emailOk ? 'text-destructive' : 'text-foreground-dim',
+                    )}
+                  >
+                    {touched.email && !emailOk
+                      ? 'That email does not look right.'
+                      : 'The email you signed up with — that’s how we know it’s you.'}
                   </p>
                 </Card>
 
@@ -186,7 +222,7 @@ export function ResetView() {
                   type="submit"
                   fullWidth
                   className="mt-6 font-semibold"
-                  disabled={busy || !username.trim() || !email.trim()}
+                  disabled={busy || !requestValid}
                 >
                   {busy ? 'Sending…' : 'Send reset code'}
                 </Button>
@@ -248,10 +284,19 @@ export function ResetView() {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        onBlur={() => touch('password')}
                         autoComplete="new-password"
+                        aria-invalid={touched.password && !passwordOk}
                         className={FIELD}
                       />
-                      <p className="mt-1.5 text-[12px] text-foreground-dim">
+                      <p
+                        className={cn(
+                          'mt-1.5 text-[12px]',
+                          touched.password && !passwordOk
+                            ? 'text-destructive'
+                            : 'text-foreground-dim',
+                        )}
+                      >
                         At least 8 characters
                       </p>
                     </div>
@@ -268,7 +313,7 @@ export function ResetView() {
                   type="submit"
                   fullWidth
                   className="mt-6 font-semibold"
-                  disabled={busy || !token.trim() || !password}
+                  disabled={busy || !resetValid}
                 >
                   {busy ? 'Saving…' : 'Set new password'}
                 </Button>

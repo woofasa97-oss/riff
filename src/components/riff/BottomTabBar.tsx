@@ -76,7 +76,11 @@ export function BottomTabBar({
     >
       <ul className="flex h-[64px] items-center justify-around px-2">
         {TABS.map((tab) => {
-          const active = activeTab ? activeTab === tab.id : pathname.startsWith(tab.href)
+          // Exact route or a sub-route of the tab — NOT a bare prefix, so "/messages" no longer
+          // lights up "/me" and off-tab screens (notifications, musician profiles) show none.
+          const active = activeTab
+            ? activeTab === tab.id
+            : pathname === tab.href || pathname.startsWith(`${tab.href}/`)
           return (
             <li key={tab.id}>
               <Link

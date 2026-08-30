@@ -181,6 +181,9 @@ export function MapView() {
       }
       mainClassName="relative overflow-hidden"
     >
+      {/* The map is a canvas of markers with no visible heading — give the page a real one for
+          screen readers and document outline. */}
+      <h1 className="sr-only">Map — musicians, studios, buskers, shops and events near you</h1>
       <ZoneMap
         zones={zones}
         selectedZoneId={selectedZoneId}

@@ -79,15 +79,22 @@ export function LiveView({ sessionId }: { sessionId: string }) {
   // copying the link. A cancelled share sheet rejects — swallow it, it is not an error.
   async function handleShare() {
     const url = window.location.href
-    try {
-      if (navigator.share) {
+    if (navigator.share) {
+      try {
         await navigator.share({ url })
-      } else {
-        await navigator.clipboard.writeText(url)
-        setCopied(true)
+        return
+      } catch (err) {
+        // The user cancelling the sheet is not a failure — leave quietly.
+        if (err instanceof Error && err.name === 'AbortError') return
+        // Any other failure (share unsupported for this payload, permission) falls through to
+        // the clipboard so the tap always does something observable.
       }
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
     } catch {
-      // user dismissed the share sheet, or the clipboard was denied — nothing to recover
+      // Clipboard denied (rare) — nothing more we can do.
     }
   }
 
@@ -128,7 +135,11 @@ export function LiveView({ sessionId }: { sessionId: string }) {
       background={
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={session.posterUrl} alt="" className="h-full w-full object-cover" />
+          <img
+            src={session.posterUrl}
+            alt={`${band?.name ?? 'Live session'} — live now`}
+            className="h-full w-full object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/10 to-black/90" />
         </>
       }

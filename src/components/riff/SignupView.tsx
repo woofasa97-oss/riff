@@ -5,9 +5,26 @@ import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { cn } from '@/lib/cn'
+import {
+  isValidName,
+  isValidOptionalEmail,
+  isValidPassword,
+  isValidUsername,
+} from '@/lib/validation'
 
 const FIELD =
   'w-full rounded-[12px] border border-border-subtle bg-background px-4 py-3 text-[14px] text-foreground placeholder:text-foreground-dim focus:outline-none focus:ring-1 focus:ring-ring'
+
+/** A field hint that turns into an error once the field has been touched and is still invalid. */
+function Hint({ ok, touched, children }: { ok: boolean; touched: boolean; children: React.ReactNode }) {
+  const invalid = touched && !ok
+  return (
+    <p className={cn('mt-1.5 text-[12px]', invalid ? 'text-destructive' : 'text-foreground-dim')}>
+      {children}
+    </p>
+  )
+}
 
 /**
  * Account creation. This screen lives OUTSIDE the store provider — there is no viewer yet —
@@ -22,9 +39,30 @@ export function SignupView() {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // A field only shows its rule as an *error* once the user has left it (or tried to submit).
+  const [touched, setTouched] = useState({
+    name: false,
+    username: false,
+    password: false,
+    email: false,
+  })
+  const touch = (field: keyof typeof touched) =>
+    setTouched((t) => (t[field] ? t : { ...t, [field]: true }))
+
+  // Live validity, mirroring the server (src/lib/validation.ts). Email is optional.
+  const nameOk = isValidName(name)
+  const usernameOk = isValidUsername(username)
+  const passwordOk = isValidPassword(password)
+  const emailOk = isValidOptionalEmail(email)
+  const allValid = nameOk && usernameOk && passwordOk && emailOk && acceptedTerms
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
+    // Enter can submit even with the button disabled — reveal every unmet rule instead.
+    if (!allValid) {
+      setTouched({ name: true, username: true, password: true, email: true })
+      return
+    }
     setBusy(true)
     setError(null)
     try {
@@ -87,10 +125,15 @@ export function SignupView() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  onBlur={() => touch('name')}
                   placeholder="Marcus Chen"
                   autoComplete="name"
+                  aria-invalid={touched.name && !nameOk}
                   className={FIELD}
                 />
+                <Hint ok={nameOk} touched={touched.name}>
+                  {touched.name && !nameOk ? 'Enter your name (2–40 characters).' : '2–40 characters'}
+                </Hint>
               </div>
               <div>
                 <label
@@ -111,17 +154,19 @@ export function SignupView() {
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                    onBlur={() => touch('username')}
                     placeholder="marcusdrums"
                     autoComplete="username"
                     autoCapitalize="none"
                     autoCorrect="off"
                     spellCheck={false}
+                    aria-invalid={touched.username && !usernameOk}
                     className={`${FIELD} pl-9`}
                   />
                 </div>
-                <p className="mt-1.5 text-[12px] text-foreground-dim">
+                <Hint ok={usernameOk} touched={touched.username}>
                   3–20 characters · lowercase letters, numbers and _
-                </p>
+                </Hint>
               </div>
               <div>
                 <label
@@ -135,10 +180,14 @@ export function SignupView() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => touch('password')}
                   autoComplete="new-password"
+                  aria-invalid={touched.password && !passwordOk}
                   className={FIELD}
                 />
-                <p className="mt-1.5 text-[12px] text-foreground-dim">At least 8 characters</p>
+                <Hint ok={passwordOk} touched={touched.password}>
+                  At least 8 characters
+                </Hint>
               </div>
               <div>
                 <label
@@ -152,16 +201,20 @@ export function SignupView() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => touch('email')}
                   placeholder="you@example.com"
                   autoComplete="email"
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
+                  aria-invalid={touched.email && !emailOk}
                   className={FIELD}
                 />
-                <p className="mt-1.5 text-[12px] text-foreground-dim">
-                  We&rsquo;ll only use it to help you back in.
-                </p>
+                <Hint ok={emailOk} touched={touched.email}>
+                  {touched.email && !emailOk
+                    ? 'That email does not look right.'
+                    : 'We’ll only use it to help you back in.'}
+                </Hint>
               </div>
             </div>
           </Card>
@@ -200,7 +253,7 @@ export function SignupView() {
             type="submit"
             fullWidth
             className="mt-6 font-semibold"
-            disabled={busy || !name.trim() || !username || !password || !acceptedTerms}
+            disabled={busy || !allValid}
           >
             {busy ? 'Creating your card…' : 'Create account'}
           </Button>
