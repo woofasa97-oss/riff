@@ -1,0 +1,67 @@
+import type { Venue } from '@/types'
+
+export const venues: Venue[] = [
+  {
+    id: 'sonic-basement',
+    name: 'Sonic Basement',
+    kind: 'Rehearsal room and live space',
+    neighborhood: 'Greenpoint, Brooklyn',
+    // Revealed only on confirmed jams, and only to attendees. See src/lib/privacy.ts.
+    address: '114 Franklin St',
+    city: 'Brooklyn, NY',
+    distanceMi: 0.9,
+    photoUrl: '/mock/venues/sonic-basement.svg',
+    rating: 4.8,
+    jamsHosted: 62,
+    hourlyRateUsd: 18,
+    amenities: ['Backline provided', 'Drum kit', 'PA system', 'Open till 2am'],
+    slots: [
+      {
+        id: 'sb-1',
+        label: 'Tonight 9:00 PM',
+        startsAt: '2026-08-28T21:00:00-04:00',
+        available: true,
+      },
+      { id: 'sb-2', label: 'Fri 7:00 PM', startsAt: '2026-09-04T19:00:00-04:00', available: true },
+      { id: 'sb-3', label: 'Sat 2:00 PM', startsAt: '2026-09-05T14:00:00-04:00', available: false },
+    ],
+    liveNow: false,
+  },
+  {
+    id: 'the-attic',
+    name: 'The Attic',
+    kind: 'Loft rehearsal room',
+    neighborhood: 'Bushwick, Brooklyn',
+    address: '46 Scholes St, Floor 3',
+    city: 'Brooklyn, NY',
+    distanceMi: 2.4,
+    photoUrl: '/mock/venues/the-attic.svg',
+    rating: 4.5,
+    jamsHosted: 38,
+    hourlyRateUsd: 14,
+    amenities: ['Drum kit', 'Upright piano', 'Street parking'],
+    slots: [
+      { id: 'at-1', label: 'Sun 4:00 PM', startsAt: '2026-08-30T16:00:00-04:00', available: true },
+      { id: 'at-2', label: 'Mon 8:00 PM', startsAt: '2026-08-31T20:00:00-04:00', available: true },
+    ],
+    liveNow: false,
+  },
+  {
+    id: 'riverside-rehearsal',
+    name: 'Riverside Rehearsal',
+    kind: 'Hourly rehearsal rooms',
+    neighborhood: 'Williamsburg, Brooklyn',
+    address: '8 Kent Ave',
+    city: 'Brooklyn, NY',
+    distanceMi: 1.3,
+    photoUrl: '/mock/venues/riverside-rehearsal.svg',
+    rating: 4.2,
+    jamsHosted: 21,
+    hourlyRateUsd: 22,
+    amenities: ['PA system', 'Backline provided', 'Air conditioning'],
+    slots: [
+      { id: 'rr-1', label: 'Sat 6:00 PM', startsAt: '2026-08-29T18:00:00-04:00', available: true },
+    ],
+    liveNow: true,
+  },
+]

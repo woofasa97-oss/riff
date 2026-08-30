@@ -9,6 +9,21 @@ const config: Config = {
       colors: {
         border: 'var(--border)',
         'border-subtle': 'var(--border-subtle)',
+        'border-hairline': 'var(--border-hairline)',
+        'surface-muted': 'var(--surface-muted)',
+        success: {
+          DEFAULT: 'var(--success)',
+          soft: 'var(--success-soft)',
+          border: 'var(--success-border)',
+        },
+        warning: {
+          DEFAULT: 'var(--warning)',
+          soft: 'var(--warning-soft)',
+          border: 'var(--warning-border)',
+        },
+        live: 'var(--live)',
+        'hero-from': 'var(--hero-from)',
+        'hero-to': 'var(--hero-to)',
         input: 'var(--input)',
         ring: 'var(--ring)',
         background: 'var(--background)',
@@ -18,7 +33,12 @@ const config: Config = {
         secondary: { DEFAULT: 'var(--secondary)', foreground: 'var(--secondary-foreground)' },
         destructive: { DEFAULT: 'var(--destructive)', foreground: 'var(--destructive-foreground)' },
         muted: { DEFAULT: 'var(--muted)', foreground: 'var(--muted-foreground)' },
-        accent: { DEFAULT: 'var(--accent)', foreground: 'var(--accent-foreground)' },
+        accent: {
+          DEFAULT: 'var(--accent)',
+          foreground: 'var(--accent-foreground)',
+          soft: 'var(--accent-soft)',
+          border: 'var(--accent-border)',
+        },
         popover: { DEFAULT: 'var(--popover)', foreground: 'var(--popover-foreground)' },
         card: { DEFAULT: 'var(--card)', foreground: 'var(--card-foreground)' },
         chart: {

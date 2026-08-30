@@ -26,8 +26,25 @@
   --ring: #8a79ab;
 
   /* Recurring in the prototype but never tokenised there. */
-  --border-subtle: #e4dfee;
-  --foreground-dim: #9c97a9;
+  --border-subtle: #e4dfee; /* hairline on white cards, chips, icon buttons */
+  --border-hairline: #f0edf5; /* divider *inside* a card, lighter than the card's own border */
+  --foreground-dim: #9c97a9; /* dim metadata — one step lighter than --muted-foreground */
+  --surface-muted: #efebf6; /* filled secondary buttons */
+
+  /* Status colours. The prototype inlines these; they carry meaning, so they are tokens. */
+  --success: #2fbf71;
+  --success-soft: #ecfdf3;
+  --success-border: #d1fadf;
+  --warning: #ca8a04;
+  --warning-soft: #fef9c3;
+  --warning-border: #fde68a;
+  --live: #e5262f;
+  --accent-soft: #fff5f7;
+  --accent-border: #fce7f3;
+
+  /* The lilac→blush wash behind every jam hero. */
+  --hero-from: #f3f0f8;
+  --hero-to: #fceef2;
 
   --chart-1: #8a79ab;
   --chart-2: #e6a5b8;
