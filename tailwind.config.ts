@@ -1,5 +1,19 @@
 import type { Config } from 'tailwindcss'
 
+/**
+ * Tokens are authored as hex in globals.css (docs/DESIGN-SYSTEM.md is the source of truth and
+ * writes them that way). A bare `var(--primary)` cannot take Tailwind's `/opacity` modifier —
+ * the utility is silently dropped, which is how `bg-primary/30` ended up rendering nothing at
+ * all. Wrapping each token in color-mix keeps the hex authoring and makes the modifiers work.
+ */
+const token = (name: string) =>
+  // Tailwind accepts a resolver function here at runtime, but `Config`'s type for
+  // `extend.colors` only admits strings — hence the cast.
+  ((({ opacityValue }: { opacityValue?: string }) =>
+    opacityValue === undefined
+      ? `var(${name})`
+      : `color-mix(in srgb, var(${name}) calc(${opacityValue} * 100%), transparent)`) as unknown as string)
+
 // Mirrors the `tailwind.config` block the prototype inlined into every screen, so class names
 // lifted from reference/screens/ resolve without translation. Values live in globals.css.
 const config: Config = {
@@ -7,46 +21,47 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        border: 'var(--border)',
-        'border-subtle': 'var(--border-subtle)',
-        'border-hairline': 'var(--border-hairline)',
-        'surface-muted': 'var(--surface-muted)',
+        border: token('--border'),
+        'border-subtle': token('--border-subtle'),
+        'border-hairline': token('--border-hairline'),
+        'surface-muted': token('--surface-muted'),
         success: {
-          DEFAULT: 'var(--success)',
-          soft: 'var(--success-soft)',
-          border: 'var(--success-border)',
+          DEFAULT: token('--success'),
+          soft: token('--success-soft'),
+          border: token('--success-border'),
         },
         warning: {
-          DEFAULT: 'var(--warning)',
-          soft: 'var(--warning-soft)',
-          border: 'var(--warning-border)',
+          DEFAULT: token('--warning'),
+          soft: token('--warning-soft'),
+          border: token('--warning-border'),
         },
-        live: 'var(--live)',
-        'hero-from': 'var(--hero-from)',
-        'hero-to': 'var(--hero-to)',
-        input: 'var(--input)',
-        ring: 'var(--ring)',
-        background: 'var(--background)',
-        foreground: 'var(--foreground)',
-        'foreground-dim': 'var(--foreground-dim)',
-        primary: { DEFAULT: 'var(--primary)', foreground: 'var(--primary-foreground)' },
-        secondary: { DEFAULT: 'var(--secondary)', foreground: 'var(--secondary-foreground)' },
-        destructive: { DEFAULT: 'var(--destructive)', foreground: 'var(--destructive-foreground)' },
-        muted: { DEFAULT: 'var(--muted)', foreground: 'var(--muted-foreground)' },
+        live: token('--live'),
+        'surface-dark': token('--surface-dark'),
+        'hero-from': token('--hero-from'),
+        'hero-to': token('--hero-to'),
+        input: token('--input'),
+        ring: token('--ring'),
+        background: token('--background'),
+        foreground: token('--foreground'),
+        'foreground-dim': token('--foreground-dim'),
+        primary: { DEFAULT: token('--primary'), foreground: token('--primary-foreground') },
+        secondary: { DEFAULT: token('--secondary'), foreground: token('--secondary-foreground') },
+        destructive: { DEFAULT: token('--destructive'), foreground: token('--destructive-foreground') },
+        muted: { DEFAULT: token('--muted'), foreground: token('--muted-foreground') },
         accent: {
-          DEFAULT: 'var(--accent)',
-          foreground: 'var(--accent-foreground)',
-          soft: 'var(--accent-soft)',
-          border: 'var(--accent-border)',
+          DEFAULT: token('--accent'),
+          foreground: token('--accent-foreground'),
+          soft: token('--accent-soft'),
+          border: token('--accent-border'),
         },
-        popover: { DEFAULT: 'var(--popover)', foreground: 'var(--popover-foreground)' },
-        card: { DEFAULT: 'var(--card)', foreground: 'var(--card-foreground)' },
+        popover: { DEFAULT: token('--popover'), foreground: token('--popover-foreground') },
+        card: { DEFAULT: token('--card'), foreground: token('--card-foreground') },
         chart: {
-          '1': 'var(--chart-1)',
-          '2': 'var(--chart-2)',
-          '3': 'var(--chart-3)',
-          '4': 'var(--chart-4)',
-          '5': 'var(--chart-5)',
+          '1': token('--chart-1'),
+          '2': token('--chart-2'),
+          '3': token('--chart-3'),
+          '4': token('--chart-4'),
+          '5': token('--chart-5'),
         },
       },
       borderRadius: {

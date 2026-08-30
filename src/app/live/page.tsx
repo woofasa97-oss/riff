@@ -1,15 +1,7 @@
-import { RadioTower } from 'lucide-react'
-import { TabStub } from '@/components/riff/TabStub'
+import { LiveListView } from '@/components/riff/LiveListView'
 
 export const metadata = { title: 'Live · Riff' }
 
 export default function LivePage() {
-  return (
-    <TabStub
-      tab="live"
-      icon={<RadioTower size={22} />}
-      title="Live is not built yet"
-      body="Sessions broadcasting right now, with chat and ratings."
-    />
-  )
+  return <LiveListView />
 }

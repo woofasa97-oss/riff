@@ -25,7 +25,7 @@ export const venues: Venue[] = [
       { id: 'sb-2', label: 'Fri 7:00 PM', startsAt: '2026-09-04T19:00:00-04:00', available: true },
       { id: 'sb-3', label: 'Sat 2:00 PM', startsAt: '2026-09-05T14:00:00-04:00', available: false },
     ],
-    liveNow: false,
+    liveNow: true,
   },
   {
     id: 'the-attic',
@@ -62,6 +62,6 @@ export const venues: Venue[] = [
     slots: [
       { id: 'rr-1', label: 'Sat 6:00 PM', startsAt: '2026-08-29T18:00:00-04:00', available: true },
     ],
-    liveNow: true,
+    liveNow: false,
   },
 ]

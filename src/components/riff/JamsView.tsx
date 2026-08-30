@@ -13,7 +13,7 @@ import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Tabs } from '@/components/ui/Tabs'
-import { formatRelativeShort } from '@/lib/datetime'
+import { formatRelativeShort, formatShortDateTime } from '@/lib/datetime'
 import { useRiffStore } from '@/lib/store'
 import {
   CURRENT_USER_ID,
@@ -22,18 +22,20 @@ import {
   listIncomingRequests,
   listJams,
   listMyApplications,
+  listMyOpenCalls,
   listThreads,
 } from '@/mocks'
 
 type TabKey = 'upcoming' | 'requests' | 'past'
 
-export function JamsView() {
-  const [tab, setTab] = useState<TabKey>('upcoming')
+export function JamsView({ initialTab = 'upcoming' }: { initialTab?: TabKey } = {}) {
+  const [tab, setTab] = useState<TabKey>(initialTab)
   const jams = useRiffStore((s) => s.jams)
   const recaps = useRiffStore((s) => s.recaps)
 
   const requests = useMemo(() => listIncomingRequests(CURRENT_USER_ID), [])
   const applications = useMemo(() => listMyApplications(CURRENT_USER_ID), [])
+  const myOpenCalls = useMemo(() => listMyOpenCalls(CURRENT_USER_ID, jams), [jams])
   const unread = useMemo(
     () => listThreads(CURRENT_USER_ID).reduce((sum, t) => sum + t.unreadCount, 0),
     [],
@@ -154,6 +156,29 @@ export function JamsView() {
                   </Card>
                 )
               })}
+            </section>
+          )}
+
+          {myOpenCalls.length > 0 && (
+            <section className="mb-6">
+              <SectionHeader>Open calls you posted</SectionHeader>
+              {myOpenCalls.map(({ jam, applicants }) => (
+                <Card key={jam.id} className="mb-3 p-4">
+                  <Link href={`/jams/${jam.id}`} className="block">
+                    <h3 className="mb-2 font-serif text-[16px] font-bold leading-tight text-foreground">
+                      {jam.title}
+                    </h3>
+                  </Link>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-[13px] text-foreground-dim">
+                      {formatShortDateTime(jam.startsAt)}
+                    </span>
+                    <Badge tone="primary" className="px-2.5 py-1 text-[12px]">
+                      {applicants.length} applied
+                    </Badge>
+                  </div>
+                </Card>
+              ))}
             </section>
           )}
         </>

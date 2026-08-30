@@ -108,6 +108,21 @@ export const jams: Jam[] = [
       'Loose neo-soul thing, nobody is auditioning. Bring something you have been sitting on.',
     threadId: 'thread-open-call-keys',
   },
+  {
+    id: 'jam-open-call-bass',
+    title: 'Bass wanted for a Thursday standards session',
+    intent: 'casual',
+    status: 'pending',
+    startsAt: '2026-09-03T19:30:00-04:00',
+    durationHours: 2,
+    venueId: 'riverside-rehearsal',
+    hostId: 'marcus-chen',
+    attendees: [{ musicianId: 'marcus-chen', instrument: 'drums', rsvp: 'confirmed' }],
+    openSeats: ['bass'],
+    isOpenCall: true,
+    message: 'Real book, slow tempos, nobody is auditioning. Bring a pencil.',
+    threadId: 'thread-open-call-bass',
+  },
 ]
 
 export const jamRequests: JamRequest[] = [
@@ -137,6 +152,14 @@ export const jamRequests: JamRequest[] = [
 ]
 
 export const openCallApplications: OpenCallApplication[] = [
+  {
+    id: 'app-jonah-bass-call',
+    jamId: 'jam-open-call-bass',
+    applicantId: 'jonah-wills',
+    instrument: 'bass',
+    status: 'pending',
+    appliedAt: '2026-08-28T12:00:00-04:00',
+  },
   {
     id: 'app-marcus-keys-call',
     jamId: 'jam-open-call-keys',

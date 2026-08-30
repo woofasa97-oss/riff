@@ -1,0 +1,46 @@
+import type { LiveComment, LiveSession } from '@/types'
+
+/** Twenty lines, so the chat rail scrolls the way a real one would. */
+const chat: LiveComment[] = [
+  ['marcus_c', 'This groove is absolutely insane'],
+  ['sarahj', 'Is that Leo on keys? Sounding huge.'],
+  ['brooklyn_beats', 'yeah man, killing it'],
+  ['jazz_cat_99', 'love the transition here'],
+  ['rubysims', 'that horn line is going to live in my head'],
+  ['dchen', 'who mixed this, it sounds enormous'],
+  ['priya_r', 'the Rhodes tone tho'],
+  ['mileswf', 'pocket is unreal'],
+  ['cami_ok', 'congas coming in at exactly the right moment'],
+  ['fay_a', 'somebody please put this on wax'],
+  ['theopark', 'been waiting all season for this set'],
+  ['jonahw', 'that modulation was filthy'],
+  ['ana_d', 'the room sounds so good tonight'],
+  ['ivo_m', 'drummer is not human'],
+  ['brooklyn_beats', 'second time I have watched this today'],
+  ['leo_keys', 'thank you all, one more coming'],
+  ['jazz_cat_99', 'YES'],
+  ['nina_a', 'this is the one'],
+  ['marcus_c', 'see you all at Sonic Basement Friday'],
+  ['sarahj', 'do not stop'],
+].map(([handle, body], i) => ({
+  id: `lc-${i + 1}`,
+  handle,
+  body,
+  // Spread across the 20 minutes the session has been running.
+  sentAt: new Date(Date.parse('2026-08-28T14:40:00-04:00') + i * 60_000).toISOString(),
+}))
+
+export const liveSessions: LiveSession[] = [
+  {
+    id: 'live-lunar-resonance',
+    bandId: 'lunar-resonance',
+    venueId: 'sonic-basement',
+    startedAt: '2026-08-28T14:40:00-04:00',
+    viewerCount: 8400,
+    rating: 4.9,
+    reputationLabel: 'Legendary',
+    streamUrl: '',
+    posterUrl: '/mock/stage/live-stage.svg',
+    chat,
+  },
+]

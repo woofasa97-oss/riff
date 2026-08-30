@@ -16,7 +16,14 @@ import { formatDayAndTime, formatTime, isSameDay } from '@/lib/datetime'
 import { directionsHref, intentLabel, jamStatusLabel, shortNeighborhood } from '@/lib/labels'
 import { jamLocationLines } from '@/lib/privacy'
 import { statsFor, useReputationContext, useRiffStore } from '@/lib/store'
-import { CURRENT_USER_ID, NOW, getMusician, getVenue, listMessages } from '@/mocks'
+import {
+  CURRENT_USER_ID,
+  NOW,
+  getMusician,
+  getVenue,
+  listLiveSessions,
+  listMessages,
+} from '@/mocks'
 import type { Jam } from '@/types'
 
 /** "Go live" only means something while the session is actually happening. */
@@ -67,7 +74,10 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
   const location = jamLocationLines(jam, venue, CURRENT_USER_ID)
   const me = jam.attendees.find((a) => a.musicianId === CURRENT_USER_ID)
   const attending = me?.rsvp === 'confirmed'
-  const liveNow = isLiveWindow(jam, NOW)
+  // "Go live" opens the broadcast only when one actually exists. Starting a stream is out of
+  // scope for v1 (docs/SPEC.md §6), so the button stays disabled rather than pointing at nothing.
+  const session = listLiveSessions().find((s) => s.jamId === jam.id)
+  const liveNow = isLiveWindow(jam, NOW) && Boolean(session)
   const whenLabel = isSameDay(jam.startsAt, NOW)
     ? `Tonight ${formatTime(jam.startsAt)}`
     : formatDayAndTime(jam.startsAt)
@@ -85,16 +95,24 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
           >
             Message group
           </Link>
-          {liveNow ? (
+          {liveNow && session ? (
             <Link
-              href={`/live/${jam.id}`}
+              href={`/live/${session.id}`}
               className="relative flex h-[48px] flex-1 items-center justify-center gap-2 rounded-[12px] bg-primary text-[15px] font-medium text-primary-foreground transition-transform active:scale-95"
             >
               <span className="absolute left-4 h-2 w-2 rounded-full bg-live" />
               Go live
             </Link>
           ) : (
-            <Button className="flex-1" disabled title="Available once the session starts">
+            <Button
+              className="flex-1"
+              disabled
+              title={
+                isLiveWindow(jam, NOW)
+                  ? 'Broadcasting is not built yet'
+                  : 'Available once the session starts'
+              }
+            >
               Go live
             </Button>
           )}

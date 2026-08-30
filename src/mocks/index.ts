@@ -6,6 +6,9 @@
  * is the immutable seed it starts from.
  */
 import { bands } from './bands'
+import { battles } from './battles'
+import { liveSessions } from './live'
+import { currentSeasonId, leaderboard, seasons } from './seasons'
 import { CURRENT_USER_ID, musicians } from './musicians'
 import { jamRequests, jams, openCallApplications } from './jams'
 import { notifications } from './notifications'
@@ -13,13 +16,28 @@ import { recordingConsents, recordings, sessionRecaps, vouches } from './reputat
 import { messages, threads } from './threads'
 import { venues } from './venues'
 import { NOW } from './clock'
-import type { Band, Jam, JamRequest, Message, Musician, Thread, Venue } from '@/types'
+import type {
+  Band,
+  Battle,
+  Jam,
+  JamRequest,
+  LeaderboardEntry,
+  LiveSession,
+  Message,
+  Musician,
+  Season,
+  Thread,
+  Venue,
+} from '@/types'
 
 export { NOW } from './clock'
 export { CURRENT_USER_ID } from './musicians'
 export {
   bands,
+  battles,
   jamRequests,
+  leaderboard,
+  liveSessions,
   jams,
   messages,
   musicians,
@@ -28,10 +46,13 @@ export {
   recordingConsents,
   recordings,
   sessionRecaps,
+  seasons,
   threads,
   venues,
   vouches,
 }
+export { pointsFromTopTen } from './seasons'
+export { ROUND_LABEL, ROUND_ORDER, seasonBadgeFor, voteShare } from './battles'
 
 // --- Musicians -------------------------------------------------------------
 
@@ -97,6 +118,16 @@ export const listIncomingRequests = (viewerId = CURRENT_USER_ID): JamRequest[] =
 export const listMyApplications = (viewerId = CURRENT_USER_ID) =>
   openCallApplications.filter((a) => a.applicantId === viewerId)
 
+/** Open calls the viewer posted, plus how many people have applied to each. */
+export function listMyOpenCalls(viewerId = CURRENT_USER_ID, source: Jam[] = jams) {
+  return source
+    .filter((jam) => jam.isOpenCall && jam.hostId === viewerId)
+    .map((jam) => ({
+      jam,
+      applicants: openCallApplications.filter((a) => a.jamId === jam.id),
+    }))
+}
+
 // --- Messaging -------------------------------------------------------------
 
 export const getThread = (id: string): Thread | undefined => threads.find((t) => t.id === id)
@@ -123,5 +154,64 @@ export const getBand = (id: string): Band | undefined => bands.find((b) => b.id 
 
 export const getRecording = (id: string) => recordings.find((r) => r.id === id)
 
-// NOTE: getLeaderboard() is specified in docs/BUILD-PLAN.md P0-02 but the leaderboard fixtures
-// belong to P6-05, which builds the screen that renders them. Deliberately not stubbed here.
+// --- Seasons, leaderboard, battles, live ------------------------------------
+
+export const getSeason = (id: string): Season | undefined => seasons.find((s) => s.id === id)
+
+export const getCurrentSeason = (): Season => getSeason(currentSeasonId) as Season
+
+export const getLeaderboard = (): LeaderboardEntry[] =>
+  [...leaderboard].sort((a, b) => a.rank - b.rank)
+
+export const getLeaderboardEntry = (musicianId: string): LeaderboardEntry | undefined =>
+  leaderboard.find((e) => e.musicianId === musicianId)
+
+export const getBattle = (id: string): Battle | undefined => battles.find((b) => b.id === id)
+
+export type BattleScope = 'local' | 'global' | 'mine'
+
+/** Scope filter behind the bracket's Brooklyn / Global / My matches tabs. */
+export function listBattles(scope: BattleScope, viewerId = CURRENT_USER_ID): Battle[] {
+  if (scope === 'global') return battles
+  if (scope === 'mine') {
+    const myBandIds = listBandsFor(viewerId).map((b) => b.id)
+    return battles.filter((b) => myBandIds.includes(b.bandAId) || myBandIds.includes(b.bandBId))
+  }
+  const localIds = bands.filter((b) => b.city.startsWith('Brooklyn')).map((b) => b.id)
+  return battles.filter((b) => localIds.includes(b.bandAId) || localIds.includes(b.bandBId))
+}
+
+/** The battle currently broadcasting, if any. */
+export const getLiveBattle = (): Battle | undefined => battles.find((b) => b.status === 'live')
+
+export const getLiveSession = (id: string): LiveSession | undefined =>
+  liveSessions.find((s) => s.id === id)
+
+export const listLiveSessions = (): LiveSession[] => liveSessions
+
+export const listBandsFor = (musicianId: string): Band[] =>
+  bands.filter((b) => b.members.some((m) => m.musicianId === musicianId))
+
+/**
+ * Who is playing at a venue: whoever is broadcasting from it right now, then the upcoming jams
+ * booked into it. Never an exact address — this is a schedule, not a location.
+ */
+export function listPlayingAtVenue(venueId: string, now = NOW, source: Jam[] = jams) {
+  const live = liveSessions
+    .filter((s) => s.venueId === venueId)
+    .map((s) => ({
+      kind: 'live' as const,
+      session: s,
+      band: s.bandId ? getBand(s.bandId) : undefined,
+    }))
+  const upcoming = source
+    .filter(
+      (jam) =>
+        jam.venueId === venueId &&
+        Date.parse(jam.startsAt) >= Date.parse(now) &&
+        (jam.status === 'confirmed' || jam.status === 'pending'),
+    )
+    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
+    .map((jam) => ({ kind: 'upcoming' as const, jam, host: getMusician(jam.hostId) }))
+  return { live, upcoming }
+}

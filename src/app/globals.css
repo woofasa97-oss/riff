@@ -39,6 +39,8 @@
   --warning-soft: #fef9c3;
   --warning-border: #fde68a;
   --live: #e5262f;
+  /* Live, Battle and Map-live invert to this. Not a dark mode — a surface variant. */
+  --surface-dark: #121118;
   --accent-soft: #fff5f7;
   --accent-border: #fce7f3;
 
@@ -90,6 +92,11 @@
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+  /* The live chat rail fades out at the top instead of hard-clipping. */
+  .chat-mask {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 100%);
   }
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 1rem);

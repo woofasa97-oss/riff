@@ -49,21 +49,31 @@ export function Button({
 export function IconButton({
   className,
   label,
+  surface = 'light',
   children,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  label: string
+  surface?: 'light' | 'dark'
+}) {
   return (
-    <button
-      aria-label={label}
-      className={cn(
-        'flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full',
-        'border border-border-subtle bg-card text-foreground transition-transform active:scale-90',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        className,
-      )}
-      {...props}
-    >
+    <button aria-label={label} className={cn(iconButtonClass(surface), className)} {...props}>
       {children}
     </button>
+  )
+}
+
+/**
+ * Shared with the header links, which have to be anchors rather than buttons — a <button>
+ * inside a <Link> is invalid markup.
+ */
+export function iconButtonClass(surface: 'light' | 'dark' = 'light') {
+  return cn(
+    'flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full',
+    'transition-transform active:scale-90',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+    surface === 'dark'
+      ? 'border border-white/10 bg-white/[0.12] text-white backdrop-blur-md'
+      : 'border border-border-subtle bg-card text-foreground',
   )
 }

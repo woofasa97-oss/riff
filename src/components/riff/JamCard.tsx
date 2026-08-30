@@ -31,7 +31,7 @@ export function JamHeroCard({ jam, now, viewerId }: { jam: Jam; now: string; vie
         href={`/jams/${jam.id}`}
         className="relative block bg-gradient-to-br from-hero-from to-hero-to p-4"
       >
-        <span className="bg-card/90 absolute right-4 top-4 rounded-full px-2.5 py-1 text-[11px] font-semibold text-foreground backdrop-blur-sm">
+        <span className="absolute right-4 top-4 rounded-full bg-card/90 px-2.5 py-1 text-[11px] font-semibold text-foreground backdrop-blur-sm">
           {relativeDayLabel(jam.startsAt, now)}
         </span>
         <h3 className="mb-1 pr-16 font-serif text-[20px] font-bold leading-tight text-foreground">

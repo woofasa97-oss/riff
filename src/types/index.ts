@@ -288,7 +288,8 @@ export interface Band {
   followers: number
   rating: number
   sessionCount: number
-  members: { musicianId: string; role: string; reliabilityPct: number }[]
+  /** Reliability is deliberately absent: it is derived per musician, never stored here. */
+  members: { musicianId: string; role: string }[]
   openSeats: Instrument[]
   recordings: Recording[]
   battleHistory: {
@@ -298,4 +299,77 @@ export interface Band {
     result: 'won' | 'lost'
   }[]
   seasonBadge?: string
+}
+
+// ---------------------------------------------------------------------------
+// Seasons, battles, live
+// ---------------------------------------------------------------------------
+
+export interface Season {
+  id: string
+  number: number
+  /** "Jazz Scene" */
+  scene: string
+  city: string
+  startsAt: string
+  endsAt: string
+}
+
+export interface LeaderboardEntry {
+  rank: number
+  musicianId: string
+  points: number
+  /** +3 / -2 / 0 — rendered as an up, down or neutral chip. */
+  delta: number
+  /** "Bassist, Indie" */
+  instrumentLabel: string
+}
+
+export type BattleRound = 'quarter' | 'semi' | 'final'
+
+export interface Battle {
+  id: string
+  seasonId: string
+  round: BattleRound
+  bandAId: string
+  bandBId: string
+  votesA: number
+  votesB: number
+  status: 'scheduled' | 'live' | 'finished'
+  winnerBandId?: string
+  /** "Stage 04 · Grand Ballroom vs. Warehouse 7" */
+  stageLabel: string
+  viewerCount?: number
+}
+
+export interface LiveComment {
+  id: string
+  handle: string
+  body: string
+  sentAt: string
+}
+
+export interface LiveSession {
+  id: string
+  bandId?: string
+  jamId?: string
+  venueId: string
+  startedAt: string
+  viewerCount: number
+  rating: number
+  /** "Legendary" */
+  reputationLabel: string
+  /** Stubbed in v1 — docs/SPEC.md §6 puts real video out of scope. */
+  streamUrl: string
+  posterUrl: string
+  chat: LiveComment[]
+}
+
+export interface MapZone {
+  id: string
+  name: string
+  musicianCount: number
+  liveJamCount: number
+  /** Stylised map coords, never lat/lng. */
+  centroid: { x: number; y: number }
 }

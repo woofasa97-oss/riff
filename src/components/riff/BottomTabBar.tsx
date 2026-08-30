@@ -21,7 +21,7 @@ const TABS: { id: TabId; href: string; label: string }[] = [
   { id: 'me', href: '/me', label: 'ME' },
 ]
 
-function TabIcon({ id, active }: { id: TabId; active: boolean }) {
+function TabIcon({ id, active, dark }: { id: TabId; active: boolean; dark: boolean }) {
   const size = 22
   switch (id) {
     case 'map':
@@ -40,7 +40,10 @@ function TabIcon({ id, active }: { id: TabId; active: boolean }) {
           name="Your profile"
           size="xs"
           ring={false}
-          className={cn('h-[22px] w-[22px]', active ? 'ring-2 ring-primary' : 'opacity-80')}
+          className={cn(
+            'h-[22px] w-[22px]',
+            active ? (dark ? 'ring-2 ring-white' : 'ring-2 ring-primary') : 'opacity-80',
+          )}
         />
       )
     }
@@ -50,17 +53,24 @@ function TabIcon({ id, active }: { id: TabId; active: boolean }) {
 export function BottomTabBar({
   activeTab,
   liveIndicator = false,
+  surface = 'light',
 }: {
   activeTab?: TabId
   /** The pink dot on LIVE, shown when something is broadcasting now. */
   liveIndicator?: boolean
+  /** Live and Battle screens invert the bar — see docs/DESIGN-SYSTEM.md. */
+  surface?: 'light' | 'dark'
 }) {
   const pathname = usePathname()
+  const dark = surface === 'dark'
 
   return (
     <nav
       aria-label="Primary"
-      className="pb-safe bg-card/95 z-20 shrink-0 border-t border-border-subtle backdrop-blur-md"
+      className={cn(
+        'pb-safe relative z-20 shrink-0 border-t backdrop-blur-md',
+        dark ? 'border-white/10 bg-black/90' : 'border-border-subtle bg-card/95',
+      )}
     >
       <ul className="flex h-[64px] items-center justify-around px-2">
         {TABS.map((tab) => {
@@ -72,13 +82,24 @@ export function BottomTabBar({
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   'flex w-16 flex-col items-center justify-center gap-1 py-1',
-                  active ? 'text-primary' : 'text-foreground-dim',
+                  dark
+                    ? active
+                      ? 'text-white'
+                      : 'text-white/50'
+                    : active
+                      ? 'text-primary'
+                      : 'text-foreground-dim',
                 )}
               >
                 <span className="relative flex h-[22px] items-center justify-center">
-                  <TabIcon id={tab.id} active={active} />
+                  <TabIcon id={tab.id} active={active} dark={dark} />
                   {tab.id === 'live' && liveIndicator && (
-                    <span className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full border border-card bg-accent" />
+                    <span
+                      className={cn(
+                        'absolute -right-1 -top-0.5 h-2 w-2 rounded-full border bg-accent',
+                        dark ? 'border-black/90' : 'border-card',
+                      )}
+                    />
                   )}
                 </span>
                 <span className={cn('text-[10px]', active ? 'font-semibold' : 'font-medium')}>
