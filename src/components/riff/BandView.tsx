@@ -16,12 +16,13 @@ import { formatDate } from '@/lib/datetime'
 import { compactCount, formatClock, instrumentLabel } from '@/lib/labels'
 import { statsFor, useReputationContext, useRiffStore } from '@/lib/store'
 import { peaksFor } from '@/lib/waveform'
-import { CURRENT_USER_ID, getBand, getMusician, seasonBadgeFor } from '@/mocks'
+import { getBand, getMusician, seasonBadgeFor } from '@/mocks'
 
 export function BandView({ bandId }: { bandId: string }) {
   const band = getBand(bandId)
   const followed = useRiffStore((s) => s.followedBandIds)
   const toggleFollow = useRiffStore((s) => s.toggleFollowBand)
+  const viewerId = useRiffStore((s) => s.viewerId)
   const ctx = useReputationContext()
 
   if (!band) {
@@ -132,9 +133,7 @@ export function BandView({ bandId }: { bandId: string }) {
             return (
               <Link
                 key={member.musicianId}
-                href={
-                  member.musicianId === CURRENT_USER_ID ? '/me' : `/musicians/${member.musicianId}`
-                }
+                href={member.musicianId === viewerId ? '/me' : `/musicians/${member.musicianId}`}
                 className="flex items-center border-b border-border-hairline p-3 last:border-0"
               >
                 <Avatar
@@ -152,7 +151,7 @@ export function BandView({ bandId }: { bandId: string }) {
                 </div>
                 {stats && (
                   <span className="shrink-0 rounded-full bg-[color:var(--hero-from)] px-2 py-1 text-[10px] font-bold text-primary">
-                    {stats.reliabilityPct}%
+                    {stats.isNew ? 'New' : `${stats.reliabilityPct}%`}
                   </span>
                 )}
               </Link>

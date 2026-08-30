@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Bell, ChevronRight, Settings, Zap } from 'lucide-react'
+import { Bell, ChevronRight, LogOut, Settings, Zap } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { AvailabilityStrip } from '@/components/riff/AvailabilityStrip'
 import { TopBar } from '@/components/riff/TopBar'
@@ -14,7 +14,7 @@ import { iconButtonClass } from '@/components/ui/Button'
 import { genreLane, instrumentLabel } from '@/lib/labels'
 import { useCurrentUser, useMusicianStats, useUnreadNotificationCount } from '@/lib/store'
 import { peaksFor } from '@/lib/waveform'
-import { CURRENT_USER_ID, getCurrentSeason, getLeaderboardEntry, listBandsFor } from '@/mocks'
+import { getCurrentSeason, getLeaderboardEntry, listBandsFor } from '@/mocks'
 
 /** Destinations that exist as stubs until their own tickets land. */
 const SETTINGS_ROWS = [
@@ -27,11 +27,12 @@ const SETTINGS_ROWS = [
 
 export function MeView() {
   const me = useCurrentUser()
-  const stats = useMusicianStats(CURRENT_USER_ID)
+  const stats = useMusicianStats(me.id)
   const unread = useUnreadNotificationCount()
-  const entry = getLeaderboardEntry(CURRENT_USER_ID)
+  // A real sign-up is unranked — the season card below only renders when an entry exists.
+  const entry = getLeaderboardEntry(me.id)
   const season = getCurrentSeason()
-  const bands = listBandsFor(CURRENT_USER_ID)
+  const bands = listBandsFor(me.id)
 
   return (
     <AppShell
@@ -78,7 +79,8 @@ export function MeView() {
             </span>
           )}
         </div>
-        <h1 className="mb-1 font-serif text-[28px] font-bold text-foreground">{me.name}</h1>
+        <h1 className="font-serif text-[28px] font-bold text-foreground">{me.name}</h1>
+        <div className="mb-1 text-[13px] font-medium text-foreground-dim">@{me.handle}</div>
         <div className="mb-2 text-[12px] font-bold uppercase tracking-[0.06em] text-primary">
           {instrumentLabel(me.instruments[0]).toUpperCase()} · {genreLane(me.genres)}
         </div>
@@ -89,7 +91,10 @@ export function MeView() {
 
       {/* STATS — all three derived, none of them editable (docs/SPEC.md §5.3). */}
       <div className="mb-6 flex justify-between gap-3 px-4">
-        <StatTile value={`${stats?.reliabilityPct ?? 0}%`} label="Reliability" />
+        <StatTile
+          value={stats?.isNew ? '—' : `${stats?.reliabilityPct ?? 0}%`}
+          label={stats?.isNew ? 'New here' : 'Reliability'}
+        />
         <StatTile value={stats?.repeatJams ?? 0} label="Repeat jams" />
         <StatTile value={stats?.vouchCount ?? 0} label="Vouches" />
       </div>
@@ -170,7 +175,7 @@ export function MeView() {
       {/* SETTINGS */}
       <section className="mb-8 px-4">
         <Card className="overflow-hidden">
-          {SETTINGS_ROWS.map((row, i) => (
+          {SETTINGS_ROWS.map((row) => (
             <Link
               key={row.href}
               href={
@@ -178,14 +183,26 @@ export function MeView() {
                   ? `/bands/${bands[0].id}`
                   : row.href
               }
-              className={`flex items-center justify-between p-4 ${
-                i < SETTINGS_ROWS.length - 1 ? 'border-b border-border-hairline' : ''
-              }`}
+              className="flex items-center justify-between border-b border-border-hairline p-4"
             >
               <span className="text-[15px] font-medium text-foreground">{row.label}</span>
               <ChevronRight size={14} className="text-foreground-dim" />
             </Link>
           ))}
+          <button
+            type="button"
+            onClick={() => {
+              // Redirect even if the POST fails — /welcome is safe either way, and a dead
+              // session on the server just means the next request signs the user out anyway.
+              void fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+                window.location.href = '/welcome'
+              })
+            }}
+            className="flex w-full items-center justify-between p-4 text-left"
+          >
+            <span className="text-[15px] font-medium text-destructive">Log out</span>
+            <LogOut size={14} className="text-destructive" />
+          </button>
         </Card>
       </section>
     </AppShell>

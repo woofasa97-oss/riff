@@ -54,9 +54,18 @@ export function AttendeeRow({
       </div>
       {stats && rsvp === 'confirmed' && (
         <div className="shrink-0 text-right">
-          <div className="text-[14px] font-bold text-foreground">{stats.reliabilityPct}%</div>
-          <div className="text-[10px] text-foreground-dim">reliability</div>
-          <ReliabilityMeter pct={stats.reliabilityPct} />
+          {stats.isNew ? (
+            <>
+              <div className="text-[14px] font-bold text-primary">New</div>
+              <div className="text-[10px] text-foreground-dim">first jams</div>
+            </>
+          ) : (
+            <>
+              <div className="text-[14px] font-bold text-foreground">{stats.reliabilityPct}%</div>
+              <div className="text-[10px] text-foreground-dim">reliability</div>
+              <ReliabilityMeter pct={stats.reliabilityPct} />
+            </>
+          )}
         </div>
       )}
     </div>

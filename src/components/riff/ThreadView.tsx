@@ -2,18 +2,26 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { CalendarCheck, CalendarDays, CircleCheck, Info, Plus, SendHorizontal } from 'lucide-react'
+import {
+  CalendarCheck,
+  CalendarDays,
+  CircleCheck,
+  Info,
+  Loader2,
+  Plus,
+  SendHorizontal,
+} from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { authorName, describeThread } from '@/components/riff/threadDisplay'
 import { Avatar } from '@/components/ui/Avatar'
-import { Button, buttonClass } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { iconButtonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
 import { formatDayAndTime, formatDayHeading, formatTime, groupByDay } from '@/lib/datetime'
 import { useRiffStore } from '@/lib/store'
-import { CURRENT_USER_ID, NOW, getJam, getMusician, getVenue, listMessages } from '@/mocks'
+import { getJam, getMusician, getVenue, listMessages } from '@/mocks'
 
 /**
  * The conversation behind a thread row: pinned jam strip, day-grouped bubbles, inline system
@@ -22,6 +30,10 @@ import { CURRENT_USER_ID, NOW, getJam, getMusician, getVenue, listMessages } fro
  */
 export function ThreadView({ threadId }: { threadId: string }) {
   const [draft, setDraft] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
+  const viewerId = useRiffStore((s) => s.viewerId)
+  const now = useRiffStore((s) => s.now)
   const messages = useRiffStore((s) => s.messages)
   const jams = useRiffStore((s) => s.jams)
   const threads = useRiffStore((s) => s.threads)
@@ -30,11 +42,12 @@ export function ThreadView({ threadId }: { threadId: string }) {
   const markThreadRead = useRiffStore((s) => s.markThreadRead)
   const thread = threads.find((t) => t.id === threadId)
 
-  // Reading the conversation clears its unread dot on the Messages list.
+  // Reading the conversation clears its unread dot on the Messages list. The store applies it
+  // optimistically, so fire-and-forget is enough here.
   useEffect(() => {
-    if (thread && thread.unreadCount > 0) markThreadRead(thread.id)
+    if (thread && thread.unreadCount > 0) void markThreadRead(thread.id)
   }, [thread, markThreadRead])
-  const display = thread ? describeThread(thread, CURRENT_USER_ID, jams) : undefined
+  const display = thread ? describeThread(thread, viewerId, jams) : undefined
   const jam = thread?.jamId
     ? (jams.find((j) => j.id === thread.jamId) ?? getJam(thread.jamId))
     : undefined
@@ -66,12 +79,21 @@ export function ThreadView({ threadId }: { threadId: string }) {
     )
   }
 
-  function handleSend(event: React.FormEvent) {
+  async function handleSend(event: React.FormEvent) {
     event.preventDefault()
     const body = draft.trim()
-    if (!body || !thread) return
-    sendMessage(thread.id, body)
-    setDraft('')
+    if (!body || !thread || sending) return
+    setSending(true)
+    setSendError(null)
+    try {
+      await sendMessage(thread.id, body)
+      // Only a delivered message clears the box — a failed one stays editable.
+      setDraft('')
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : 'Could not send — try again')
+    } finally {
+      setSending(false)
+    }
   }
 
   const isGroup = display.faces.length > 1
@@ -128,31 +150,43 @@ export function ThreadView({ threadId }: { threadId: string }) {
       footer={
         <form
           onSubmit={handleSend}
-          className="pb-safe z-20 flex shrink-0 items-center gap-2 border-t border-border-subtle bg-background/95 px-4 py-3 backdrop-blur-md"
+          className="pb-safe z-20 shrink-0 border-t border-border-subtle bg-background/95 px-4 py-3 backdrop-blur-md"
         >
-          {/* Attachments are out of scope for v1, so this opens the jam rather than a picker. */}
-          <Link
-            href={jam ? `/jams/${jam.id}` : '/jams'}
-            aria-label="Jam details"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-card text-foreground transition-transform active:scale-90"
-          >
-            <Plus size={17} />
-          </Link>
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder={isGroup ? 'Message the group' : 'Message'}
-            aria-label="Write a message"
-            className="h-10 flex-1 rounded-full border border-border-subtle bg-card px-4 text-[14px] text-foreground placeholder:text-foreground-dim focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-          <button
-            type="submit"
-            disabled={draft.trim().length === 0}
-            aria-label="Send"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90 disabled:opacity-40"
-          >
-            <SendHorizontal size={16} />
-          </button>
+          {sendError && (
+            <p role="alert" className="mb-2 text-[12px] text-destructive">
+              {sendError}
+            </p>
+          )}
+          <div className="flex items-center gap-2">
+            {/* Attachments are out of scope for v1, so this opens the jam rather than a picker. */}
+            <Link
+              href={jam ? `/jams/${jam.id}` : '/jams'}
+              aria-label="Jam details"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-card text-foreground transition-transform active:scale-90"
+            >
+              <Plus size={17} />
+            </Link>
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder={isGroup ? 'Message the group' : 'Message'}
+              aria-label="Write a message"
+              className="h-10 flex-1 rounded-full border border-border-subtle bg-card px-4 text-[14px] text-foreground placeholder:text-foreground-dim focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <button
+              type="submit"
+              disabled={sending || draft.trim().length === 0}
+              aria-label="Send"
+              aria-busy={sending}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90 disabled:opacity-40"
+            >
+              {sending ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <SendHorizontal size={16} />
+              )}
+            </button>
+          </div>
         </form>
       }
     >
@@ -165,7 +199,7 @@ export function ThreadView({ threadId }: { threadId: string }) {
           <section key={day.key} className="flex flex-col gap-4">
             <div className="text-center">
               <span className="inline-block rounded-full border border-border-subtle bg-card px-3 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-foreground-dim">
-                {formatDayHeading(day.items[0].sentAt, NOW)}
+                {formatDayHeading(day.items[0].sentAt, now)}
               </span>
             </div>
 
@@ -186,7 +220,7 @@ export function ThreadView({ threadId }: { threadId: string }) {
                 )
               }
 
-              const mine = message.authorId === CURRENT_USER_ID
+              const mine = message.authorId === viewerId
               const author = getMusician(message.authorId)
 
               if (mine) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -32,17 +32,26 @@ import { getCurrentSeason, getLeaderboardEntry, getMusician } from '@/mocks'
 /**
  * How a musician looks to everyone else (42-profile-musician.html). Everything reputational —
  * badges, tiles, ranking, vouches — is derived via useMusicianStats / vouchesFor, never read
- * from an editable field (product rule 3). The viewer's own profile lives on /me; the route
- * redirects there before this ever renders for the current user.
+ * from an editable field (product rule 3). The viewer's own profile lives on /me; only the
+ * client knows who the viewer is, so the redirect there happens here, not in the route.
  */
 export function MusicianProfileView({ musicianId }: { musicianId: string }) {
   const router = useRouter()
+  const viewerId = useRiffStore((s) => s.viewerId)
   const jams = useRiffStore((s) => s.jams)
   const openDirectThread = useRiffStore((s) => s.openDirectThread)
   const recordingConsents = useRiffStore((s) => s.recordingConsents)
   const ctx = useReputationContext()
   const stats = useMusicianStats(musicianId)
   const musician = getMusician(musicianId)
+
+  const [messageBusy, setMessageBusy] = useState(false)
+  const [messageError, setMessageError] = useState<string | null>(null)
+
+  const isSelf = musicianId === viewerId
+  useEffect(() => {
+    if (isSelf) router.replace('/me')
+  }, [isSelf, router])
 
   // Completed sessions this musician actually played that carry a recording — and only when
   // every confirmed attendee agreed to publish it. A recording without unanimous consent is
@@ -67,6 +76,8 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
       vouchesFor(musicianId, ctx).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
     [musicianId, ctx],
   )
+
+  if (isSelf) return null
 
   if (!musician || !stats) {
     return (
@@ -93,6 +104,7 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
   const season = getCurrentSeason()
   const firstName = musician.name.split(' ')[0]
   const preview = allVouches.slice(0, 2)
+  const isSeed = musician.avatarUrl.startsWith('/mock/')
 
   return (
     <AppShell
@@ -101,14 +113,30 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
       mainClassName="pb-6"
       footer={
         <StickyActionBar
-          note={`A request is a proposal — nothing is confirmed until ${firstName} accepts.`}
+          note={
+            messageError ? (
+              <span className="text-destructive">{messageError}</span>
+            ) : (
+              `A request is a proposal — nothing is confirmed until ${firstName} accepts.`
+            )
+          }
         >
           <Button
             variant="secondary"
             className="flex-1"
-            onClick={() => {
-              const thread = openDirectThread(musicianId)
-              router.push(`/messages/${thread.id}`)
+            disabled={messageBusy}
+            onClick={async () => {
+              setMessageBusy(true)
+              setMessageError(null)
+              try {
+                const thread = await openDirectThread(musicianId)
+                router.push(`/messages/${thread.id}`)
+              } catch (err) {
+                setMessageError(
+                  err instanceof Error ? err.message : 'Something went wrong — try again',
+                )
+                setMessageBusy(false)
+              }
             }}
           >
             Message
@@ -122,6 +150,12 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
         </StickyActionBar>
       }
     >
+      {isSeed && (
+        <p className="px-4 pt-3 text-center text-[11px] text-foreground-dim">
+          Riff crew · demo profile — they won&apos;t reply to requests
+        </p>
+      )}
+
       {/* IDENTITY — neighbourhood and distance only, never an address (product rule 2). */}
       <section className="flex flex-col items-center px-4 pb-8 pt-6 text-center">
         <div className="relative mb-4">
@@ -168,7 +202,10 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
 
       {/* STATS — computed from session recaps, not editable (product rule 3). */}
       <div className="mb-8 flex justify-between gap-3 px-4">
-        <StatTile value={`${stats.reliabilityPct}%`} label="Reliability" />
+        <StatTile
+          value={stats.isNew ? '—' : `${stats.reliabilityPct}%`}
+          label={stats.isNew ? 'New here' : 'Reliability'}
+        />
         <StatTile value={stats.repeatJams} label="Repeat jams" />
         <StatTile value={stats.vouchCount} label="Vouches" />
       </div>

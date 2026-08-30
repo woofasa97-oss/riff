@@ -14,14 +14,18 @@ export function canRevealAddress(jam: Jam, viewerId: string): boolean {
   return jam.attendees.some((a) => a.musicianId === viewerId && a.rsvp === 'confirmed')
 }
 
-/** What to render in a jam's location block, given who is looking. */
+/**
+ * What to render in a jam's location block. The address itself now arrives ONLY as
+ * jam.revealedAddress, granted by the server per viewer — the client bundle carries no
+ * addresses at all, so there is nothing here for a curious devtools user to find.
+ */
 export function jamLocationLines(
   jam: Jam,
   venue: Venue,
   viewerId: string,
 ): { primary: string; secondary: string; exact: boolean } {
-  if (canRevealAddress(jam, viewerId)) {
-    return { primary: venue.address, secondary: venue.city, exact: true }
+  if (canRevealAddress(jam, viewerId) && jam.revealedAddress) {
+    return { primary: jam.revealedAddress, secondary: venue.city, exact: true }
   }
   return {
     primary: venue.neighborhood,

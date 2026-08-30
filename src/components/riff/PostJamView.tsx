@@ -16,7 +16,7 @@ import { cn } from '@/lib/cn'
 import { formatShortDateTime, formatTime, relativeDayLabel } from '@/lib/datetime'
 import { instrumentLabel, intentLabel, shortNeighborhood } from '@/lib/labels'
 import { useCurrentUser, useRiffStore } from '@/lib/store'
-import { NOW, getVenue, listNearbyMusicians, venues } from '@/mocks'
+import { getVenue, listNearbyMusicians, venues } from '@/mocks'
 import type { Instrument, Intent, Jam } from '@/types'
 
 type Mode = 'open' | 'invite'
@@ -41,6 +41,8 @@ export function PostJamView() {
   const router = useRouter()
   const me = useCurrentUser()
   const postJam = useRiffStore((s) => s.postJam)
+  const now = useRiffStore((s) => s.now)
+  const allMusicians = useRiffStore((s) => s.musicians)
 
   const [mode, setMode] = useState<Mode>('open')
   const [title, setTitle] = useState('')
@@ -54,16 +56,22 @@ export function PostJamView() {
   const [invitedIds, setInvitedIds] = useState<string[]>([])
   const [message, setMessage] = useState('')
   const [posted, setPosted] = useState<Jam | null>(null)
+  const [busy, setBusy] = useState<'draft' | 'post' | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const nearby = useMemo(() => listNearbyMusicians(), [])
+  // Store-fed so freshly signed-up players are invitable without a reload.
+  const nearby = useMemo(
+    () => listNearbyMusicians({ viewerId: me.id }, allMusicians),
+    [me.id, allMusicians],
+  )
   const invited = useMemo(
     () => nearby.filter((m) => invitedIds.includes(m.id)),
     [nearby, invitedIds],
   )
 
-  // The next 7 days off the mock clock, keyed by their zoned calendar date.
+  // The next 7 days off the server clock, keyed by their zoned calendar date.
   const days = useMemo(() => {
-    const nowMs = Date.parse(NOW)
+    const nowMs = Date.parse(now)
     const dateFmt = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'America/New_York',
       year: 'numeric',
@@ -82,10 +90,10 @@ export function PostJamView() {
       const d = new Date(nowMs + offset * 86_400_000)
       const key = dateFmt.format(d)
       const label =
-        offset <= 1 ? relativeDayLabel(`${key}T12:00:00-04:00`, NOW) : weekdayFmt.format(d)
+        offset <= 1 ? relativeDayLabel(`${key}T12:00:00-04:00`, now) : weekdayFmt.format(d)
       return { key, label, dayNum: dayNumFmt.format(d) }
     })
-  }, [])
+  }, [now])
 
   // Validation in the order the form reads; the first missing thing is named under the button.
   const missing =
@@ -104,27 +112,35 @@ export function PostJamView() {
   function pickDay(key: string) {
     setDateKey(key)
     // A time already chosen can be in the past once "Today" is picked — clear it, never lie.
-    if (hour !== null && Date.parse(startsAtFor(key, hour)) <= Date.parse(NOW)) setHour(null)
+    if (hour !== null && Date.parse(startsAtFor(key, hour)) <= Date.parse(now)) setHour(null)
   }
 
-  function submit(asDraft: boolean) {
-    if (missing || !dateKey || hour === null || !venueId) return
-    // Posting never confirms anything: the store files this as pending (or draft), and only
-    // acceptances move it forward — product rule 1.
-    const jam = postJam({
-      title: title.trim(),
-      intent,
-      isOpenCall: mode === 'open',
-      openSeats: roles,
-      startsAt: startsAtFor(dateKey, hour),
-      durationHours: duration,
-      venueId,
-      message: message.trim() || undefined,
-      invitedIds: mode === 'invite' ? invitedIds : [],
-      asDraft,
-    })
-    if (asDraft) router.push('/jams')
-    else setPosted(jam)
+  async function submit(asDraft: boolean) {
+    if (busy || missing || !dateKey || hour === null || !venueId) return
+    setBusy(asDraft ? 'draft' : 'post')
+    setError(null)
+    try {
+      // Posting never confirms anything: the server files this as pending (or draft), and only
+      // acceptances move it forward — product rule 1.
+      const jam = await postJam({
+        title: title.trim(),
+        intent,
+        isOpenCall: mode === 'open',
+        openSeats: roles,
+        startsAt: startsAtFor(dateKey, hour),
+        durationHours: duration,
+        venueId,
+        message: message.trim() || undefined,
+        invitedIds: mode === 'invite' ? invitedIds : [],
+        asDraft,
+      })
+      // Stay busy on success — a re-enabled button during navigation invites a double post.
+      if (asDraft) router.push('/jams')
+      else setPosted(jam)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong — try again')
+      setBusy(null)
+    }
   }
 
   // ---- Posted: say where it went and what is (not) confirmed. ---------------
@@ -193,22 +209,30 @@ export function PostJamView() {
       footer={
         <StickyActionBar
           note={
-            missing ??
-            (mode === 'invite'
-              ? 'Nothing is confirmed until they accept.'
-              : 'Your open call shows on Discover until the seats fill.')
+            error ? (
+              <span className="text-destructive">{error}</span>
+            ) : (
+              (missing ??
+              (mode === 'invite'
+                ? 'Nothing is confirmed until they accept.'
+                : 'Your open call shows on Discover until the seats fill.'))
+            )
           }
         >
           <Button
             variant="secondary"
             className="flex-1"
-            disabled={!!missing}
-            onClick={() => submit(true)}
+            disabled={!!missing || busy !== null}
+            onClick={() => void submit(true)}
           >
-            Save draft
+            {busy === 'draft' ? 'Saving…' : 'Save draft'}
           </Button>
-          <Button className="flex-1" disabled={!!missing} onClick={() => submit(false)}>
-            {mode === 'open' ? 'Post open call' : 'Send invites'}
+          <Button
+            className="flex-1"
+            disabled={!!missing || busy !== null}
+            onClick={() => void submit(false)}
+          >
+            {busy === 'post' ? 'Posting…' : mode === 'open' ? 'Post open call' : 'Send invites'}
           </Button>
         </StickyActionBar>
       }
@@ -318,7 +342,7 @@ export function PostJamView() {
               {TIME_HOURS.map((h) => {
                 // On "Today" an afternoon slot can already be behind the clock — offer no past.
                 const past =
-                  dateKey !== null && Date.parse(startsAtFor(dateKey, h)) <= Date.parse(NOW)
+                  dateKey !== null && Date.parse(startsAtFor(dateKey, h)) <= Date.parse(now)
                 return (
                   <Chip
                     key={h}

@@ -115,6 +115,7 @@ export function deriveStats(musician: Musician, ctx: ReputationContext): Musicia
   const vouchCount = musician.baseline.vouches + vouchesFor(musician.id, ctx).length
 
   return {
+    isNew: attendances === 0,
     reliabilityPct,
     repeatJams,
     vouchCount,

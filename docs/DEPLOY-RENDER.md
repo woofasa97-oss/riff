@@ -84,3 +84,21 @@ OSM's default styling back in line with the rest of the app.
 **What never changes:** the map renders neighbourhoods, never people. `MapZone.center` is the
 only geography in the data, and musicians carry no coordinates at all — see `src/lib/privacy.ts`
 and `docs/SPEC.md` §5.2.
+
+## Accounts and the database
+
+Riff now has real username + password accounts. State lives in **SQLite** via `better-sqlite3`
+at `RIFF_DB_PATH` (default `./data/riff.db`, gitignored; `/var/data/riff.db` on Render). On
+first boot the fixture world from `src/mocks/` is seeded in — with every timestamp shifted so
+the demo scene starts "today" — and real sign-ups join it. Seed musicians are flagged and have
+no login.
+
+Three operational facts:
+
+1. **One instance only.** SQLite is per-process. Never scale `riff-web` horizontally; when
+   that day comes, the schema is written to translate 1:1 to Postgres (docs/DATA-MODEL.md).
+2. **Durability needs a disk.** On the free plan the filesystem — and therefore every account —
+   resets on each deploy. Attach the commented-out `disk:` block in `render.yaml` (paid) to
+   keep accounts. Fine to skip while just trying the app with friends.
+3. **No secrets to configure.** Sessions are random tokens stored hashed in the database, so
+   there is no signing key to manage. Passwords are scrypt-hashed with per-user salts.

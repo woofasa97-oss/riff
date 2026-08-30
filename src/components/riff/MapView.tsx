@@ -12,9 +12,8 @@ import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
 import { formatDurationMinutes, minutesSince } from '@/lib/datetime'
 import { compactCount, instrumentLabel, shortNeighborhood } from '@/lib/labels'
-import { useUnreadNotificationCount } from '@/lib/store'
+import { useRiffStore, useUnreadNotificationCount } from '@/lib/store'
 import {
-  NOW,
   getBand,
   getLiveSession,
   getVenue,
@@ -38,21 +37,27 @@ export function MapView() {
   const [selectedZoneId, setSelectedZoneId] = useState<string>()
   const [selectedLiveId, setSelectedLiveId] = useState<string>()
   const unread = useUnreadNotificationCount()
+  const viewerId = useRiffStore((s) => s.viewerId)
+  const musicians = useRiffStore((s) => s.musicians)
+  const now = useRiffStore((s) => s.now)
 
   const filter: ZoneFilter = useMemo(
     () => ({ tonightOnly, instrument: instrument === 'all' ? undefined : instrument }),
     [tonightOnly, instrument],
   )
 
-  const zones = useMemo(() => summariseAllZones(filter), [filter])
-  const me = viewerZone()
+  const zones = useMemo(
+    () => summariseAllZones(filter, viewerId, musicians),
+    [filter, viewerId, musicians],
+  )
+  const me = viewerZone(viewerId)
   const selected = zones.find((z) => z.zone.id === selectedZoneId)
   const totalNearby = zones.reduce((sum, z) => sum + z.count, 0)
 
   const session = selectedLiveId ? getLiveSession(selectedLiveId) : undefined
   const sessionBand = session?.bandId ? getBand(session.bandId) : undefined
   const sessionVenue = session ? getVenue(session.venueId) : undefined
-  const elapsed = session ? minutesSince(session.startedAt, NOW) : 0
+  const elapsed = session ? minutesSince(session.startedAt, now) : 0
 
   return (
     <AppShell

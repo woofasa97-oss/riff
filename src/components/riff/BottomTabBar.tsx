@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Compass, Guitar, Map, RadioTower } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/cn'
-import { getCurrentUser } from '@/mocks'
+import { useCurrentUser } from '@/lib/store'
 
 export type TabId = 'map' | 'discover' | 'jams' | 'live' | 'me'
 
@@ -22,6 +22,7 @@ const TABS: { id: TabId; href: string; label: string }[] = [
 ]
 
 function TabIcon({ id, active, dark }: { id: TabId; active: boolean; dark: boolean }) {
+  const me = useCurrentUser()
   const size = 22
   switch (id) {
     case 'map':
@@ -33,7 +34,6 @@ function TabIcon({ id, active, dark }: { id: TabId; active: boolean; dark: boole
     case 'live':
       return <RadioTower size={size} strokeWidth={active ? 2.2 : 1.8} />
     case 'me': {
-      const me = getCurrentUser()
       return (
         <Avatar
           src={me.avatarUrl}

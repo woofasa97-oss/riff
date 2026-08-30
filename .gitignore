@@ -17,3 +17,6 @@ next-env.d.ts
 /build
 *.tsbuildinfo
 .vercel
+
+# SQLite database (local + per-instance on Render)
+data/

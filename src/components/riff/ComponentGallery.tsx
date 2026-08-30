@@ -27,9 +27,9 @@ import { StatTile } from '@/components/ui/StatTile'
 import { ChipTabs, Tabs } from '@/components/ui/Tabs'
 import { Toggle } from '@/components/ui/Toggle'
 import { emptyGrid } from '@/lib/availability'
-import { useMusicianStats, useRiffStore } from '@/lib/store'
+import { useCurrentUser, useMusicianStats, useRiffStore } from '@/lib/store'
 import { peaksFor } from '@/lib/waveform'
-import { CURRENT_USER_ID, getCurrentUser, getMusician, listNearbyMusicians } from '@/mocks'
+import { getMusician, listNearbyMusicians } from '@/mocks'
 import type { Instrument, Intent, Slot, VouchTag, Weekday } from '@/types'
 
 const BUTTON_VARIANTS = ['primary', 'secondary', 'outline', 'ghost', 'destructive'] as const
@@ -60,16 +60,16 @@ function MissingFixture({ what }: { what: string }) {
  * regression is visible at a glance. Not linked from the product chrome.
  */
 export function ComponentGallery() {
-  const user = getCurrentUser()
+  const user = useCurrentUser()
+  const viewerId = useRiffStore((s) => s.viewerId)
+  const musicians = useRiffStore((s) => s.musicians)
   const sarah = getMusician('sarah-jenkins')
-  const neighbors = listNearbyMusicians().slice(0, 5)
-  const stats = useMusicianStats(CURRENT_USER_ID)
+  const neighbors = listNearbyMusicians({ viewerId }, musicians).slice(0, 5)
+  const stats = useMusicianStats(viewerId)
   const jams = useRiffStore((s) => s.jams)
   const requests = useRiffStore((s) => s.requests)
   const openCall = jams.find((j) => j.isOpenCall)
-  const pendingCount = requests.filter(
-    (r) => r.toId === CURRENT_USER_ID && r.status === 'pending',
-  ).length
+  const pendingCount = requests.filter((r) => r.toId === viewerId && r.status === 'pending').length
 
   const [chipOn, setChipOn] = useState(true)
   const [tab, setTab] = useState<GalleryTab>('upcoming')

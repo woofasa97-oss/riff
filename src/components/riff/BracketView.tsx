@@ -10,7 +10,6 @@ import { iconButtonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
 import { useRiffStore } from '@/lib/store'
 import {
-  CURRENT_USER_ID,
   ROUND_LABEL,
   ROUND_ORDER,
   getBand,
@@ -141,16 +140,17 @@ const SCOPES: { id: BattleScope; label: string }[] = [
 export function BracketView() {
   const [scope, setScope] = useState<BattleScope>('local')
   const season = getCurrentSeason()
-  const myBand = listBandsFor(CURRENT_USER_ID)[0]
+  const viewerId = useRiffStore((s) => s.viewerId)
+  const myBand = listBandsFor(viewerId)[0]
   const voted = useRiffStore((s) => s.battleVotes)
 
   const rounds = useMemo(() => {
-    const visible = listBattles(scope, CURRENT_USER_ID)
+    const visible = listBattles(scope, viewerId)
     return ROUND_ORDER.map((round) => ({
       round,
       battles: visible.filter((b) => b.round === round),
     })).filter((column) => column.battles.length > 0)
-  }, [scope])
+  }, [scope, viewerId])
 
   const champion = useMemo(() => {
     const final = listBattles('global').find((b) => b.round === 'final')

@@ -1,0 +1,381 @@
+/**
+ * SQLite persistence for real accounts. SERVER-ONLY — importing this from a client component
+ * would fail the build (better-sqlite3 is a native module) and would be wrong anyway.
+ *
+ * v1 was mocks-only; real sign-ups changed that. The schema below is the docs/DATA-MODEL.md
+ * types made literal, with nested arrays as JSON columns — they translate 1:1 into the
+ * Postgres tables the doc promises when this outgrows one instance. One process, one file:
+ * SQLite is correct for a single Render service and wrong for more than one. See
+ * docs/DEPLOY-RENDER.md.
+ *
+ * On first boot the fixture world is seeded in, with every timestamp shifted so "tonight's
+ * jam" is tonight at seed time — new users land in a living scene, not a museum of
+ * August 2026. Seed musicians are flagged `is_seed`; they have no login and never reply.
+ */
+import fs from 'node:fs'
+import path from 'node:path'
+import Database from 'better-sqlite3'
+import {
+  bands as seedBands,
+  jamRequests as seedRequests,
+  jams as seedJams,
+  messages as seedMessages,
+  musicians as seedMusicians,
+  notifications as seedNotifications,
+  recordingConsents as seedConsents,
+  sessionRecaps as seedRecaps,
+  threads as seedThreads,
+  venues as seedVenues,
+  vouches as seedVouches,
+  CURRENT_USER_ID as SEED_ANCHOR_USER,
+  NOW as FIXTURE_NOW,
+} from '@/mocks'
+
+const DB_PATH = process.env.RIFF_DB_PATH ?? path.join(process.cwd(), 'data', 'riff.db')
+
+let _db: Database.Database | undefined
+
+export function db(): Database.Database {
+  if (_db) return _db
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true })
+  _db = new Database(DB_PATH)
+  _db.pragma('journal_mode = WAL')
+  _db.pragma('foreign_keys = ON')
+  migrate(_db)
+  seed(_db)
+  return _db
+}
+
+function migrate(d: Database.Database) {
+  d.exec(`
+    CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+
+    CREATE TABLE IF NOT EXISTS users (
+      id            TEXT PRIMARY KEY,             -- equals the musician id
+      username      TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      password_hash TEXT NOT NULL,
+      password_salt TEXT NOT NULL,
+      created_at    TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      token_hash TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL REFERENCES users(id),
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS musicians (
+      id                TEXT PRIMARY KEY,
+      name              TEXT NOT NULL,
+      handle            TEXT NOT NULL,
+      avatar_url        TEXT NOT NULL,
+      instruments       TEXT NOT NULL,            -- JSON Instrument[]
+      genres            TEXT NOT NULL,            -- JSON Genre[]
+      intent            TEXT NOT NULL,
+      neighborhood      TEXT NOT NULL,
+      city              TEXT NOT NULL,
+      travel_radius_mi  INTEGER NOT NULL,
+      bio               TEXT,
+      clip              TEXT,                     -- JSON AudioClip | null
+      availability      TEXT NOT NULL,            -- JSON Availability
+      available_tonight INTEGER NOT NULL DEFAULT 0,
+      tonight_set_on    TEXT,                     -- ET date key; expires at local midnight
+      verified          INTEGER NOT NULL DEFAULT 0,
+      jams_hosted       INTEGER NOT NULL DEFAULT 0,
+      baseline          TEXT NOT NULL,            -- JSON ReputationBaseline
+      is_seed           INTEGER NOT NULL DEFAULT 0,
+      profile_complete  INTEGER NOT NULL DEFAULT 1,
+      created_at        TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS venues (
+      id TEXT PRIMARY KEY, name TEXT NOT NULL, kind TEXT NOT NULL,
+      neighborhood TEXT NOT NULL, address TEXT NOT NULL, city TEXT NOT NULL,
+      distance_mi REAL NOT NULL, photo_url TEXT NOT NULL, rating REAL NOT NULL,
+      jams_hosted INTEGER NOT NULL, hourly_rate_usd INTEGER NOT NULL,
+      amenities TEXT NOT NULL, slots TEXT NOT NULL, live_now INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS jams (
+      id             TEXT PRIMARY KEY,
+      title          TEXT NOT NULL,
+      intent         TEXT NOT NULL,
+      status         TEXT NOT NULL,
+      starts_at      TEXT NOT NULL,
+      duration_hours REAL NOT NULL,
+      actual_duration_min INTEGER,
+      venue_id       TEXT NOT NULL,
+      host_id        TEXT NOT NULL,
+      attendees      TEXT NOT NULL,               -- JSON JamAttendee[]
+      open_seats     TEXT NOT NULL,               -- JSON Instrument[]
+      is_open_call   INTEGER NOT NULL,
+      posted_at      TEXT,
+      message        TEXT,
+      thread_id      TEXT NOT NULL,
+      recording_id   TEXT,
+      recap_id       TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS requests (
+      id               TEXT PRIMARY KEY,
+      from_id          TEXT NOT NULL,
+      to_id            TEXT NOT NULL,
+      intent           TEXT NOT NULL,
+      proposed_times   TEXT NOT NULL,             -- JSON string[]
+      venue_id         TEXT,
+      venue_suggestion TEXT,
+      message          TEXT NOT NULL,
+      status           TEXT NOT NULL,
+      counter_times    TEXT,                      -- JSON string[] | null
+      jam_id           TEXT,
+      created_at       TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS applications (
+      id TEXT PRIMARY KEY, jam_id TEXT NOT NULL, applicant_id TEXT NOT NULL,
+      instrument TEXT NOT NULL, status TEXT NOT NULL, applied_at TEXT NOT NULL,
+      UNIQUE (jam_id, applicant_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS threads (
+      id TEXT PRIMARY KEY, kind TEXT NOT NULL, jam_id TEXT, request_id TEXT,
+      venue_id TEXT, band_id TEXT,
+      participant_ids TEXT NOT NULL,              -- JSON string[]
+      last_message_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS thread_reads (
+      thread_id TEXT NOT NULL, user_id TEXT NOT NULL, last_read_at TEXT NOT NULL,
+      PRIMARY KEY (thread_id, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS messages (
+      id TEXT PRIMARY KEY, thread_id TEXT NOT NULL, author_id TEXT NOT NULL,
+      body TEXT NOT NULL, sent_at TEXT NOT NULL, kind TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id, sent_at);
+
+    CREATE TABLE IF NOT EXISTS recaps (
+      id TEXT PRIMARY KEY, jam_id TEXT NOT NULL, author_id TEXT NOT NULL,
+      attendance TEXT NOT NULL, vouches TEXT NOT NULL,
+      publish_recording INTEGER NOT NULL, duration_label TEXT NOT NULL, created_at TEXT NOT NULL,
+      UNIQUE (jam_id, author_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS consents (
+      jam_id TEXT NOT NULL, musician_id TEXT NOT NULL,
+      PRIMARY KEY (jam_id, musician_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS vouches (
+      id TEXT PRIMARY KEY, from_id TEXT NOT NULL, to_id TEXT NOT NULL,
+      tags TEXT NOT NULL, note TEXT NOT NULL, sessions_together INTEGER NOT NULL,
+      jam_id TEXT NOT NULL, created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id TEXT PRIMARY KEY, user_id TEXT NOT NULL, kind TEXT NOT NULL, actor_id TEXT,
+      body TEXT NOT NULL, meta TEXT, created_at TEXT NOT NULL, read INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at);
+  `)
+}
+
+/** ET date key for an instant — the unit "available tonight" expires on. */
+export function etDateKey(iso: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(iso))
+}
+
+function seed(d: Database.Database) {
+  const seeded = d.prepare(`SELECT value FROM meta WHERE key = 'seeded_at'`).get() as
+    { value: string } | undefined
+  if (seeded) return
+
+  // Shift every fixture instant by whole days so the anchor "tonight" jam lands today.
+  const now = new Date().toISOString()
+  const dayMs = 86_400_000
+  const shiftDays = Math.round(
+    (Date.parse(`${etDateKey(now)}T12:00:00Z`) -
+      Date.parse(`${etDateKey(FIXTURE_NOW)}T12:00:00Z`)) /
+      dayMs,
+  )
+  const shift = (iso: string) => new Date(Date.parse(iso) + shiftDays * dayMs).toISOString()
+
+  const tx = d.transaction(() => {
+    const mIns = d.prepare(`INSERT INTO musicians
+      (id,name,handle,avatar_url,instruments,genres,intent,neighborhood,city,travel_radius_mi,
+       bio,clip,availability,available_tonight,tonight_set_on,verified,jams_hosted,baseline,
+       is_seed,profile_complete,created_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,1,?)`)
+    for (const m of seedMusicians) {
+      const clip = m.clip ? { ...m.clip, recordedAt: shift(m.clip.recordedAt) } : null
+      mIns.run(
+        m.id,
+        m.name,
+        m.handle,
+        m.avatarUrl,
+        JSON.stringify(m.instruments),
+        JSON.stringify(m.genres),
+        m.intent,
+        m.neighborhood,
+        m.city,
+        m.travelRadiusMi,
+        m.bio ?? null,
+        clip ? JSON.stringify(clip) : null,
+        JSON.stringify(m.availability),
+        m.availableTonight ? 1 : 0,
+        m.availableTonight ? etDateKey(now) : null,
+        m.verified ? 1 : 0,
+        m.jamsHosted,
+        JSON.stringify(m.baseline),
+        now,
+      )
+    }
+
+    const vIns = d.prepare(`INSERT INTO venues VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    for (const v of seedVenues) {
+      vIns.run(
+        v.id,
+        v.name,
+        v.kind,
+        v.neighborhood,
+        v.address,
+        v.city,
+        v.distanceMi,
+        v.photoUrl,
+        v.rating,
+        v.jamsHosted,
+        v.hourlyRateUsd,
+        JSON.stringify(v.amenities),
+        JSON.stringify(v.slots.map((s) => ({ ...s, startsAt: shift(s.startsAt) }))),
+        v.liveNow ? 1 : 0,
+      )
+    }
+
+    const jIns = d.prepare(`INSERT INTO jams VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    for (const j of seedJams) {
+      jIns.run(
+        j.id,
+        j.title,
+        j.intent,
+        j.status,
+        shift(j.startsAt),
+        j.durationHours,
+        j.actualDurationMin ?? null,
+        j.venueId,
+        j.hostId,
+        JSON.stringify(j.attendees),
+        JSON.stringify(j.openSeats),
+        j.isOpenCall ? 1 : 0,
+        j.postedAt ? shift(j.postedAt) : null,
+        j.message ?? null,
+        j.threadId,
+        j.recordingId ?? null,
+        j.recapId ?? null,
+      )
+    }
+
+    const rIns = d.prepare(`INSERT INTO requests VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
+    for (const r of seedRequests) {
+      rIns.run(
+        r.id,
+        r.fromId,
+        r.toId,
+        r.intent,
+        JSON.stringify(r.proposedTimes.map(shift)),
+        r.venueId ?? null,
+        r.venueSuggestion ?? null,
+        r.message,
+        r.status,
+        r.counterTimes ? JSON.stringify(r.counterTimes.map(shift)) : null,
+        r.jamId ?? null,
+        shift(r.createdAt),
+      )
+    }
+
+    const tIns = d.prepare(`INSERT INTO threads VALUES (?,?,?,?,?,?,?,?)`)
+    for (const t of seedThreads) {
+      tIns.run(
+        t.id,
+        t.kind,
+        t.jamId ?? null,
+        t.requestId ?? null,
+        t.venueId ?? null,
+        t.bandId ?? null,
+        JSON.stringify(t.participantIds),
+        shift(t.lastMessageAt),
+      )
+    }
+    // Fixture unreadCounts model Marcus's unread state: seed thread_reads for the anchor user
+    // so his dots match, and later real readers get their own rows.
+    const trIns = d.prepare(`INSERT INTO thread_reads VALUES (?,?,?)`)
+    for (const t of seedThreads) {
+      if (!t.participantIds.includes(SEED_ANCHOR_USER)) continue
+      if (t.unreadCount === 0) trIns.run(t.id, SEED_ANCHOR_USER, shift(t.lastMessageAt))
+    }
+
+    const msgIns = d.prepare(`INSERT INTO messages VALUES (?,?,?,?,?,?)`)
+    for (const m of seedMessages) {
+      msgIns.run(m.id, m.threadId, m.authorId, m.body, shift(m.sentAt), m.kind)
+    }
+
+    const recIns = d.prepare(`INSERT INTO recaps VALUES (?,?,?,?,?,?,?,?)`)
+    for (const r of seedRecaps) {
+      recIns.run(
+        r.id,
+        r.jamId,
+        r.authorId,
+        JSON.stringify(r.attendance),
+        JSON.stringify(r.vouches),
+        r.publishRecording ? 1 : 0,
+        r.durationLabel,
+        shift(r.createdAt),
+      )
+    }
+
+    const cIns = d.prepare(`INSERT INTO consents VALUES (?,?)`)
+    for (const [jamId, ids] of Object.entries(seedConsents)) {
+      for (const id of ids) cIns.run(jamId, id)
+    }
+
+    const vouchIns = d.prepare(`INSERT INTO vouches VALUES (?,?,?,?,?,?,?,?)`)
+    for (const v of seedVouches) {
+      vouchIns.run(
+        v.id,
+        v.fromId,
+        v.toId,
+        JSON.stringify(v.tags),
+        v.note,
+        v.sessionsTogether,
+        v.jamId,
+        shift(v.createdAt),
+      )
+    }
+
+    const nIns = d.prepare(`INSERT INTO notifications VALUES (?,?,?,?,?,?,?,?)`)
+    for (const n of seedNotifications) {
+      nIns.run(
+        n.id,
+        SEED_ANCHOR_USER,
+        n.kind,
+        n.actorId ?? null,
+        n.body,
+        n.meta ? JSON.stringify(n.meta) : null,
+        shift(n.createdAt),
+        n.read ? 1 : 0,
+      )
+    }
+
+    d.prepare(`INSERT INTO meta VALUES ('seeded_at', ?)`).run(now)
+    d.prepare(`INSERT INTO meta VALUES ('seed_shift_days', ?)`).run(String(shiftDays))
+    // Bands stay fixture-served (Phase 6 flavor, no per-user state) — recorded for reference.
+    d.prepare(`INSERT INTO meta VALUES ('seed_bands', ?)`).run(String(seedBands.length))
+  })
+  tx()
+}

@@ -9,10 +9,12 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { formatDurationMinutes, minutesSince } from '@/lib/datetime'
 import { compactCount } from '@/lib/labels'
-import { NOW, getBand, getLiveBattle, getVenue, listLiveSessions, voteShare } from '@/mocks'
+import { useRiffStore } from '@/lib/store'
+import { getBand, getLiveBattle, getVenue, listLiveSessions, voteShare } from '@/mocks'
 
 /** What is broadcasting now: jam sessions first, then the season's live battle. */
 export function LiveListView() {
+  const now = useRiffStore((s) => s.now)
   const sessions = listLiveSessions()
   const battle = getLiveBattle()
   const bandA = battle ? getBand(battle.bandAId) : undefined
@@ -47,7 +49,7 @@ export function LiveListView() {
               {sessions.map((session) => {
                 const band = getBand(session.bandId ?? '')
                 const venue = getVenue(session.venueId)
-                const elapsed = minutesSince(session.startedAt, NOW)
+                const elapsed = minutesSince(session.startedAt, now)
                 return (
                   <Link
                     key={session.id}

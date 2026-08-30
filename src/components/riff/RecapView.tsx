@@ -20,13 +20,14 @@ import { spellNumber } from '@/lib/labels'
 import { canVouch, hasUnanimousConsent } from '@/lib/privacy'
 import { statsFor, useReputationContext, useRiffStore } from '@/lib/store'
 import { peaksFor } from '@/lib/waveform'
-import { CURRENT_USER_ID, getMusician, getRecording, getVenue } from '@/mocks'
+import { getMusician, getRecording, getVenue } from '@/mocks'
 import type { MusicianStats, RecapVouch, VouchTag } from '@/types'
 
 type Verdict = 'yes' | 'no'
 
 export function RecapView({ jamId }: { jamId: string }) {
   const router = useRouter()
+  const viewerId = useRiffStore((s) => s.viewerId)
   const jams = useRiffStore((s) => s.jams)
   const consents = useRiffStore((s) => s.recordingConsents)
   const postRecap = useRiffStore((s) => s.postRecap)
@@ -40,18 +41,20 @@ export function RecapView({ jamId }: { jamId: string }) {
   const coAttendees = useMemo(() => {
     if (!jam) return []
     return jam.attendees
-      .filter((a) => a.rsvp === 'confirmed' && canVouch(jam, CURRENT_USER_ID, a.musicianId))
+      .filter((a) => a.rsvp === 'confirmed' && canVouch(jam, viewerId, a.musicianId))
       .map((a) => ({ attendee: a, musician: getMusician(a.musicianId) }))
       .filter((x): x is { attendee: typeof x.attendee; musician: NonNullable<typeof x.musician> } =>
         Boolean(x.musician),
       )
-  }, [jam])
+  }, [jam, viewerId])
 
   // Attendance defaults to "showed up" — the common case, and what the reference screen shows.
   const [attendance, setAttendance] = useState<Record<string, Verdict>>({})
   const [tags, setTags] = useState<Record<string, VouchTag[]>>({})
   const [notes, setNotes] = useState<Record<string, string>>({})
   const [posted, setPosted] = useState<{ before: Record<string, MusicianStats> } | null>(null)
+  const [posting, setPosting] = useState(false)
+  const [postError, setPostError] = useState<string | null>(null)
 
   const verdictFor = (id: string): Verdict => attendance[id] ?? 'yes'
 
@@ -102,22 +105,24 @@ export function RecapView({ jamId }: { jamId: string }) {
 
   const recording = jam.recordingId ? getRecording(jam.recordingId) : undefined
   const consentIds = consents[jam.id] ?? []
-  const iConsent = consentIds.includes(CURRENT_USER_ID)
+  const iConsent = consentIds.includes(viewerId)
   const unanimous = hasUnanimousConsent(jam, consentIds)
   const confirmedCount = jam.attendees.filter((a) => a.rsvp === 'confirmed').length
   const durationLabel = jam.actualDurationMin
     ? formatDurationMinutes(jam.actualDurationMin)
     : `${jam.durationHours}h`
 
-  function handlePost() {
-    if (!jam) return
+  async function handlePost() {
+    if (!jam || posting) return
+    // Snapshot everyone's stats before the server applies the recap, so the posted screen
+    // can show exactly what this session moved.
     const before: Record<string, MusicianStats> = {}
     for (const { musician } of coAttendees) {
       const stats = statsFor(musician.id, ctx)
       if (stats) before[musician.id] = stats
     }
 
-    const attendanceMap: Record<string, boolean> = { [CURRENT_USER_ID]: true }
+    const attendanceMap: Record<string, boolean> = { [viewerId]: true }
     const vouches: RecapVouch[] = []
     for (const { musician } of coAttendees) {
       attendanceMap[musician.id] = verdictFor(musician.id) === 'yes'
@@ -129,14 +134,22 @@ export function RecapView({ jamId }: { jamId: string }) {
       }
     }
 
-    postRecap({
-      jamId: jam.id,
-      attendance: attendanceMap,
-      vouches,
-      publishRecording: Boolean(recording) && unanimous,
-      durationLabel,
-    })
-    setPosted({ before })
+    setPosting(true)
+    setPostError(null)
+    try {
+      await postRecap({
+        jamId: jam.id,
+        attendance: attendanceMap,
+        vouches,
+        publishRecording: Boolean(recording) && unanimous,
+        durationLabel,
+      })
+      setPosted({ before })
+    } catch (err) {
+      setPostError(err instanceof Error ? err.message : 'Something went wrong — try again')
+    } finally {
+      setPosting(false)
+    }
   }
 
   // ---- Posted state: show exactly what moved. -------------------------------
@@ -231,16 +244,25 @@ export function RecapView({ jamId }: { jamId: string }) {
       header={<SubScreenHeader title="Session recap" backHref="/jams" />}
       mainClassName="px-4 py-8"
       footer={
-        <StickyActionBar note="This is what builds your reliability, repeats and vouches.">
+        <StickyActionBar
+          note={
+            postError ? (
+              <span className="text-destructive">{postError}</span>
+            ) : (
+              'This is what builds your reliability, repeats and vouches.'
+            )
+          }
+        >
           <Button
             variant="secondary"
             className="w-[120px] shrink-0"
+            disabled={posting}
             onClick={() => router.push('/jams')}
           >
             Skip
           </Button>
-          <Button className="flex-1" onClick={handlePost}>
-            Post recap
+          <Button className="flex-1" disabled={posting} onClick={() => void handlePost()}>
+            {posting ? 'Posting…' : 'Post recap'}
           </Button>
         </StickyActionBar>
       }
@@ -388,7 +410,11 @@ export function RecapView({ jamId }: { jamId: string }) {
               <Toggle
                 label="Agree to publish this recording"
                 checked={iConsent}
-                onChange={(next) => setRecordingConsent(jam.id, CURRENT_USER_ID, next)}
+                // `checked` mirrors the store, which only moves on a successful round-trip —
+                // a failed call leaves the toggle where it was, and polling reconciles.
+                onChange={(next) =>
+                  void setRecordingConsent(jam.id, viewerId, next).catch(() => {})
+                }
               />
             </div>
           </Card>

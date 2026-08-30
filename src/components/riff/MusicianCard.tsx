@@ -29,9 +29,11 @@ export function MusicianCard({ musician, className }: { musician: Musician; clas
     ? { lead: 'TOP RELIABILITY', detail: `${stats.repeatJams} repeat jams` }
     : musician.verified
       ? { lead: 'VERIFIED', detail: `${musician.jamsHosted} jams hosted` }
-      : stats
-        ? { lead: `${stats.reliabilityPct}% RELIABILITY`, detail: `${stats.vouchCount} vouches` }
-        : undefined
+      : stats?.isNew
+        ? { lead: 'NEW HERE', detail: 'first jams welcome' }
+        : stats
+          ? { lead: `${stats.reliabilityPct}% RELIABILITY`, detail: `${stats.vouchCount} vouches` }
+          : undefined
 
   return (
     <Card className={cn('relative flex flex-col p-4', className)}>

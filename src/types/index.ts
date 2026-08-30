@@ -47,6 +47,8 @@ export interface Availability {
 }
 
 export interface MusicianStats {
+  /** No recapped sessions yet — render "New", never "0%": unproven is not unreliable. */
+  isNew: boolean
   /** Derived: showedUp ÷ confirmed attendances × 100. */
   reliabilityPct: number
   repeatJams: number
@@ -117,8 +119,11 @@ export interface Venue {
   name: string
   kind: string
   neighborhood: string
-  /** Only revealed on confirmed jams, and only to attendees. See src/lib/privacy.ts. */
-  address: string
+  /**
+   * Never present client-side. The server strips it from every snapshot and reveals it only
+   * as Jam.revealedAddress on confirmed jams, to attendees (src/server/world.ts).
+   */
+  address?: string
   city: string
   distanceMi: number
   photoUrl: string
@@ -165,6 +170,11 @@ export interface Jam {
   threadId: string
   recordingId?: string
   recapId?: string
+  /**
+   * The venue's street address, present ONLY when the server decided this viewer may see it:
+   * jam confirmed and viewer a confirmed attendee. Its absence IS the privacy rule.
+   */
+  revealedAddress?: string
 }
 
 export interface JamRequest {
@@ -262,7 +272,12 @@ export interface Message {
 export interface Notification {
   id: string
   kind:
-    'request_accepted' | 'vouch_received' | 'open_call_application' | 'rank_change' | 'band_live'
+    | 'request_received'
+    | 'request_accepted'
+    | 'vouch_received'
+    | 'open_call_application'
+    | 'rank_change'
+    | 'band_live'
   actorId?: string
   body: string
   meta?: Record<string, string>

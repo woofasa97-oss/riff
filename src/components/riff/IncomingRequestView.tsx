@@ -19,7 +19,7 @@ import { formatShortDateTime } from '@/lib/datetime'
 import { instrumentLabel, intentLabel, shortNeighborhood, vouchTagLabel } from '@/lib/labels'
 import { vouchesFor } from '@/lib/reputation'
 import { useCurrentUser, useMusicianStats, useReputationContext, useRiffStore } from '@/lib/store'
-import { CURRENT_USER_ID, NOW, getMusician, getVenue, venues } from '@/mocks'
+import { getMusician, getVenue, venues } from '@/mocks'
 import type { VouchTag } from '@/types'
 
 /**
@@ -35,6 +35,8 @@ export function IncomingRequestView({ requestId }: { requestId: string }) {
   // Read from the store, not the fixtures, so answering updates the Requests tab live.
   const requests = useRiffStore((s) => s.requests)
   const respondToRequest = useRiffStore((s) => s.respondToRequest)
+  const viewerId = useRiffStore((s) => s.viewerId)
+  const now = useRiffStore((s) => s.now)
   const ctx = useReputationContext()
   const currentUser = useCurrentUser()
 
@@ -50,11 +52,14 @@ export function IncomingRequestView({ requestId }: { requestId: string }) {
   // Local terminal states — after answering, the store status flips, and these keep the
   // confirmation on screen instead of dropping straight into the "already settled" guard.
   const [outcome, setOutcome] = useState<'countered' | 'declined' | null>(null)
+  // One answer in flight at a time; remembering WHICH button is busy keeps the others honest.
+  const [busy, setBusy] = useState<'accept' | 'counter' | 'decline' | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   // Counter-proposals come from the viewer's OWN grid — they are saying when THEY are free.
   const mySlots = useMemo(
-    () => nextAvailableSlots(currentUser.availability, NOW, 3),
-    [currentUser.availability],
+    () => nextAvailableSlots(currentUser.availability, now, 3),
+    [currentUser.availability, now],
   )
 
   // What co-attendees have actually said about the requester, most-said first.
@@ -71,7 +76,7 @@ export function IncomingRequestView({ requestId }: { requestId: string }) {
 
   // Only the recipient answers a request. The sender opening their own by URL sees its state,
   // not the accept controls — product rule 1 also holds in the store, this is the honest UI.
-  if (request && request.toId !== CURRENT_USER_ID) {
+  if (request && request.toId !== viewerId) {
     return (
       <AppShell activeTab="jams" header={header} mainClassName="flex items-center px-4 py-6">
         <EmptyState
@@ -183,27 +188,52 @@ export function IncomingRequestView({ requestId }: { requestId: string }) {
 
   const canAccept = Boolean(selectedTime) && Boolean(selectedVenueId)
 
-  function handleAccept() {
-    if (!request || !selectedTime || !selectedVenueId) return
-    const { jamId } = respondToRequest({
-      requestId: request.id,
-      action: 'accept',
-      startsAt: selectedTime,
-      venueId: selectedVenueId,
-    })
-    if (jamId) router.push(`/jams/${jamId}`)
+  async function handleAccept() {
+    if (!request || !selectedTime || !selectedVenueId || busy) return
+    setBusy('accept')
+    setError(null)
+    try {
+      const { jamId } = await respondToRequest({
+        requestId: request.id,
+        action: 'accept',
+        startsAt: selectedTime,
+        venueId: selectedVenueId,
+      })
+      // Stay busy through the navigation — the confirmed jam screen is the confirmation.
+      if (jamId) router.push(`/jams/${jamId}`)
+      else setBusy(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong — try again')
+      setBusy(null)
+    }
   }
 
-  function handleCounter() {
-    if (!request || counterTimes.length === 0) return
-    respondToRequest({ requestId: request.id, action: 'counter', counterTimes })
-    setOutcome('countered')
+  async function handleCounter() {
+    if (!request || counterTimes.length === 0 || busy) return
+    setBusy('counter')
+    setError(null)
+    try {
+      await respondToRequest({ requestId: request.id, action: 'counter', counterTimes })
+      setOutcome('countered')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong — try again')
+    } finally {
+      setBusy(null)
+    }
   }
 
-  function handleDecline() {
-    if (!request) return
-    respondToRequest({ requestId: request.id, action: 'decline' })
-    setOutcome('declined')
+  async function handleDecline() {
+    if (!request || busy) return
+    setBusy('decline')
+    setError(null)
+    try {
+      await respondToRequest({ requestId: request.id, action: 'decline' })
+      setOutcome('declined')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong — try again')
+    } finally {
+      setBusy(null)
+    }
   }
 
   return (
@@ -218,7 +248,7 @@ export function IncomingRequestView({ requestId }: { requestId: string }) {
             </h2>
             <p className="text-[14px] text-foreground-dim">
               {instrumentLabel(from.instruments[0])}
-              {stats && ` · ${stats.reliabilityPct}% reliability`}
+              {stats && (stats.isNew ? ' · new here' : ` · ${stats.reliabilityPct}% reliability`)}
             </p>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
               {from.verified && (
@@ -342,8 +372,13 @@ export function IncomingRequestView({ requestId }: { requestId: string }) {
       {/* The three answers — every one of them works, and two of them are ways out
           (docs/SPEC.md §4.4). */}
       <div className="mt-6 flex flex-col gap-3">
-        <Button fullWidth disabled={!canAccept} onClick={handleAccept}>
-          Accept and confirm
+        {error && (
+          <p role="alert" className="text-center text-[12.5px] text-destructive">
+            {error}
+          </p>
+        )}
+        <Button fullWidth disabled={!canAccept || busy !== null} onClick={handleAccept}>
+          {busy === 'accept' ? 'Confirming…' : 'Accept and confirm'}
         </Button>
 
         <Button fullWidth variant="secondary" onClick={() => setCounterOpen((o) => !o)}>
@@ -382,20 +417,21 @@ export function IncomingRequestView({ requestId }: { requestId: string }) {
               fullWidth
               size="sm"
               className="mt-4"
-              disabled={counterTimes.length === 0}
+              disabled={counterTimes.length === 0 || busy !== null}
               onClick={handleCounter}
             >
-              Send suggestion
+              {busy === 'counter' ? 'Sending…' : 'Send suggestion'}
             </Button>
           </Card>
         )}
 
         <button
           type="button"
+          disabled={busy !== null}
           onClick={handleDecline}
-          className="w-full py-3 text-[14px] font-medium text-foreground-dim transition-transform active:scale-95"
+          className="w-full py-3 text-[14px] font-medium text-foreground-dim transition-transform active:scale-95 disabled:opacity-50"
         >
-          Decline politely
+          {busy === 'decline' ? 'Declining…' : 'Decline politely'}
         </button>
       </div>
     </AppShell>

@@ -30,14 +30,23 @@ const postedTs = (jam: Jam) => (jam.postedAt ? Date.parse(jam.postedAt) : 0)
 /** The Discover feed (docs/BUILD-PLAN.md P2-02, from 20-discover.html). */
 export function DiscoverView() {
   const jams = useRiffStore((s) => s.jams)
+  const allMusicians = useRiffStore((s) => s.musicians)
+  const viewerId = useRiffStore((s) => s.viewerId)
 
   const [intent, setIntent] = useState<IntentFilter>('all')
   const [tonightOnly, setTonightOnly] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
 
-  const musicians = useMemo(() => listNearbyMusicians(), [])
-  const tonightAllCount = useMemo(() => listNearbyMusicians({ tonightOnly: true }).length, [])
+  // Fed from the store snapshot so new sign-ups appear on the next poll, no reload needed.
+  const musicians = useMemo(
+    () => listNearbyMusicians({ viewerId }, allMusicians),
+    [viewerId, allMusicians],
+  )
+  const tonightAllCount = useMemo(
+    () => listNearbyMusicians({ tonightOnly: true, viewerId }, allMusicians).length,
+    [viewerId, allMusicians],
+  )
 
   const q = query.trim().toLowerCase()
   const filtered = musicians.filter(

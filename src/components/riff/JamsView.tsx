@@ -15,12 +15,14 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Tabs } from '@/components/ui/Tabs'
 import { formatRelativeShort, formatShortDateTime } from '@/lib/datetime'
 import { useRiffStore } from '@/lib/store'
-import { CURRENT_USER_ID, NOW, getMusician, listJams } from '@/mocks'
+import { getMusician, listJams } from '@/mocks'
 
 type TabKey = 'upcoming' | 'requests' | 'past'
 
 export function JamsView({ initialTab = 'upcoming' }: { initialTab?: TabKey } = {}) {
   const [tab, setTab] = useState<TabKey>(initialTab)
+  const viewerId = useRiffStore((s) => s.viewerId)
+  const now = useRiffStore((s) => s.now)
   const jams = useRiffStore((s) => s.jams)
   const recaps = useRiffStore((s) => s.recaps)
   const allRequests = useRiffStore((s) => s.requests)
@@ -31,9 +33,9 @@ export function JamsView({ initialTab = 'upcoming' }: { initialTab?: TabKey } = 
   const requests = useMemo(
     () =>
       allRequests
-        .filter((r) => r.toId === CURRENT_USER_ID && r.status === 'pending')
+        .filter((r) => r.toId === viewerId && r.status === 'pending')
         .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
-    [allRequests],
+    [allRequests, viewerId],
   )
   // Requests the viewer sent that the other side has not settled yet.
   const outgoing = useMemo(
@@ -41,53 +43,52 @@ export function JamsView({ initialTab = 'upcoming' }: { initialTab?: TabKey } = 
       allRequests
         .filter(
           (r) =>
-            r.fromId === CURRENT_USER_ID &&
-            (r.status === 'pending' || r.status === 'counter-proposed'),
+            r.fromId === viewerId && (r.status === 'pending' || r.status === 'counter-proposed'),
         )
         .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
-    [allRequests],
+    [allRequests, viewerId],
   )
   const applications = useMemo(
-    () => allApplications.filter((a) => a.applicantId === CURRENT_USER_ID),
-    [allApplications],
+    () => allApplications.filter((a) => a.applicantId === viewerId),
+    [allApplications, viewerId],
   )
   // Unsent drafts, so "Save draft" has somewhere to come back to.
   const drafts = useMemo(
-    () => jams.filter((jam) => jam.status === 'draft' && jam.hostId === CURRENT_USER_ID),
-    [jams],
+    () => jams.filter((jam) => jam.status === 'draft' && jam.hostId === viewerId),
+    [jams, viewerId],
   )
   const myOpenCalls = useMemo(
     () =>
       jams
-        .filter((jam) => jam.isOpenCall && jam.hostId === CURRENT_USER_ID)
+        .filter((jam) => jam.isOpenCall && jam.hostId === viewerId)
         .map((jam) => ({
           jam,
           applicants: allApplications.filter((a) => a.jamId === jam.id),
         })),
-    [jams, allApplications],
+    [jams, allApplications, viewerId],
   )
   const unread = useMemo(
     () =>
       threads
-        .filter((t) => t.participantIds.includes(CURRENT_USER_ID))
+        .filter((t) => t.participantIds.includes(viewerId))
         .reduce((sum, t) => sum + t.unreadCount, 0),
-    [threads],
+    [threads, viewerId],
   )
 
   const upcoming = useMemo(
-    () => listJams('upcoming', { viewerId: CURRENT_USER_ID, now: NOW, source: jams }),
-    [jams],
+    () => listJams('upcoming', { viewerId, now, source: jams }),
+    [jams, viewerId, now],
   )
   const past = useMemo(
-    () => listJams('past', { viewerId: CURRENT_USER_ID, now: NOW, source: jams }),
-    [jams],
+    () => listJams('past', { viewerId, now, source: jams }),
+    [jams, viewerId, now],
   )
 
   // "This week" is anything inside seven days; everything else falls under "Later".
   const thisWeek = upcoming.filter(
-    (j) => Date.parse(j.startsAt) - Date.parse(NOW) <= 7 * 86_400_000,
+    (j) => Date.parse(j.startsAt) - Date.parse(now) <= 7 * 86_400_000,
   )
-  const later = upcoming.filter((j) => Date.parse(j.startsAt) - Date.parse(NOW) > 7 * 86_400_000)
+  const later = upcoming.filter((j) => Date.parse(j.startsAt) - Date.parse(now) > 7 * 86_400_000)
 
   const hasRecap = (jamId: string) => recaps.some((r) => r.jamId === jamId)
 
@@ -164,7 +165,7 @@ export function JamsView({ initialTab = 'upcoming' }: { initialTab?: TabKey } = 
                   <SectionHeader>This week</SectionHeader>
                   {thisWeek.map((jam, i) =>
                     i === 0 ? (
-                      <JamHeroCard key={jam.id} jam={jam} now={NOW} viewerId={CURRENT_USER_ID} />
+                      <JamHeroCard key={jam.id} jam={jam} now={now} viewerId={viewerId} />
                     ) : (
                       <JamCompactCard key={jam.id} jam={jam} />
                     ),
@@ -213,7 +214,7 @@ export function JamsView({ initialTab = 'upcoming' }: { initialTab?: TabKey } = 
                     <div className="mt-3 flex items-center justify-between">
                       <span className="text-[13px] text-foreground-dim">
                         {(() => {
-                          const when = formatRelativeShort(application.appliedAt, NOW)
+                          const when = formatRelativeShort(application.appliedAt, now)
                           return /^\d/.test(when)
                             ? `Applied ${when} ago`
                             : `Applied ${when === 'now' ? 'just now' : when.toLowerCase()}`
@@ -269,7 +270,7 @@ export function JamsView({ initialTab = 'upcoming' }: { initialTab?: TabKey } = 
                   <SectionHeader>Waiting on you</SectionHeader>
                   {requests.map((request) => (
                     <Link key={request.id} href={`/requests/${request.id}`} className="block">
-                      <RequestCard request={request} now={NOW} />
+                      <RequestCard request={request} now={now} />
                     </Link>
                   ))}
                 </section>
@@ -289,7 +290,7 @@ export function JamsView({ initialTab = 'upcoming' }: { initialTab?: TabKey } = 
                             <p className="mt-0.5 text-[13px] text-foreground-dim">
                               {/* "now"/"Yesterday" carry their own tense; only "3h" wants "ago". */}
                               {(() => {
-                                const when = formatRelativeShort(request.createdAt, NOW)
+                                const when = formatRelativeShort(request.createdAt, now)
                                 return /^\d/.test(when)
                                   ? `Sent ${when} ago`
                                   : `Sent ${when === 'now' ? 'just now' : when}`

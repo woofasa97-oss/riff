@@ -10,8 +10,8 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { IconButton } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
+import { useRiffStore } from '@/lib/store'
 import {
-  CURRENT_USER_ID,
   getCurrentSeason,
   getLeaderboard,
   getLeaderboardEntry,
@@ -52,11 +52,12 @@ function Row({
   topPoints: number
   highlighted?: boolean
 }) {
+  const viewerId = useRiffStore((s) => s.viewerId)
   const musician = getMusician(entry.musicianId)
   if (!musician) return null
   const share = Math.round((entry.points / topPoints) * 100)
 
-  const isMe = entry.musicianId === CURRENT_USER_ID
+  const isMe = entry.musicianId === viewerId
   const href = isMe ? '/me' : `/musicians/${entry.musicianId}`
   const rowClass = cn(
     'relative flex items-center overflow-hidden rounded-[16px] border p-3 shadow-sm',
@@ -132,10 +133,11 @@ function PodiumPlace({
   avatarClass: string
   padClass: string
 }) {
+  const viewerId = useRiffStore((s) => s.viewerId)
   const musician = getMusician(entry.musicianId)
   if (!musician) return null
   const isFirst = place === 1
-  const isMe = entry.musicianId === CURRENT_USER_ID
+  const isMe = entry.musicianId === viewerId
   const href = isMe ? '/me' : `/musicians/${entry.musicianId}`
   const wrapperClass = cn('relative flex flex-1 flex-col items-center', padClass)
 
@@ -195,11 +197,12 @@ function PodiumPlace({
 export function LeaderboardView() {
   const [showPoints, setShowPoints] = useState(false)
   const season = getCurrentSeason()
+  const viewerId = useRiffStore((s) => s.viewerId)
   const rows = getLeaderboard()
-  const me = getLeaderboardEntry(CURRENT_USER_ID)
-  const gap = pointsFromTopTen(CURRENT_USER_ID)
+  const me = getLeaderboardEntry(viewerId)
+  const gap = pointsFromTopTen(viewerId)
   const podium = rows.slice(0, 3)
-  const rest = rows.slice(3).filter((e) => e.musicianId !== CURRENT_USER_ID)
+  const rest = rows.slice(3).filter((e) => e.musicianId !== viewerId)
   const topPoints = rows[0]?.points ?? 1
 
   // Podium order is 2 · 1 · 3 so first place stands in the middle.

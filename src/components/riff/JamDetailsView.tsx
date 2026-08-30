@@ -16,14 +16,7 @@ import { formatDayAndTime, formatTime, isSameDay } from '@/lib/datetime'
 import { directionsHref, intentLabel, jamStatusLabel, shortNeighborhood } from '@/lib/labels'
 import { jamLocationLines } from '@/lib/privacy'
 import { statsFor, useReputationContext, useRiffStore } from '@/lib/store'
-import {
-  CURRENT_USER_ID,
-  NOW,
-  getMusician,
-  getVenue,
-  listLiveSessions,
-  listMessages,
-} from '@/mocks'
+import { getMusician, getVenue, listLiveSessions, listMessages } from '@/mocks'
 import type { Jam } from '@/types'
 
 /** "Go live" only means something while the session is actually happening. */
@@ -34,12 +27,16 @@ function isLiveWindow(jam: Jam, now: string): boolean {
 }
 
 export function JamDetailsView({ jamId }: { jamId: string }) {
+  const viewerId = useRiffStore((s) => s.viewerId)
+  const now = useRiffStore((s) => s.now)
   const jams = useRiffStore((s) => s.jams)
   const threads = useRiffStore((s) => s.threads)
   const messages = useRiffStore((s) => s.messages)
   const withdrawFromJam = useRiffStore((s) => s.withdrawFromJam)
   const ctx = useReputationContext()
   const [confirmingExit, setConfirmingExit] = useState(false)
+  const [withdrawing, setWithdrawing] = useState(false)
+  const [withdrawError, setWithdrawError] = useState<string | null>(null)
 
   const jam = jams.find((j) => j.id === jamId)
   const venue = jam ? getVenue(jam.venueId) : undefined
@@ -70,20 +67,19 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
     )
   }
 
-  const location = jamLocationLines(jam, venue, CURRENT_USER_ID)
+  const location = jamLocationLines(jam, venue, viewerId)
   // The group conversation belongs to the people on the jam. A viewer browsing someone
   // else's open call is not in it, and a draft has no thread yet.
   const threadExists = threads.some((t) => t.id === jam.threadId)
   const inConversation =
-    threadExists &&
-    jam.attendees.some((a) => a.musicianId === CURRENT_USER_ID && a.rsvp !== 'declined')
-  const me = jam.attendees.find((a) => a.musicianId === CURRENT_USER_ID)
+    threadExists && jam.attendees.some((a) => a.musicianId === viewerId && a.rsvp !== 'declined')
+  const me = jam.attendees.find((a) => a.musicianId === viewerId)
   const attending = me?.rsvp === 'confirmed'
   // "Go live" opens the broadcast only when one actually exists. Starting a stream is out of
   // scope for v1 (docs/SPEC.md §6), so the button stays disabled rather than pointing at nothing.
   const session = listLiveSessions().find((s) => s.jamId === jam.id)
-  const liveNow = isLiveWindow(jam, NOW) && Boolean(session)
-  const whenLabel = isSameDay(jam.startsAt, NOW)
+  const liveNow = isLiveWindow(jam, now) && Boolean(session)
+  const whenLabel = isSameDay(jam.startsAt, now)
     ? `Tonight ${formatTime(jam.startsAt)}`
     : formatDayAndTime(jam.startsAt)
 
@@ -124,7 +120,7 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
               className="flex-1"
               disabled
               title={
-                isLiveWindow(jam, NOW)
+                isLiveWindow(jam, now)
                   ? 'Broadcasting is not built yet'
                   : 'Available once the session starts'
               }
@@ -172,7 +168,7 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
             .map((attendee, index, list) => {
               const musician = getMusician(attendee.musicianId)
               if (!musician) return null
-              const isYou = attendee.musicianId === CURRENT_USER_ID
+              const isYou = attendee.musicianId === viewerId
               return (
                 <Link
                   key={attendee.musicianId}
@@ -214,9 +210,9 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
               <div className="text-[13px] text-foreground-dim">{location.secondary}</div>
             </div>
           </div>
-          {location.exact && (
+          {location.exact && jam.revealedAddress && (
             <a
-              href={directionsHref(`${venue.address}, ${venue.city}`)}
+              href={directionsHref(`${jam.revealedAddress}, ${venue.city}`)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex shrink-0 items-center gap-1 text-[14px] font-medium text-primary"
@@ -280,11 +276,15 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
               <p className="text-[14px] text-foreground">
                 Drop out of {jam.title}? The others will see the seat open up.
               </p>
+              {withdrawError && (
+                <p className="mt-2 text-[13px] text-destructive">{withdrawError}</p>
+              )}
               <div className="mt-4 flex gap-3">
                 <Button
                   size="sm"
                   variant="secondary"
                   className="flex-1"
+                  disabled={withdrawing}
                   onClick={() => setConfirmingExit(false)}
                 >
                   Stay in
@@ -293,12 +293,23 @@ export function JamDetailsView({ jamId }: { jamId: string }) {
                   size="sm"
                   variant="outline"
                   className="flex-1 text-destructive"
-                  onClick={() => {
-                    withdrawFromJam(jam.id)
-                    setConfirmingExit(false)
+                  disabled={withdrawing}
+                  onClick={async () => {
+                    setWithdrawing(true)
+                    setWithdrawError(null)
+                    try {
+                      await withdrawFromJam(jam.id)
+                      setConfirmingExit(false)
+                    } catch (err) {
+                      setWithdrawError(
+                        err instanceof Error ? err.message : 'Something went wrong — try again',
+                      )
+                    } finally {
+                      setWithdrawing(false)
+                    }
                   }}
                 >
-                  Yes, drop out
+                  {withdrawing ? 'Dropping out…' : 'Yes, drop out'}
                 </Button>
               </div>
             </Card>

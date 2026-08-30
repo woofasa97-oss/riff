@@ -13,15 +13,7 @@ import { cn } from '@/lib/cn'
 import { formatDurationMinutes, minutesSince } from '@/lib/datetime'
 import { compactCount } from '@/lib/labels'
 import { useRiffStore } from '@/lib/store'
-import {
-  CURRENT_USER_ID,
-  NOW,
-  getBand,
-  getLiveSession,
-  getMusician,
-  getMusicianByHandle,
-  getVenue,
-} from '@/mocks'
+import { getBand, getLiveSession, getMusician, getMusicianByHandle, getVenue } from '@/mocks'
 
 /** Star input for the end-of-session rating. */
 function StarInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
@@ -52,6 +44,7 @@ export function LiveView({ sessionId }: { sessionId: string }) {
   const [draft, setDraft] = useState('')
   const [rateOpen, setRateOpen] = useState(false)
   const [stars, setStars] = useState(0)
+  const now = useRiffStore((s) => s.now)
   const chatBySession = useRiffStore((s) => s.liveChat)
   const sendLiveComment = useRiffStore((s) => s.sendLiveComment)
   const rateSession = useRiffStore((s) => s.rateSession)
@@ -91,7 +84,7 @@ export function LiveView({ sessionId }: { sessionId: string }) {
     )
   }
 
-  const elapsedMin = minutesSince(session.startedAt, NOW)
+  const elapsedMin = minutesSince(session.startedAt, now)
   const isFollowing = band ? followed.includes(band.id) : false
   const myRating = ratings[session.id]
 
@@ -99,7 +92,7 @@ export function LiveView({ sessionId }: { sessionId: string }) {
     e.preventDefault()
     const body = draft.trim()
     if (!body || !session) return
-    sendLiveComment(session.id, body, getMusician(CURRENT_USER_ID)?.handle)
+    sendLiveComment(session.id, body)
     setDraft('')
   }
 

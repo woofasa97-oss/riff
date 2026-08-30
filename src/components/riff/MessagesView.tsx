@@ -15,7 +15,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { formatRelativeShort } from '@/lib/datetime'
 import { useRiffStore } from '@/lib/store'
-import { CURRENT_USER_ID, NOW, getLastMessage } from '@/mocks'
+import { getLastMessage } from '@/mocks'
 
 type Filter = 'all' | 'jams' | 'requests' | 'bands'
 
@@ -29,6 +29,8 @@ const FILTERS: { id: Filter; label: string }[] = [
 export function MessagesView() {
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
+  const viewerId = useRiffStore((s) => s.viewerId)
+  const now = useRiffStore((s) => s.now)
   const messages = useRiffStore((s) => s.messages)
   const threads = useRiffStore((s) => s.threads)
   const jams = useRiffStore((s) => s.jams)
@@ -37,9 +39,9 @@ export function MessagesView() {
     const needle = query.trim().toLowerCase()
     return (
       threads
-        .filter((t) => t.participantIds.includes(CURRENT_USER_ID))
+        .filter((t) => t.participantIds.includes(viewerId))
         .map((thread) => {
-          const display = describeThread(thread, CURRENT_USER_ID, jams)
+          const display = describeThread(thread, viewerId, jams)
           const last = getLastMessage(thread.id, messages)
           return { thread, display, last }
         })
@@ -63,7 +65,7 @@ export function MessagesView() {
             Date.parse(a.last?.sentAt ?? a.thread.lastMessageAt),
         )
     )
-  }, [filter, query, messages, threads, jams])
+  }, [filter, query, messages, threads, jams, viewerId])
 
   return (
     <AppShell
@@ -170,7 +172,7 @@ export function MessagesView() {
                       <span
                         className={cn('shrink-0 text-[12px] text-foreground-dim', unread && 'mr-4')}
                       >
-                        {last ? formatRelativeShort(last.sentAt, NOW) : ''}
+                        {last ? formatRelativeShort(last.sentAt, now) : ''}
                       </span>
                     </div>
                     <p

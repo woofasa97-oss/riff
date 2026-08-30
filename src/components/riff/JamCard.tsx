@@ -18,12 +18,13 @@ function attendeePeople(jam: Jam) {
 
 /**
  * The lead card on the Jams tab: gradient hero, then a two-button action strip.
- * `Directions` appears only when the address is actually disclosable (docs/SPEC.md §5.2).
+ * `Directions` appears only when the server actually disclosed the address to this viewer
+ * (jam.revealedAddress — docs/SPEC.md §5.2).
  */
 export function JamHeroCard({ jam, now, viewerId }: { jam: Jam; now: string; viewerId: string }) {
   const venue = getVenue(jam.venueId)
   const people = attendeePeople(jam)
-  const showDirections = canRevealAddress(jam, viewerId) && venue
+  const showDirections = canRevealAddress(jam, viewerId) && venue && jam.revealedAddress
 
   return (
     <Card className="mb-4 overflow-hidden">
@@ -58,7 +59,7 @@ export function JamHeroCard({ jam, now, viewerId }: { jam: Jam; now: string; vie
         </Link>
         {showDirections ? (
           <a
-            href={directionsHref(`${venue.address}, ${venue.city}`)}
+            href={directionsHref(`${jam.revealedAddress}, ${venue.city}`)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex h-[44px] flex-1 items-center justify-center rounded-[12px] border border-border-subtle bg-card text-[14px] font-medium text-foreground transition-transform active:scale-95"

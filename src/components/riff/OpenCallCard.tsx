@@ -1,12 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { AvatarStack } from '@/components/ui/Avatar'
 import { formatRelativeShort, formatTime, relativeDayLabel } from '@/lib/datetime'
 import { cn } from '@/lib/cn'
 import { joinNames } from '@/lib/labels'
-import { useRiffStore } from '@/lib/store'
-import { CURRENT_USER_ID, NOW, getMusician } from '@/mocks'
+import { useCurrentUser, useRiffStore } from '@/lib/store'
+import { getMusician } from '@/mocks'
 import type { Jam } from '@/types'
 
 /**
@@ -17,10 +18,14 @@ import type { Jam } from '@/types'
 export function OpenCallCard({ jam, className }: { jam: Jam; className?: string }) {
   const applications = useRiffStore((s) => s.applications)
   const applyToOpenCall = useRiffStore((s) => s.applyToOpenCall)
-  const viewer = getMusician(CURRENT_USER_ID)
+  const viewerId = useRiffStore((s) => s.viewerId)
+  const now = useRiffStore((s) => s.now)
+  const viewer = useCurrentUser()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const isMine = jam.hostId === CURRENT_USER_ID
-  const applied = applications.some((a) => a.jamId === jam.id && a.applicantId === CURRENT_USER_ID)
+  const isMine = jam.hostId === viewerId
+  const applied = applications.some((a) => a.jamId === jam.id && a.applicantId === viewerId)
   const applicantCount = applications.filter((a) => a.jamId === jam.id).length
 
   const hosts = jam.attendees
@@ -28,8 +33,25 @@ export function OpenCallCard({ jam, className }: { jam: Jam; className?: string 
     .map((a) => getMusician(a.musicianId))
     .filter((m): m is NonNullable<typeof m> => Boolean(m))
 
+  // Seed hosts never review applications — say so before someone waits on one.
+  const seedHost = Boolean(getMusician(jam.hostId)?.avatarUrl.startsWith('/mock/'))
+
   // Apply on the seat you actually play, falling back to whatever is open.
   const seat = jam.openSeats.find((s) => viewer?.instruments.includes(s)) ?? jam.openSeats[0]
+
+  async function handleApply() {
+    if (!seat || busy) return
+    setBusy(true)
+    setError(null)
+    try {
+      await applyToOpenCall(jam.id, seat)
+    } catch (err) {
+      // A 409 here means "already applied" — the server's own line says exactly that.
+      setError(err instanceof Error ? err.message : 'Something went wrong — try again')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <article
@@ -46,7 +68,7 @@ export function OpenCallCard({ jam, className }: { jam: Jam; className?: string 
           <span className="text-[11px] text-foreground-dim">
             {/* "2h" composes with "ago"; "Yesterday"/"Tue" already carry their own tense. */}
             {(() => {
-              const label = formatRelativeShort(jam.postedAt, NOW)
+              const label = formatRelativeShort(jam.postedAt, now)
               return /^\d/.test(label)
                 ? `Posted ${label} ago`
                 : `Posted ${label.toLowerCase() === label ? label : label.charAt(0).toLowerCase() + label.slice(1)}`
@@ -76,13 +98,19 @@ export function OpenCallCard({ jam, className }: { jam: Jam; className?: string 
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <span className="rounded bg-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
-            {relativeDayLabel(jam.startsAt, NOW)}
+            {relativeDayLabel(jam.startsAt, now)}
           </span>
           <span className="rounded bg-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
             {formatTime(jam.startsAt)}
           </span>
         </div>
       </div>
+
+      {seedHost && (
+        <p className="-mt-2 mb-3 text-[11px] text-foreground-dim">
+          Hosted by the Riff crew — demo call
+        </p>
+      )}
 
       {isMine ? (
         <Link
@@ -96,14 +124,21 @@ export function OpenCallCard({ jam, className }: { jam: Jam; className?: string 
           Applied · Pending
         </div>
       ) : (
-        <button
-          type="button"
-          disabled={!seat}
-          onClick={() => seat && applyToOpenCall(jam.id, seat)}
-          className="h-[48px] w-full rounded-[12px] border border-primary bg-card text-[15px] font-semibold text-primary transition-transform active:scale-95 disabled:opacity-40"
-        >
-          Apply to join
-        </button>
+        <>
+          <button
+            type="button"
+            disabled={!seat || busy}
+            onClick={handleApply}
+            className="h-[48px] w-full rounded-[12px] border border-primary bg-card text-[15px] font-semibold text-primary transition-transform active:scale-95 disabled:opacity-40"
+          >
+            {busy ? 'Applying…' : 'Apply to join'}
+          </button>
+          {error && (
+            <p role="alert" className="mt-2 text-center text-[12px] text-destructive">
+              {error}
+            </p>
+          )}
+        </>
       )}
     </article>
   )

@@ -15,7 +15,7 @@ import { nextAvailableSlots } from '@/lib/availability'
 import { cn } from '@/lib/cn'
 import { genreLane, intentLabel, playerLabel, shortNeighborhood } from '@/lib/labels'
 import { useMusicianStats, useRiffStore } from '@/lib/store'
-import { CURRENT_USER_ID, NOW, getMusician, getVenue, venues } from '@/mocks'
+import { getMusician, getVenue, venues } from '@/mocks'
 import type { Intent } from '@/types'
 
 const INTENTS: Intent[] = ['casual', 'serious', 'gigging']
@@ -32,6 +32,8 @@ export function RequestJamView({ musicianId }: { musicianId: string }) {
   const target = getMusician(musicianId)
   const stats = useMusicianStats(musicianId)
   const sendJamRequest = useRiffStore((s) => s.sendJamRequest)
+  const viewerId = useRiffStore((s) => s.viewerId)
+  const now = useRiffStore((s) => s.now)
 
   const [intent, setIntent] = useState<Intent>('casual')
   const [times, setTimes] = useState<string[]>([])
@@ -39,15 +41,17 @@ export function RequestJamView({ musicianId }: { musicianId: string }) {
   const [suggestion, setSuggestion] = useState('')
   const [message, setMessage] = useState('')
   const [sent, setSent] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Honest time chips: drawn from the target's real availability grid, never invented.
   const slots = useMemo(
-    () => (target ? nextAvailableSlots(target.availability, NOW, MAX_TIMES) : []),
-    [target],
+    () => (target ? nextAvailableSlots(target.availability, now, MAX_TIMES) : []),
+    [target, now],
   )
 
   // You cannot request a jam with yourself, and an unknown id gets an exit, not a 500.
-  if (!target || target.id === CURRENT_USER_ID) {
+  if (!target || target.id === viewerId) {
     return (
       <AppShell
         activeTab="discover"
@@ -82,19 +86,26 @@ export function RequestJamView({ musicianId }: { musicianId: string }) {
     )
   }
 
-  function handleSend() {
-    if (!target || !canSend) return
-    sendJamRequest({
-      toId: target.id,
-      intent,
-      proposedTimes: times,
-      venueId,
-      venueSuggestion: suggestion.trim() || undefined,
-      message:
-        // The message opens the request's thread, so an empty one still needs a real line.
-        message.trim() || `Hey ${firstName} — up for a ${intentLabel(intent).toLowerCase()}?`,
-    })
-    setSent(true)
+  async function handleSend() {
+    if (!target || !canSend || busy) return
+    setBusy(true)
+    setError(null)
+    try {
+      await sendJamRequest({
+        toId: target.id,
+        intent,
+        proposedTimes: times,
+        venueId,
+        venueSuggestion: suggestion.trim() || undefined,
+        // The server owns the empty-message rule now — its rejection surfaces inline below.
+        message: message.trim(),
+      })
+      setSent(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong — try again')
+    } finally {
+      setBusy(false)
+    }
   }
 
   // ---- Sent state: what happens next, and where to watch it. ---------------
@@ -186,9 +197,14 @@ export function RequestJamView({ musicianId }: { musicianId: string }) {
                 Nothing is confirmed until {firstName} accepts.
               </span>
             </div>
-            <Button fullWidth disabled={!canSend} onClick={handleSend}>
-              Send jam request
+            <Button fullWidth disabled={!canSend || busy} onClick={handleSend}>
+              {busy ? 'Sending…' : 'Send jam request'}
             </Button>
+            {error && (
+              <p role="alert" className="pt-2 text-center text-[12px] text-destructive">
+                {error}
+              </p>
+            )}
             {slots.length === 0 ? (
               <p className="pt-2 text-center text-[11px] text-foreground-dim">
                 A request needs at least one time, and {firstName} has no free slots right now.

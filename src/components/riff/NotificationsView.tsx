@@ -23,17 +23,22 @@ import { IconButton } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
 import { dayDelta, formatRelativeShort, formatShortDateTime } from '@/lib/datetime'
 import { useRiffStore } from '@/lib/store'
-import { NOW, getBand, getJam, getMusician, notifications } from '@/mocks'
+import { getBand, getJam, getMusician } from '@/mocks'
 import type { Notification } from '@/types'
 
 type Filter = 'all' | 'requests'
 
 /** Kinds that belong to the Requests tab — the ones that are about someone asking to play. */
-const REQUEST_KINDS: Notification['kind'][] = ['request_accepted', 'open_call_application']
+const REQUEST_KINDS: Notification['kind'][] = [
+  'request_received',
+  'request_accepted',
+  'open_call_application',
+]
 
 /** One badge per kind, so a row is identifiable before it is read. */
 function KindBadge({ kind }: { kind: Notification['kind'] }) {
   const map = {
+    request_received: { icon: <Mail size={8} />, tone: 'bg-primary' },
     request_accepted: { icon: <Check size={8} strokeWidth={4} />, tone: 'bg-success' },
     vouch_received: { icon: <Handshake size={8} />, tone: 'bg-primary' },
     open_call_application: { icon: <Mail size={8} />, tone: 'bg-accent' },
@@ -56,6 +61,7 @@ function KindBadge({ kind }: { kind: Notification['kind'] }) {
 
 /** Where a row goes when tapped. Every notification deep-links to its subject. */
 function targetHref(n: Notification): string {
+  if (n.meta?.requestId) return `/requests/${n.meta.requestId}`
   if (n.meta?.liveId) return `/live/${n.meta.liveId}`
   if (n.meta?.jamId) return `/jams/${n.meta.jamId}`
   if (n.kind === 'rank_change') return '/leaderboard'
@@ -83,18 +89,20 @@ function subtitleFor(n: Notification): React.ReactNode {
   }
 }
 
-function NotificationRow({ n, unread }: { n: Notification; unread: boolean }) {
+function NotificationRow({ n }: { n: Notification }) {
   const actor = n.actorId ? getMusician(n.actorId) : undefined
   const band = n.meta?.bandId ? getBand(n.meta.bandId) : undefined
+  const now = useRiffStore((s) => s.now)
   const markRead = useRiffStore((s) => s.markNotificationRead)
 
   return (
     <Link
       href={targetHref(n)}
-      onClick={() => markRead(n.id)}
+      // Optimistic in the store — navigation should not wait on the round-trip.
+      onClick={() => void markRead(n.id)}
       className={cn(
         'relative flex gap-3 rounded-[16px] border border-border-subtle p-4 shadow-sm',
-        unread ? 'bg-[color:var(--hero-from)]' : 'bg-card',
+        !n.read ? 'bg-[color:var(--hero-from)]' : 'bg-card',
       )}
     >
       <div className="relative shrink-0">
@@ -125,9 +133,9 @@ function NotificationRow({ n, unread }: { n: Notification; unread: boolean }) {
       </div>
 
       <span className="mt-0.5 flex shrink-0 items-center gap-1.5">
-        {unread && <span className="h-2 w-2 rounded-full bg-primary" aria-label="Unread" />}
+        {!n.read && <span className="h-2 w-2 rounded-full bg-primary" aria-label="Unread" />}
         <span className="text-[12px] text-foreground-dim">
-          {formatRelativeShort(n.createdAt, NOW)}
+          {formatRelativeShort(n.createdAt, now)}
         </span>
       </span>
     </Link>
@@ -136,20 +144,22 @@ function NotificationRow({ n, unread }: { n: Notification; unread: boolean }) {
 
 export function NotificationsView() {
   const [filter, setFilter] = useState<Filter>('all')
-  const read = useRiffStore((s) => s.notificationsRead)
+  const notifications = useRiffStore((s) => s.notifications)
+  const now = useRiffStore((s) => s.now)
   const markAll = useRiffStore((s) => s.markAllNotificationsRead)
 
   const { today, earlier } = useMemo(() => {
+    // The server hands the list newest-first; re-sort defensively after optimistic updates.
     const rows = notifications
       .filter((n) => (filter === 'requests' ? REQUEST_KINDS.includes(n.kind) : true))
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
     return {
-      today: rows.filter((n) => dayDelta(n.createdAt, NOW) === 0),
-      earlier: rows.filter((n) => dayDelta(n.createdAt, NOW) !== 0),
+      today: rows.filter((n) => dayDelta(n.createdAt, now) === 0),
+      earlier: rows.filter((n) => dayDelta(n.createdAt, now) !== 0),
     }
-  }, [filter])
+  }, [filter, notifications, now])
 
-  const unreadCount = notifications.filter((n) => !read[n.id]).length
+  const unreadCount = notifications.filter((n) => !n.read).length
 
   return (
     <AppShell
@@ -163,7 +173,8 @@ export function NotificationsView() {
             action={
               <IconButton
                 label="Mark all as read"
-                onClick={markAll}
+                // Optimistic in the store, so fire-and-forget.
+                onClick={() => void markAll()}
                 disabled={unreadCount === 0}
                 className="border-transparent bg-transparent disabled:opacity-30"
               >
@@ -219,7 +230,7 @@ export function NotificationsView() {
               <SectionHeader>Today</SectionHeader>
               <div className="flex flex-col gap-2">
                 {today.map((n) => (
-                  <NotificationRow key={n.id} n={n} unread={!read[n.id]} />
+                  <NotificationRow key={n.id} n={n} />
                 ))}
               </div>
             </section>
@@ -229,7 +240,7 @@ export function NotificationsView() {
               <SectionHeader>Earlier</SectionHeader>
               <div className="flex flex-col gap-2">
                 {earlier.map((n) => (
-                  <NotificationRow key={n.id} n={n} unread={!read[n.id]} />
+                  <NotificationRow key={n.id} n={n} />
                 ))}
               </div>
             </section>

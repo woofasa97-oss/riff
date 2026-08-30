@@ -11,7 +11,6 @@ import { formatClock } from '@/lib/labels'
 import { useOnboardingStore } from '@/lib/onboarding-store'
 import { useRiffStore, type ProfileOverrides } from '@/lib/store'
 import { peaksFor } from '@/lib/waveform'
-import { NOW } from '@/mocks'
 
 const MAX_SEC = 24
 const CLIP_SEED = 'clip-onboarding'
@@ -33,6 +32,10 @@ export function OnboardingClipView() {
   const router = useRouter()
   const clip = useOnboardingStore((s) => s.clip)
   const setClip = useOnboardingStore((s) => s.setClip)
+  const applyOnboarding = useRiffStore((s) => s.applyOnboarding)
+
+  const [busy, setBusy] = useState(false)
+  const [commitError, setCommitError] = useState<string | null>(null)
 
   // Returning to this step with a draft take intact resumes on the playback state.
   const [phase, setPhase] = useState<Phase>(() =>
@@ -130,13 +133,15 @@ export function OnboardingClipView() {
   }
 
   /** Commits the whole onboarding draft. Skip differs from Save only by omitting the clip. */
-  function commit(saveClip: boolean) {
+  async function commit(saveClip: boolean) {
     if (doneRef.current) return
     doneRef.current = true
+    setBusy(true)
+    setCommitError(null)
     releaseCapture()
     const draft = useOnboardingStore.getState()
     const overrides: ProfileOverrides = {}
-    // useCurrentUser spreads these over the fixture user, so an undefined or empty value
+    // The server merges these over the existing profile, so an undefined or empty value
     // from a skipped step would blank a field the flow never touched — only settled
     // choices go in. Step 3 is skippable: an untouched empty grid must not erase the
     // profile's existing availability.
@@ -162,10 +167,19 @@ export function OnboardingClipView() {
         url: '/mock/clips/clip-onboarding.m4a',
         durationSec: draft.clip.durationSec,
         waveform: draft.clip.peaks,
-        recordedAt: NOW,
+        // Client moment is fine here: the take was literally just recorded on this device.
+        recordedAt: new Date().toISOString(),
       }
     }
-    useRiffStore.getState().applyOnboarding(overrides)
+    try {
+      await applyOnboarding(overrides)
+    } catch (err) {
+      // Re-arm both footer actions — the draft is intact, so the user can just retry.
+      doneRef.current = false
+      setBusy(false)
+      setCommitError(err instanceof Error ? err.message : 'Something went wrong — try again')
+      return
+    }
     draft.reset()
     router.push('/map')
   }
@@ -179,10 +193,11 @@ export function OnboardingClipView() {
       title="Let them hear you"
       subtitle="24 seconds is all it takes. Musicians with a clip get 3x more jam requests."
       backHref="/onboarding/availability"
-      continueLabel="Save clip and finish"
-      continueDisabled={phase !== 'recorded' || !clip}
-      onContinue={() => commit(true)}
-      skip={{ label: 'Skip for now', onSkip: () => commit(false) }}
+      continueLabel={busy ? 'Saving…' : 'Save clip and finish'}
+      continueDisabled={phase !== 'recorded' || !clip || busy}
+      onContinue={() => void commit(true)}
+      // While busy the doneRef guard makes skip a no-op — the shell has no disabled skip.
+      skip={{ label: busy ? 'Saving…' : 'Skip for now', onSkip: () => void commit(false) }}
     >
       <Card className="mb-4 flex min-h-[280px] flex-col items-center justify-center p-6">
         {phase === 'recorded' && clip ? (
@@ -297,6 +312,12 @@ export function OnboardingClipView() {
           </p>
         </div>
       </div>
+
+      {commitError && (
+        <p role="alert" className="mt-3 text-center text-[13px] font-medium text-destructive">
+          {commitError}
+        </p>
+      )}
     </OnboardingShell>
   )
 }

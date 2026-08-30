@@ -3,10 +3,13 @@
 Mobile-first web app that helps musicians find people nearby to play with tonight, turn that into
 a confirmed session, and build a reputation from sessions they actually showed up to.
 
-**Stack:** Next.js 15 (App Router) · TypeScript · Tailwind · zustand · lucide-react.
-**Deploy:** one Render web service via `render.yaml`. No database.
-**Data:** mock fixtures in `src/mocks/` for v1. No backend yet. Types are written to translate
-directly into Postgres tables later — see `docs/DATA-MODEL.md`.
+**Stack:** Next.js 15 (App Router) · TypeScript · Tailwind · zustand · lucide-react ·
+SQLite (better-sqlite3) server-side.
+**Deploy:** one Render web service via `render.yaml` (single instance — SQLite).
+**Data:** real accounts (username + password, sessions) in SQLite, seeded on first boot from
+the fixtures in `src/mocks/`. The server (`src/server/`) is authoritative: every mutation is
+authenticated and authorized there; the client store mirrors per-viewer snapshots from
+`/api/riff`. Types translate 1:1 into Postgres later — see `docs/DATA-MODEL.md`.
 
 ## Context budget — read this first
 

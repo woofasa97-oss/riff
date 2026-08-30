@@ -100,7 +100,13 @@ export function AvailabilityGrid({
                 aria-selected={on}
                 onPointerDown={(e) => {
                   // Release capture so pointerenter fires on the cells the drag crosses.
-                  e.currentTarget.releasePointerCapture?.(e.pointerId)
+                  // Throws on pointer ids without an active capture (synthetic events,
+                  // some assistive tech) — and the toggle must survive that.
+                  try {
+                    e.currentTarget.releasePointerCapture?.(e.pointerId)
+                  } catch {
+                    /* no capture to release */
+                  }
                   setPainting(!on)
                   applyCell(day, slot, !on)
                 }}

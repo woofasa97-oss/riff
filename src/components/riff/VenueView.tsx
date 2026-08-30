@@ -14,10 +14,11 @@ import { SubScreenHeader } from '@/components/riff/TopBar'
 import { cn } from '@/lib/cn'
 import { formatTime, relativeDayLabel } from '@/lib/datetime'
 import { useRiffStore } from '@/lib/store'
-import { NOW, getBand, getVenue, listLiveSessions, listPlayingAtVenue } from '@/mocks'
+import { getBand, getVenue, listLiveSessions, listPlayingAtVenue } from '@/mocks'
 
 export function VenueView({ venueId }: { venueId: string }) {
   const jams = useRiffStore((s) => s.jams)
+  const now = useRiffStore((s) => s.now)
   const venue = getVenue(venueId)
   const [selectedSlot, setSelectedSlot] = useState<string | undefined>(
     () => venue?.slots.find((s) => s.available)?.id,
@@ -44,7 +45,7 @@ export function VenueView({ venueId }: { venueId: string }) {
     )
   }
 
-  const { live, upcoming } = listPlayingAtVenue(venue.id, NOW, jams)
+  const { live, upcoming } = listPlayingAtVenue(venue.id, now, jams)
   const liveSession = listLiveSessions().find((s) => s.venueId === venue.id)
   const slot = venue.slots.find((s) => s.id === selectedSlot)
 
@@ -199,7 +200,7 @@ export function VenueView({ venueId }: { venueId: string }) {
                   </div>
                 </div>
                 <span className="shrink-0 rounded-full bg-[color:var(--hero-from)] px-2 py-1 text-[10px] font-bold text-primary">
-                  {relativeDayLabel(jam.startsAt, NOW)} {formatTime(jam.startsAt)}
+                  {relativeDayLabel(jam.startsAt, now)} {formatTime(jam.startsAt)}
                 </span>
               </Link>
             ))}
@@ -233,7 +234,7 @@ export function VenueView({ venueId }: { venueId: string }) {
                     selected ? 'font-bold text-primary' : 'font-medium text-foreground-dim',
                   )}
                 >
-                  {relativeDayLabel(s.startsAt, NOW)}
+                  {relativeDayLabel(s.startsAt, now)}
                 </span>
                 <span
                   className={cn(

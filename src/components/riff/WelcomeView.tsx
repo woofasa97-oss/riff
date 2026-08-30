@@ -1,19 +1,13 @@
-'use client'
-
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Apple } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
-import { Button } from '@/components/ui/Button'
+import { buttonClass } from '@/components/ui/Button'
+import { cn } from '@/lib/cn'
 
 /**
- * Pre-onboarding welcome screen — no tab bar, no header. All three auth entries are stubs
- * that drop straight into onboarding; real auth comes with the backend (docs/SPEC.md).
+ * Pre-auth welcome screen — no tab bar, no header. Both entries are full navigations into the
+ * real account flow: /signup creates an account, /login signs an existing one back in.
  */
 export function WelcomeView() {
-  const router = useRouter()
-  const startOnboarding = () => router.push('/onboarding/location')
-
   return (
     <AppShell
       activeTab={null}
@@ -36,29 +30,15 @@ export function WelcomeView() {
       </div>
 
       <div className="mt-auto flex w-full flex-col items-center gap-4 pt-12">
-        <Button fullWidth className="font-semibold shadow-sm" onClick={startOnboarding}>
+        <Link
+          href="/signup"
+          className={cn(buttonClass({ fullWidth: true }), 'font-semibold shadow-sm')}
+        >
           Create your player card
-        </Button>
-        <Button
-          variant="outline"
-          fullWidth
-          className="gap-3 border-0 font-semibold shadow-sm"
-          onClick={startOnboarding}
-        >
-          <Apple size={20} aria-hidden />
-          Continue with Apple
-        </Button>
-        <Button
-          variant="outline"
-          fullWidth
-          className="border-0 font-semibold shadow-sm"
-          onClick={startOnboarding}
-        >
-          Continue with Google
-        </Button>
+        </Link>
 
         <Link
-          href="/jams"
+          href="/login"
           className="mt-4 py-2 text-[14px] font-medium text-white/80 transition-colors hover:text-white"
         >
           I already have an account

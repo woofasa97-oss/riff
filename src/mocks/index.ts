@@ -35,6 +35,27 @@ import type {
 
 export { NOW } from './clock'
 export { CURRENT_USER_ID } from './musicians'
+
+// ---------------------------------------------------------------------------
+// Live world registry
+// ---------------------------------------------------------------------------
+// With real accounts, "who exists" is server truth, not this module. The registries below
+// start on the fixtures (so seeds and tooling keep working) and are replaced wholesale by the
+// store provider with each snapshot — after which getMusician/getVenue resolve real users too.
+// Venue addresses never enter the registry: the server strips them, and the fixture fallback
+// strips them here for symmetry (addresses reach the client only as Jam.revealedAddress).
+
+let liveMusicians: Musician[] = musicians
+let liveVenues: Venue[] = venues.map((v) => ({ ...v, address: undefined }))
+let musicianById = new Map(liveMusicians.map((m) => [m.id, m]))
+let venueById = new Map(liveVenues.map((v) => [v.id, v]))
+
+export function registerWorld(nextMusicians: Musician[], nextVenues: Venue[]) {
+  liveMusicians = nextMusicians
+  liveVenues = nextVenues.map((v) => ({ ...v, address: undefined }))
+  musicianById = new Map(liveMusicians.map((m) => [m.id, m]))
+  venueById = new Map(liveVenues.map((v) => [v.id, v]))
+}
 export {
   bands,
   battles,
@@ -61,30 +82,37 @@ export { ROUND_LABEL, ROUND_ORDER, battleChatSeed, seasonBadgeFor, voteShare } f
 
 // --- Musicians -------------------------------------------------------------
 
-export const getMusician = (id: string): Musician | undefined => musicians.find((m) => m.id === id)
+export const getMusician = (id: string): Musician | undefined => musicianById.get(id)
 
 /** Live-chat handles map back to musicians where one exists. */
 export const getMusicianByHandle = (handle: string): Musician | undefined =>
-  musicians.find((m) => m.handle === handle)
+  liveMusicians.find((m) => m.handle === handle)
 
-export const getCurrentUser = (): Musician =>
-  musicians.find((m) => m.id === CURRENT_USER_ID) as Musician
+// getCurrentUser was removed with real accounts: the viewer is whoever the session says,
+// via useCurrentUser() in src/lib/store.ts. CURRENT_USER_ID survives as the seed anchor only.
 
-/** Everyone except the viewer, nearest first. Zone-level distances only. */
+/**
+ * Everyone except the viewer: real players first (nearest first within each group), seed
+ * profiles after — a young network's actual musicians should not hide behind the demo crew.
+ * Zone-level distances only.
+ */
 export function listNearbyMusicians(
   options: { withinMi?: number; tonightOnly?: boolean; viewerId?: string } = {},
+  source: Musician[] = liveMusicians,
 ): Musician[] {
+  const isSeed = (m: Musician) => m.avatarUrl.startsWith('/mock/')
   const { withinMi = Infinity, tonightOnly = false, viewerId = CURRENT_USER_ID } = options
-  return musicians
+  return source
     .filter((m) => m.id !== viewerId)
+    .filter((m) => m.instruments.length > 0)
     .filter((m) => m.distanceMi <= withinMi)
     .filter((m) => !tonightOnly || m.availableTonight)
-    .sort((a, b) => a.distanceMi - b.distanceMi)
+    .sort((a, b) => Number(isSeed(a)) - Number(isSeed(b)) || a.distanceMi - b.distanceMi)
 }
 
 // --- Venues ----------------------------------------------------------------
 
-export const getVenue = (id: string): Venue | undefined => venues.find((v) => v.id === id)
+export const getVenue = (id: string): Venue | undefined => venueById.get(id)
 
 // --- Jams ------------------------------------------------------------------
 
@@ -248,11 +276,13 @@ export function listMusiciansInZone(
   zoneId: string,
   filter: ZoneFilter = {},
   viewerId = CURRENT_USER_ID,
+  source: Musician[] = liveMusicians,
 ): Musician[] {
   const zone = getZone(zoneId)
   if (!zone) return []
-  return musicians.filter((m) => {
+  return source.filter((m) => {
     if (m.id === viewerId) return false
+    if (m.instruments.length === 0) return false
     if (m.neighborhood !== zone.name) return false
     if (filter.tonightOnly && !m.availableTonight) return false
     if (filter.instrument && !m.instruments.includes(filter.instrument)) return false
@@ -277,10 +307,11 @@ export function summariseZone(
   zoneId: string,
   filter: ZoneFilter = {},
   viewerId = CURRENT_USER_ID,
+  source: Musician[] = liveMusicians,
 ): ZoneSummary | undefined {
   const zone = getZone(zoneId)
   if (!zone) return undefined
-  const inZone = listMusiciansInZone(zoneId, filter, viewerId)
+  const inZone = listMusiciansInZone(zoneId, filter, viewerId, source)
 
   const distances = inZone.map((m) => m.distanceMi).sort((a, b) => a - b)
   const tally = new Map<Instrument, number>()
@@ -310,9 +341,13 @@ export function summariseZone(
   }
 }
 
-export function summariseAllZones(filter: ZoneFilter = {}, viewerId = CURRENT_USER_ID) {
+export function summariseAllZones(
+  filter: ZoneFilter = {},
+  viewerId = CURRENT_USER_ID,
+  source: Musician[] = liveMusicians,
+) {
   return mapZones
-    .map((z) => summariseZone(z.id, filter, viewerId))
+    .map((z) => summariseZone(z.id, filter, viewerId, source))
     .filter((s): s is ZoneSummary => Boolean(s))
 }
 
