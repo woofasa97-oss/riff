@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const parsed = validateSignup(body)
   if ('error' in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 })
   try {
-    const userId = createAccount(parsed.name, parsed.username, parsed.password)
+    const userId = createAccount(parsed.name, parsed.username, parsed.password, parsed.email)
     const { token, expiresAt } = createSession(userId)
     const res = NextResponse.json({ ok: true, userId })
     res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions(expiresAt))

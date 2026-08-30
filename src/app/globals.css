@@ -74,6 +74,18 @@
   body {
     font-family: var(--font-sans);
   }
+  /* Touch responsiveness: kill the legacy 300ms tap delay and double-tap-zoom that can make a
+     first tap on nav/back/+ feel like it "didn't register", and drop the grey tap flash. */
+  a,
+  button,
+  [role='button'],
+  [role='tab'],
+  input,
+  label,
+  summary {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
   h1,
   h2,
   h3,

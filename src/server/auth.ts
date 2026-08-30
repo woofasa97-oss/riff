@@ -122,18 +122,90 @@ export function clearThrottle(key: string) {
 // --- validation -------------------------------------------------------------
 export const USERNAME_RE = /^[a-z0-9_]{3,20}$/
 
+/** A light email sanity check — enough to catch typos, not a deliverability guarantee. */
+export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export function validateSignup(input: {
   name?: unknown
   username?: unknown
   password?: unknown
-}): { name: string; username: string; password: string } | { error: string } {
+  email?: unknown
+  acceptedTerms?: unknown
+}): { name: string; username: string; password: string; email: string | null } | { error: string } {
   const name = typeof input.name === 'string' ? input.name.trim() : ''
   const username = typeof input.username === 'string' ? input.username.trim().toLowerCase() : ''
   const password = typeof input.password === 'string' ? input.password : ''
+  const emailRaw = typeof input.email === 'string' ? input.email.trim() : ''
   if (name.length < 2 || name.length > 40) return { error: 'Name needs 2–40 characters.' }
   if (!USERNAME_RE.test(username))
     return { error: 'Username: 3–20 characters, a–z, 0–9 and _ only.' }
   if (password.length < 8) return { error: 'Password needs at least 8 characters.' }
   if (password.length > 200) return { error: 'Password is too long.' }
-  return { name, username, password }
+  // Email is optional (it's how you'd recover a locked account), but must look valid if given.
+  if (emailRaw && (!EMAIL_RE.test(emailRaw) || emailRaw.length > 120))
+    return { error: 'That email does not look right.' }
+  if (input.acceptedTerms !== true) return { error: 'Please accept the terms to continue.' }
+  return { name, username, password, email: emailRaw || null }
+}
+
+// --- password reset tokens --------------------------------------------------
+const RESET_TTL_MIN = 30
+
+/**
+ * Issue a one-time reset token, but ONLY when the given email matches the account's recovery
+ * email. This is the second factor that keeps a reset from being a username-only account
+ * takeover: knowing a username is not enough — you must also know the email on file. Accounts
+ * that signed up without an email cannot self-recover (honest: there is nothing to verify
+ * against). Returns the raw token (only the hash is stored), or undefined.
+ *
+ * The token is never returned to an anonymous HTTP caller in production — see
+ * /api/auth/request-reset, which gates its exposure behind an explicit preview flag.
+ */
+export function issueResetToken(username: string, email: string): string | undefined {
+  const d = db()
+  const user = d
+    .prepare(`SELECT id, email FROM users WHERE username = ?`)
+    .get(username.trim().toLowerCase()) as { id: string; email: string | null } | undefined
+  if (!user || !user.email) return undefined
+  if (user.email.trim().toLowerCase() !== email.trim().toLowerCase()) return undefined
+  const token = crypto.randomBytes(24).toString('hex')
+  const now = new Date()
+  d.prepare(`DELETE FROM password_resets WHERE user_id = ?`).run(user.id)
+  d.prepare(`INSERT INTO password_resets VALUES (?,?,?,?)`).run(
+    crypto.createHash('sha256').update(token).digest('hex'),
+    user.id,
+    now.toISOString(),
+    new Date(now.getTime() + RESET_TTL_MIN * 60_000).toISOString(),
+  )
+  return token
+}
+
+/** Consume a reset token and set a new password. Single-use; expired tokens are rejected. */
+export function resetPasswordWithToken(token: string, newPassword: string): boolean {
+  if (typeof newPassword !== 'string' || newPassword.length < 8 || newPassword.length > 200) {
+    throw new Error('Password needs at least 8 characters.')
+  }
+  const d = db()
+  const hash = crypto.createHash('sha256').update(token).digest('hex')
+  const row = d
+    .prepare(`SELECT user_id, expires_at FROM password_resets WHERE token_hash = ?`)
+    .get(hash) as { user_id: string; expires_at: string } | undefined
+  if (!row) return false
+  if (Date.parse(row.expires_at) < Date.now()) {
+    d.prepare(`DELETE FROM password_resets WHERE token_hash = ?`).run(hash)
+    return false
+  }
+  const { hash: pwHash, salt } = hashPassword(newPassword)
+  const tx = d.transaction(() => {
+    d.prepare(`UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?`).run(
+      pwHash,
+      salt,
+      row.user_id,
+    )
+    d.prepare(`DELETE FROM password_resets WHERE token_hash = ?`).run(hash)
+    // Log the user out of all existing sessions after a reset.
+    d.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(row.user_id)
+  })
+  tx()
+  return true
 }

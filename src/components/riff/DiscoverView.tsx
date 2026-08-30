@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { CalendarDays, Check, ChevronRight, Compass, Eye, Search, X } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { CalendarDays, Check, ChevronRight, Compass, Eye, MapPin, Search, X } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { MusicianCard } from '@/components/riff/MusicianCard'
 import { OpenCallCard } from '@/components/riff/OpenCallCard'
@@ -11,12 +12,15 @@ import { Button, buttonClass } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ChipTabs } from '@/components/ui/Tabs'
 import { cn } from '@/lib/cn'
-import { intentLabel } from '@/lib/labels'
+import { genreLabel, instrumentLabel, intentLabel, playerLabel } from '@/lib/labels'
 import { useIsGuest, useRiffStore } from '@/lib/store'
 import { listNearbyMusicians } from '@/mocks'
-import type { Intent, Jam } from '@/types'
+import type { Intent, Jam, Musician } from '@/types'
 
 type IntentFilter = Intent | 'all'
+
+/** Guest "just looking" strip: once dismissed it stays hidden for the session. */
+const GUEST_BANNER_KEY = 'riff_guest_banner_dismissed'
 
 const INTENT_CHIPS: { id: IntentFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -27,6 +31,21 @@ const INTENT_CHIPS: { id: IntentFilter; label: string }[] = [
 
 const postedTs = (jam: Jam) => (jam.postedAt ? Date.parse(jam.postedAt) : 0)
 
+/** Search hits a musician's name, their instrument (either label form), or their genres. */
+function matchesSearch(m: Musician, q: string): boolean {
+  if (q === '') return true
+  if (m.name.toLowerCase().includes(q)) return true
+  if (
+    m.instruments.some(
+      (i) =>
+        instrumentLabel(i).toLowerCase().includes(q) || playerLabel(i).toLowerCase().includes(q),
+    )
+  ) {
+    return true
+  }
+  return m.genres.some((g) => genreLabel(g).toLowerCase().includes(q))
+}
+
 /** The Discover feed (docs/BUILD-PLAN.md P2-02, from 20-discover.html). */
 export function DiscoverView() {
   const jams = useRiffStore((s) => s.jams)
@@ -34,27 +53,52 @@ export function DiscoverView() {
   const viewerId = useRiffStore((s) => s.viewerId)
   const isGuest = useIsGuest()
 
+  // The map deep-links here with a URL scope (docs/BUILD-PLAN cross-ticket contract):
+  // ?zone=<Neighbourhood> narrows the feed to one patch, ?tonight=1 pre-arms the tonight filter.
+  const searchParams = useSearchParams()
+  const zone = searchParams.get('zone')?.trim() || null
+
   const [intent, setIntent] = useState<IntentFilter>('all')
-  const [tonightOnly, setTonightOnly] = useState(false)
+  const [tonightOnly, setTonightOnly] = useState(() => searchParams.get('tonight') === '1')
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
 
+  // A guest can dismiss the "just looking" strip; the choice is stored client-side so it holds
+  // across tab switches. Read after mount (not during render) to stay SSR/hydration-safe.
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(GUEST_BANNER_KEY) === '1') setBannerDismissed(true)
+    } catch {
+      // localStorage unavailable (SSR, privacy mode): the banner simply shows.
+    }
+  }, [])
+
+  function dismissBanner() {
+    setBannerDismissed(true)
+    try {
+      localStorage.setItem(GUEST_BANNER_KEY, '1')
+    } catch {
+      // Non-fatal: the dismissal still holds for this mount even if it cannot persist.
+    }
+  }
+
   // Fed from the store snapshot so new sign-ups appear on the next poll, no reload needed.
-  const musicians = useMemo(
-    () => listNearbyMusicians({ viewerId }, allMusicians),
-    [viewerId, allMusicians],
-  )
-  const tonightAllCount = useMemo(
-    () => listNearbyMusicians({ tonightOnly: true, viewerId }, allMusicians).length,
-    [viewerId, allMusicians],
-  )
+  const musicians = useMemo(() => {
+    const nearby = listNearbyMusicians({ viewerId }, allMusicians)
+    return zone ? nearby.filter((m) => m.neighborhood === zone) : nearby
+  }, [viewerId, allMusicians, zone])
+  const tonightAllCount = useMemo(() => {
+    const free = listNearbyMusicians({ tonightOnly: true, viewerId }, allMusicians)
+    return (zone ? free.filter((m) => m.neighborhood === zone) : free).length
+  }, [viewerId, allMusicians, zone])
 
   const q = query.trim().toLowerCase()
   const filtered = musicians.filter(
     (m) =>
       (intent === 'all' || m.intent === intent) &&
       (!tonightOnly || m.availableTonight) &&
-      (q === '' || m.name.toLowerCase().includes(q)),
+      matchesSearch(m, q),
   )
 
   // Only pending open calls belong in the feed — once the host accepts someone the jam is
@@ -105,7 +149,7 @@ export function DiscoverView() {
             actions={
               <button
                 type="button"
-                aria-label={searchOpen ? 'Close search' : 'Search musicians by name'}
+                aria-label={searchOpen ? 'Close search' : 'Search musicians'}
                 aria-expanded={searchOpen}
                 onClick={toggleSearch}
                 className={cn(
@@ -130,8 +174,8 @@ export function DiscoverView() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by name"
-                  aria-label="Search musicians by name"
+                  placeholder="Search by name, instrument or genre"
+                  aria-label="Search musicians by name, instrument or genre"
                   className="h-full w-full bg-transparent text-[14px] text-foreground placeholder:text-foreground-dim focus:outline-none"
                 />
                 {query !== '' && (
@@ -151,7 +195,7 @@ export function DiscoverView() {
       }
       mainClassName="flex flex-col gap-5 pb-6 pt-2"
     >
-      {isGuest && (
+      {isGuest && !bannerDismissed && (
         <div className="shrink-0 px-4">
           <div className="flex items-center gap-2.5 rounded-[12px] border border-border-subtle bg-surface-muted px-3 py-1.5 shadow-sm">
             <Eye size={15} className="shrink-0 text-primary" />
@@ -161,8 +205,38 @@ export function DiscoverView() {
             <Link href="/signup" className={cn(buttonClass({ size: 'sm' }), 'shrink-0 px-4')}>
               Sign up
             </Link>
-            {/* Reads as a dismiss so the strip feels light; it stays put — guest mode is persistent. */}
-            <X size={14} aria-hidden className="shrink-0 text-foreground-dim" />
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={dismissBanner}
+              className={cn(
+                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
+                'text-foreground-dim transition-transform active:scale-90',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              )}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {zone && (
+        <div className="shrink-0 px-4">
+          <div className="flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 py-1.5 pl-3 pr-1.5 text-primary">
+            <MapPin size={14} className="shrink-0" />
+            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">In {zone}</span>
+            <Link
+              href="/discover"
+              aria-label={`Clear ${zone} filter`}
+              className={cn(
+                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
+                'transition-transform active:scale-90',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              )}
+            >
+              <X size={14} />
+            </Link>
           </div>
         </div>
       )}

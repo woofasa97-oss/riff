@@ -108,6 +108,11 @@ export function LoginView() {
                   autoComplete="current-password"
                   className={FIELD}
                 />
+                <div className="mt-2 text-right">
+                  <Link href="/reset" className="text-[13px] font-medium text-primary">
+                    Forgot password?
+                  </Link>
+                </div>
               </div>
             </div>
           </Card>

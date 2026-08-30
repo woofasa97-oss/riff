@@ -9,8 +9,9 @@ import { ZoneMap } from '@/components/riff/ZoneMap'
 import { Avatar, AvatarStack } from '@/components/ui/Avatar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/cn'
-import { formatDurationMinutes, minutesSince } from '@/lib/datetime'
+import { formatDurationMinutes, liveElapsedMinutes } from '@/lib/datetime'
 import { compactCount, instrumentLabel, shortNeighborhood } from '@/lib/labels'
 import { useRiffStore, useUnreadNotificationCount } from '@/lib/store'
 import {
@@ -22,6 +23,12 @@ import {
   type ZoneFilter,
 } from '@/mocks'
 import type { Instrument } from '@/types'
+
+/** "0.9 miles away" / "1 mile away" for a single distance, "0.7–0.9 miles away" for a spread. */
+function distanceAwayLabel({ min, max }: { min: number; max: number }): string {
+  if (min === max) return `${min} ${min === 1 ? 'mile' : 'miles'} away`
+  return `${min}–${max} miles away`
+}
 
 /** docs/SPEC.md §4.2: Tonight · All musicians · Bass · Drums · Keys. */
 const INSTRUMENT_FILTERS: { id: Instrument | 'all'; label: string }[] = [
@@ -57,7 +64,8 @@ export function MapView() {
   const session = selectedLiveId ? getLiveSession(selectedLiveId) : undefined
   const sessionBand = session?.bandId ? getBand(session.bandId) : undefined
   const sessionVenue = session ? getVenue(session.venueId) : undefined
-  const elapsed = session ? minutesSince(session.startedAt, now) : 0
+  // The fixed session.startedAt goes stale; derive a fresh, slowly-climbing elapsed instead.
+  const elapsed = liveElapsedMinutes(now)
 
   return (
     <AppShell
@@ -171,11 +179,12 @@ export function MapView() {
               {selected.count === 0
                 ? 'Nobody here matches that filter'
                 : `${selected.count} ${selected.count === 1 ? 'musician' : 'musicians'} nearby`}
-              {selected.distanceRange &&
-                ` · ${selected.distanceRange.min}–${selected.distanceRange.max} miles away`}
+              {selected.distanceRange && ` · ${distanceAwayLabel(selected.distanceRange)}`}
             </p>
 
-            {selected.count > 0 && (
+            {/* The musician-list area: real rows when the zone has people, calm muted
+                placeholders otherwise, so an empty zone never leaves the sheet body blank. */}
+            {selected.count > 0 ? (
               <>
                 <div className="mt-4 flex items-center gap-3">
                   <AvatarStack
@@ -222,6 +231,18 @@ export function MapView() {
                   ))}
                 </ul>
               </>
+            ) : (
+              <div className="mt-4 space-y-2" aria-hidden>
+                {[0, 1].map((i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-3.5 w-24" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
 
             {selected.liveSessionIds.length > 0 && (
@@ -241,8 +262,9 @@ export function MapView() {
               </button>
             )}
 
+            {/* Carry the neighbourhood through so Discover lands scoped to this zone, tonight. */}
             <Link
-              href="/discover"
+              href={`/discover?zone=${encodeURIComponent(selected.zone.name)}&tonight=1`}
               className={cn(buttonClass({ size: 'sm', fullWidth: true }), 'mt-4 block')}
             >
               See who is free

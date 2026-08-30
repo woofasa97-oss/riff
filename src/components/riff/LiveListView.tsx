@@ -8,7 +8,7 @@ import { Button, buttonClass } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { prizePool, SEASON_STATUS_LABEL } from '@/lib/competition'
-import { formatDurationMinutes, minutesSince } from '@/lib/datetime'
+import { formatDurationMinutes, liveElapsedMinutes } from '@/lib/datetime'
 import { compactCount, formatCredits } from '@/lib/labels'
 import { useRiffStore } from '@/lib/store'
 import { getBand, getLiveBattle, getVenue, listLiveSessions, voteShare } from '@/mocks'
@@ -52,7 +52,7 @@ export function LiveListView() {
               {sessions.map((session) => {
                 const band = getBand(session.bandId ?? '')
                 const venue = getVenue(session.venueId)
-                const elapsed = minutesSince(session.startedAt, now)
+                const elapsed = liveElapsedMinutes(now)
                 return (
                   <Link
                     key={session.id}

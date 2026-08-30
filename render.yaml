@@ -35,6 +35,14 @@ services:
       # `next start` always serves one, so the variable buys nothing and breaks `npm ci`.
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
+      # Password recovery has no email provider wired up. With this flag ON, the reset endpoint
+      # returns the reset code in its response so a preview user can complete recovery self-serve
+      # — but ONLY after proving the account's recovery email (a username alone never works).
+      # Leave it OFF (delete this) for a real deployment and wire email delivery instead; then
+      # the code is issued but never returned over HTTP. It is set here because this is a
+      # throwaway preview meant for trying the app.
+      - key: RIFF_PREVIEW_RESET
+        value: "1"
       # RIFF_DB_PATH is intentionally NOT set here. With no disk, db.ts defaults to
       # <project>/data/riff.db — writable on Render's ephemeral filesystem — and, as a last
       # resort, falls back to the OS temp dir. Both reset on deploy; that is the free-plan

@@ -163,7 +163,7 @@ export function NotificationsView() {
 
   return (
     <AppShell
-      activeTab="me"
+      activeTab={undefined}
       header={
         <>
           <SubScreenHeader

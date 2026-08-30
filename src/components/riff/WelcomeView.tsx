@@ -54,7 +54,7 @@ export function WelcomeView() {
 
         <Link
           href="/login"
-          className="mt-4 py-2 text-[14px] font-medium text-white/80 transition-colors hover:text-white"
+          className="mt-4 py-2 text-[14px] font-medium text-white/80 transition-colors [@media(hover:hover)]:hover:text-white"
         >
           I already have an account
         </Link>

@@ -29,7 +29,7 @@ export const sessionRecaps: SessionRecap[] = [
  * 24; these eight carry notes and the rest sit in his ReputationBaseline, because the fixtures
  * only model the recent jams rather than his whole history.
  */
-export const vouches: Vouch[] = [
+const curatedVouches: Vouch[] = [
   {
     id: 'v-1',
     fromId: 'sarah-jenkins',
@@ -113,6 +113,87 @@ export const vouches: Vouch[] = [
   },
 ]
 
+/**
+ * Baseline vouches, materialised as records so a profile's vouch COUNT always equals the vouch
+ * LIST beneath it (previously the count added an un-listed baseline and the two disagreed).
+ * These are note-less "earned in earlier sessions" entries — the vouches screen renders them
+ * with that framing. The curated notes above stay as-is and count on top.
+ */
+const VOUCH_TAG_CYCLE: import('@/types').VouchTag[] = [
+  'GreatPocket',
+  'ListenFirst',
+  'SolidTime',
+  'GoodEnergy',
+  'ProVibe',
+  'EasyToPlayWith',
+  'EarlyBird',
+]
+
+function materialiseBaselineVouches(): Vouch[] {
+  // Deterministic voucher pool: the other musicians, so each note-less vouch is attributable.
+  const voucherIds = [
+    'marcus-chen',
+    'sarah-jenkins',
+    'leo-rossi',
+    'nina-alvarez',
+    'theo-park',
+    'ruby-sims',
+    'david-chen',
+    'priya-raman',
+    'jonah-wills',
+    'camille-okafor',
+    'ana-duarte',
+    'miles-whitfield',
+    'ivo-marek',
+    'fay-ansari',
+  ]
+  // Materialise exactly `baseline.vouches` records per musician. Combined with the curated
+  // records and recap-derived vouches, this reproduces each musician's original total while
+  // making every one of them appear in the list — so count == list length everywhere.
+  const baselines: Record<string, number> = {
+    'marcus-chen': 16,
+    'sarah-jenkins': 11,
+    'leo-rossi': 9,
+    'nina-alvarez': 8,
+    'theo-park': 6,
+    'ruby-sims': 14,
+    'david-chen': 3,
+    'priya-raman': 5,
+    'jonah-wills': 7,
+    'camille-okafor': 13,
+    'ana-duarte': 2,
+    'miles-whitfield': 12,
+    'ivo-marek': 6,
+    'fay-ansari': 10,
+  }
+
+  const out: Vouch[] = []
+  for (const [toId, total] of Object.entries(baselines)) {
+    const needed = total
+    let vi = 0
+    for (let k = 0; k < needed; k++) {
+      // Skip self-vouches; walk the pool.
+      let fromId = voucherIds[vi % voucherIds.length]
+      vi++
+      if (fromId === toId) {
+        fromId = voucherIds[vi % voucherIds.length]
+        vi++
+      }
+      out.push({
+        id: `v-base-${toId}-${k}`,
+        fromId,
+        toId,
+        tags: [VOUCH_TAG_CYCLE[(k + toId.length) % VOUCH_TAG_CYCLE.length]],
+        note: '',
+        sessionsTogether: 1 + ((k + toId.length) % 4),
+        jamId: 'jam-fusion-night',
+        createdAt: new Date(Date.parse('2026-05-01T12:00:00-04:00') + k * 3_600_000).toISOString(),
+      })
+    }
+  }
+  return out
+}
+
 export const recordings: Recording[] = [
   {
     id: 'rec-neosoul-0821',
@@ -131,3 +212,9 @@ export const recordings: Recording[] = [
 export const recordingConsents: Record<string, string[]> = {
   'jam-neosoul-0821': ['sarah-jenkins', 'leo-rossi', 'nina-alvarez'],
 }
+
+/**
+ * The single source of truth for vouches: curated (noted) records plus the materialised
+ * baseline. A profile's vouch count is derived from THIS list, so count and list always agree.
+ */
+export const vouches: Vouch[] = [...curatedVouches, ...materialiseBaselineVouches()]

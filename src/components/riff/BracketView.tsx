@@ -166,6 +166,20 @@ export function BracketView() {
       : undefined
   }, [])
 
+  // The final lives in the last, off-screen bracket column, so surface it up top where it
+  // can't be scrolled past. Always reads the global draw — the final is the same in any scope.
+  const finalMatch = useMemo(() => {
+    const final = listBattles('global').find((b) => b.round === 'final')
+    if (!final) return undefined
+    return {
+      id: final.id,
+      live: final.status === 'live',
+      a: getBand(final.bandAId)?.name ?? 'TBD',
+      b: getBand(final.bandBId)?.name ?? 'TBD',
+      share: voteShare(final),
+    }
+  }, [])
+
   // YOUR RUN reads from the bracket, so it can never contradict it.
   const myRun = useMemo(() => {
     if (!myBand) return undefined
@@ -247,6 +261,54 @@ export function BracketView() {
           </button>
         ))}
       </div>
+
+      {/* The final is the last, off-screen column — pin it above the scroll so it's never missed. */}
+      {finalMatch && (
+        <div className="shrink-0 px-4 pb-4">
+          <div
+            className={cn(
+              'relative overflow-hidden rounded-[16px] p-4',
+              finalMatch.live
+                ? 'border border-primary/40 bg-surface-dark/80 shadow-[0_0_15px_rgba(138,121,171,0.2)] backdrop-blur-xl'
+                : GLASS,
+            )}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+                Final
+              </span>
+              {finalMatch.live && (
+                <span className="rounded-[3px] bg-live px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none tracking-wider text-white">
+                  Live
+                </span>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-serif text-[15px] font-bold text-white">
+                  {finalMatch.a}
+                </div>
+                <div className="text-[12px] font-bold text-primary">{finalMatch.share.a}%</div>
+              </div>
+              <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-white/40">
+                vs
+              </span>
+              <div className="min-w-0 flex-1 text-right">
+                <div className="truncate font-serif text-[15px] font-bold text-white">
+                  {finalMatch.b}
+                </div>
+                <div className="text-[12px] font-bold text-accent">{finalMatch.share.b}%</div>
+              </div>
+            </div>
+            <Link
+              href={`/battles/${finalMatch.id}`}
+              className="mt-3 flex items-center justify-center gap-1.5 rounded-full border border-primary/30 bg-primary/20 px-3 py-2 text-[12px] font-bold text-primary"
+            >
+              <Play size={11} fill="currentColor" /> Watch now
+            </Link>
+          </div>
+        </div>
+      )}
 
       {rounds.length === 0 ? (
         <div className="px-4 py-6">

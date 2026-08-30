@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowDown, ArrowUp, ChevronDown, Crown, Info, MoreVertical } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, ChevronDown, Crown, Info, MoreVertical } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { IconButton } from '@/components/ui/Button'
@@ -196,6 +197,9 @@ function PodiumPlace({
 
 export function LeaderboardView() {
   const [showPoints, setShowPoints] = useState(false)
+  // Which scope picker is open. Only one option each in v1, but the chip's chevron promises a
+  // picker, so tapping opens a real one instead of lying about being interactive.
+  const [scope, setScope] = useState<'city' | 'scene' | null>(null)
   const season = getCurrentSeason()
   const viewerId = useRiffStore((s) => s.viewerId)
   const rows = getLeaderboard()
@@ -248,14 +252,26 @@ export function LeaderboardView() {
         )
       }
     >
-      {/* Scope pills. Only the season is switchable in v1; the other two are the fixed scene. */}
+      {/* Scope pills. City and scene open a picker; the season stays fixed in v1. */}
       <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-4 py-3">
-        <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border-subtle bg-card px-4 py-1.5 text-[13px] font-medium text-foreground shadow-sm">
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-label={`City: ${season.city}. Change scope`}
+          onClick={() => setScope('city')}
+          className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border-subtle bg-card px-4 py-1.5 text-[13px] font-medium text-foreground shadow-sm transition-transform active:scale-95"
+        >
           {season.city} <ChevronDown size={10} className="text-foreground-dim" />
-        </span>
-        <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border-subtle bg-card px-4 py-1.5 text-[13px] font-medium text-foreground shadow-sm">
+        </button>
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-label={`Scene: ${season.scene}. Change scope`}
+          onClick={() => setScope('scene')}
+          className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border-subtle bg-card px-4 py-1.5 text-[13px] font-medium text-foreground shadow-sm transition-transform active:scale-95"
+        >
           {season.scene} <ChevronDown size={10} className="text-foreground-dim" />
-        </span>
+        </button>
         <span className="shrink-0 whitespace-nowrap rounded-full bg-foreground px-4 py-1.5 text-[13px] font-medium text-white shadow-sm">
           Season {season.number}
         </span>
@@ -319,6 +335,38 @@ export function LeaderboardView() {
           </div>
         )}
       </div>
+
+      {/*
+        Scope picker. The season carries one city and one scene, so the sheet shows that single
+        option selected rather than inventing others — the chevron now leads somewhere honest.
+      */}
+      <BottomSheet
+        open={scope !== null}
+        onClose={() => setScope(null)}
+        title={scope === 'city' ? 'Choose city' : 'Choose scene'}
+      >
+        {scope && (
+          <>
+            <h2 className="mb-3 pr-8 font-serif text-[17px] font-bold text-foreground">
+              {scope === 'city' ? 'City' : 'Scene'}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setScope(null)}
+              aria-current="true"
+              className="flex w-full items-center justify-between rounded-[12px] border border-primary bg-primary/5 px-4 py-3 text-left transition-transform active:scale-[0.99]"
+            >
+              <span className="text-[14px] font-medium text-foreground">
+                {scope === 'city' ? season.city : season.scene}
+              </span>
+              <Check size={16} className="shrink-0 text-primary" />
+            </button>
+            <p className="mt-3 text-[12px] text-foreground-dim">
+              More {scope === 'city' ? 'cities' : 'scenes'} are coming.
+            </p>
+          </>
+        )}
+      </BottomSheet>
     </AppShell>
   )
 }

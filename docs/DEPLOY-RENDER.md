@@ -123,3 +123,20 @@ and must not reuse this mock ledger as-is. The wallet lives in the `wallets` / `
 tables; entries and payouts in `competition_entries`; settlement is in `settleSeason`
 (src/server/world.ts), which currently ranks by entry order as a stand-in for real bracket
 results.
+
+## Password recovery (no email provider)
+
+Signup collects an optional recovery email. There is no mail provider wired up, so password
+reset works like this:
+
+- Reset requires BOTH the username AND the account's recovery email to match — a username alone
+  can never reset an account (that would be takeover-by-username). Accounts that signed up
+  without an email cannot self-recover until email is added.
+- The reset code is only returned in the HTTP response when `RIFF_PREVIEW_RESET=1`. That flag is
+  set in `render.yaml` for this throwaway preview so recovery is self-serve without email. For a
+  real deployment, remove the flag and wire an email/SMS provider to deliver the code; the code
+  is still issued, just never returned over the wire. With the flag off the response is identical
+  whether or not the account exists, so usernames can't be enumerated.
+
+This is a preview-grade posture, deliberately chosen so the recovery flow is demonstrable end to
+end without a mail integration. It is documented here rather than hidden.

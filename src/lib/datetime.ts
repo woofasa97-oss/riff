@@ -142,3 +142,15 @@ export function groupByDay<T extends { sentAt: string }>(
   }
   return out
 }
+
+/**
+ * A believable "started N min ago" for a demo live session. The fixtures carry a fixed
+ * startedAt that goes stale (the seed shifts by whole days, so time-of-day drifts to "41h
+ * ago"), so instead we derive a fresh elapsed from the current minute: it climbs one a minute
+ * and wraps in the low teens, always reading as a set that is genuinely on right now. Derived
+ * from the server-provided `now`, so server and client agree (no hydration mismatch).
+ */
+export function liveElapsedMinutes(now: string): number {
+  const minute = Math.floor(Date.parse(now) / 60_000)
+  return 14 + (minute % 33)
+}

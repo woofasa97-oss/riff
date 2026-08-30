@@ -10,7 +10,7 @@ import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/cn'
-import { formatDurationMinutes, minutesSince } from '@/lib/datetime'
+import { formatDurationMinutes, liveElapsedMinutes } from '@/lib/datetime'
 import { compactCount } from '@/lib/labels'
 import { useRiffStore } from '@/lib/store'
 import { getBand, getLiveSession, getMusician, getMusicianByHandle, getVenue } from '@/mocks'
@@ -44,6 +44,7 @@ export function LiveView({ sessionId }: { sessionId: string }) {
   const [draft, setDraft] = useState('')
   const [rateOpen, setRateOpen] = useState(false)
   const [stars, setStars] = useState(0)
+  const [copied, setCopied] = useState(false)
   const now = useRiffStore((s) => s.now)
   const chatBySession = useRiffStore((s) => s.liveChat)
   const sendLiveComment = useRiffStore((s) => s.sendLiveComment)
@@ -67,6 +68,29 @@ export function LiveView({ sessionId }: { sessionId: string }) {
     if (el) el.scrollTop = el.scrollHeight
   }, [chat])
 
+  // The "Link copied" pill is transient — clear it a couple of seconds after it shows.
+  useEffect(() => {
+    if (!copied) return
+    const t = setTimeout(() => setCopied(false), 2000)
+    return () => clearTimeout(t)
+  }, [copied])
+
+  // Sharing needs no account, so it is never gated. Prefer the native share sheet; fall back to
+  // copying the link. A cancelled share sheet rejects — swallow it, it is not an error.
+  async function handleShare() {
+    const url = window.location.href
+    try {
+      if (navigator.share) {
+        await navigator.share({ url })
+      } else {
+        await navigator.clipboard.writeText(url)
+        setCopied(true)
+      }
+    } catch {
+      // user dismissed the share sheet, or the clipboard was denied — nothing to recover
+    }
+  }
+
   if (!session) {
     return (
       <AppShell activeTab="live" header={<TopBar />} mainClassName="flex items-center px-4 py-6">
@@ -84,7 +108,7 @@ export function LiveView({ sessionId }: { sessionId: string }) {
     )
   }
 
-  const elapsedMin = minutesSince(session.startedAt, now)
+  const elapsedMin = liveElapsedMinutes(now)
   const isFollowing = band ? followed.includes(band.id) : false
   const myRating = ratings[session.id]
 
@@ -113,9 +137,14 @@ export function LiveView({ sessionId }: { sessionId: string }) {
           surface="dark"
           actions={
             <>
-              <span className={cn(iconButtonClass('dark'), 'pointer-events-none opacity-60')}>
+              <button
+                type="button"
+                onClick={handleShare}
+                aria-label="Share this session"
+                className={iconButtonClass('dark')}
+              >
                 <Share2 size={14} />
-              </span>
+              </button>
               <Link href="/live" aria-label="Close" className={iconButtonClass('dark')}>
                 <X size={16} />
               </Link>
@@ -155,6 +184,16 @@ export function LiveView({ sessionId }: { sessionId: string }) {
         </form>
       }
     >
+      {/* Transient confirmation for the clipboard fallback of Share. */}
+      {copied && (
+        <div
+          role="status"
+          className="pointer-events-none fixed left-1/2 top-16 z-30 -translate-x-1/2 rounded-full border border-white/10 bg-black/70 px-4 py-2 text-[12px] font-medium text-white shadow-lg backdrop-blur-md"
+        >
+          Link copied
+        </div>
+      )}
+
       {/* BAND ROW */}
       <div className="flex items-center justify-between gap-3 px-4">
         <div className="flex min-w-0 items-center gap-3">

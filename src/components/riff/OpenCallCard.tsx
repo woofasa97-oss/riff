@@ -25,6 +25,8 @@ export function OpenCallCard({ jam, className }: { jam: Jam; className?: string 
   const [error, setError] = useState<string | null>(null)
 
   const isMine = jam.hostId === viewerId
+  // The host row taps through to the host's profile, like every other avatar in the app.
+  const hostHref = isMine ? '/me' : `/musicians/${jam.hostId}`
   const applied = applications.some((a) => a.jamId === jam.id && a.applicantId === viewerId)
   const applicantCount = applications.filter((a) => a.jamId === jam.id).length
 
@@ -86,7 +88,10 @@ export function OpenCallCard({ jam, className }: { jam: Jam; className?: string 
       )}
 
       <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
+        <Link
+          href={hostHref}
+          className="-m-1 flex min-w-0 items-center gap-2 rounded-lg p-1 transition-transform active:scale-95"
+        >
           <AvatarStack
             people={hosts.map((m) => ({ id: m.id, name: m.name, avatarUrl: m.avatarUrl }))}
             max={2}
@@ -95,7 +100,7 @@ export function OpenCallCard({ jam, className }: { jam: Jam; className?: string 
           <span className="truncate text-[12px] font-medium text-foreground">
             Hosted by {joinNames(hosts.map((m) => m.name.split(' ')[0]))}
           </span>
-        </div>
+        </Link>
         <div className="flex shrink-0 items-center gap-1.5">
           <span className="rounded bg-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
             {relativeDayLabel(jam.startsAt, now)}

@@ -5,7 +5,12 @@ import { SIGNUP_GRANT_CREDITS } from '@/mocks'
 import { hashPassword, verifyPassword, DECOY_HASH, DECOY_SALT } from '@/server/auth'
 import { WorldError } from '@/server/world'
 
-export function createAccount(name: string, username: string, password: string): string {
+export function createAccount(
+  name: string,
+  username: string,
+  password: string,
+  email: string | null = null,
+): string {
   const d = db()
   const id = `u-${username}`
   const exists =
@@ -16,7 +21,7 @@ export function createAccount(name: string, username: string, password: string):
   const { hash, salt } = hashPassword(password)
   const now = new Date().toISOString()
   const tx = d.transaction(() => {
-    d.prepare(`INSERT INTO users VALUES (?,?,?,?,?)`).run(id, username, hash, salt, now)
+    d.prepare(`INSERT INTO users VALUES (?,?,?,?,?,?)`).run(id, username, email, hash, salt, now)
     // A fresh profile is intentionally empty: onboarding fills it, and profile_complete stays
     // 0 (undiscoverable, redirected into onboarding) until it does.
     d.prepare(

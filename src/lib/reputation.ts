@@ -112,7 +112,9 @@ export function deriveStats(musician: Musician, ctx: ReputationContext): Musicia
 
   const reliabilityPct = attendances === 0 ? 0 : Math.round((showedUp / attendances) * 100)
   const repeatJams = musician.baseline.repeatJamsOffset + countRepeatJams(musician.id, ctx.jams)
-  const vouchCount = musician.baseline.vouches + vouchesFor(musician.id, ctx).length
+  // Count derives from the vouch records themselves (baseline is materialised into records in
+  // src/mocks/reputation.ts), so the number on a profile always matches the list under it.
+  const vouchCount = vouchesFor(musician.id, ctx).length
 
   return {
     isNew: attendances === 0,

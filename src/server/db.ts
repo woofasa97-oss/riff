@@ -63,7 +63,9 @@ export function db(): Database.Database {
   const conn = tryOpen(DB_PATH) ?? tryOpen(path.join(os.tmpdir(), 'riff.db'))
   if (!conn) throw new Error('Riff could not open a database in any writable location')
   if (conn.name !== DB_PATH) {
-    console.warn(`[riff] using fallback database at ${conn.name} — set RIFF_DB_PATH to a writable path`)
+    console.warn(
+      `[riff] using fallback database at ${conn.name} — set RIFF_DB_PATH to a writable path`,
+    )
   }
   _db = conn
   migrate(_db)
@@ -78,9 +80,17 @@ function migrate(d: Database.Database) {
     CREATE TABLE IF NOT EXISTS users (
       id            TEXT PRIMARY KEY,             -- equals the musician id
       username      TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      email         TEXT,                         -- optional; for account recovery + notices
       password_hash TEXT NOT NULL,
       password_salt TEXT NOT NULL,
       created_at    TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS password_resets (
+      token_hash TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS sessions (
@@ -441,10 +451,19 @@ function seed(d: Database.Database) {
     // A few seed acts already paid in, so the prize pool reads as a live competition rather
     // than an empty shell. They are competitors only — no wallet, no login.
     const ceIns = d.prepare(`INSERT INTO competition_entries VALUES (?,?,?,?,?,?,?,?)`)
+    // Enough entrants that the competition's field matches the populated leaderboard for the
+    // same season (previously only 3, which read as a contradiction next to 14 ranked players).
     const seedEntrants: [string, string][] = [
       ['nina-alvarez', 'Nina Alvarez'],
-      ['ruby-sims', 'Ruby Sims'],
       ['theo-park', 'Theo Park'],
+      ['ruby-sims', 'Ruby Sims'],
+      ['david-chen', 'David Chen'],
+      ['sarah-jenkins', 'Sarah Jenkins'],
+      ['leo-rossi', 'Leo Rossi'],
+      ['camille-okafor', 'Camille Okafor'],
+      ['miles-whitfield', 'Miles Whitfield'],
+      ['fay-ansari', 'Fay Ansari'],
+      ['jonah-wills', 'Jonah Wills'],
     ]
     seedEntrants.forEach(([id, name], i) => {
       ceIns.run(

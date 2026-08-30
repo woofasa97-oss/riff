@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Mic, Music2, Search, SquarePen } from 'lucide-react'
+import { MessageSquare, Mic, Music2, Search, SquarePen } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { authorName, describeThread } from '@/components/riff/threadDisplay'
@@ -14,7 +14,7 @@ import { ChipTabs } from '@/components/ui/Tabs'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { formatRelativeShort } from '@/lib/datetime'
-import { useRiffStore } from '@/lib/store'
+import { useIsGuest, useRiffStore } from '@/lib/store'
 import { getLastMessage } from '@/mocks'
 
 type Filter = 'all' | 'jams' | 'requests' | 'bands'
@@ -29,6 +29,7 @@ const FILTERS: { id: Filter; label: string }[] = [
 export function MessagesView() {
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
+  const isGuest = useIsGuest()
   const viewerId = useRiffStore((s) => s.viewerId)
   const now = useRiffStore((s) => s.now)
   const messages = useRiffStore((s) => s.messages)
@@ -88,119 +89,156 @@ export function MessagesView() {
       }
       mainClassName="pb-6"
     >
-      <div className="px-4 py-3">
-        <label className="flex h-[40px] items-center gap-2 rounded-full border border-border-subtle bg-card px-4">
-          <Search size={14} className="shrink-0 text-foreground-dim" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search jams and people"
-            aria-label="Search jams and people"
-            className="w-full bg-transparent text-[14px] text-foreground placeholder:text-foreground-dim focus:outline-none"
-          />
-        </label>
-      </div>
-
-      <ChipTabs<Filter> items={FILTERS} value={filter} onChange={setFilter} className="px-4 pb-4" />
-
-      <div className="flex flex-col gap-3 px-4">
-        {rows.length === 0 ? (
+      {isGuest ? (
+        // The inbox is a write surface: jam threads and the requests waiting on you only exist
+        // once you have a player card, so guests get the same sign-up nudge every action shows.
+        <div className="px-4 py-6">
           <EmptyState
-            title={query ? 'Nothing matches that' : 'No conversations yet'}
-            body={
-              query
-                ? 'Try a different name, or clear the search.'
-                : 'Threads open when a jam is confirmed or someone replies to a request.'
-            }
+            icon={<MessageSquare size={22} />}
+            title="Sign up to start conversations"
+            body="Jam threads and the requests waiting on you land here once you have a player card."
             action={
-              query ? (
-                <Button size="sm" variant="secondary" onClick={() => setQuery('')}>
-                  Clear search
-                </Button>
-              ) : (
+              <div className="flex gap-2">
+                <Link href="/signup" className={buttonClass({ size: 'sm' })}>
+                  Create player card
+                </Link>
                 <Link
                   href="/discover"
                   className={buttonClass({ variant: 'secondary', size: 'sm' })}
                 >
-                  Find musicians
+                  Browse musicians
                 </Link>
-              )
+              </div>
             }
           />
-        ) : (
-          rows.map(({ thread, display, last }) => {
-            const unread = thread.unreadCount > 0
-            return (
-              <Card key={thread.id} className="relative p-0">
-                <Link href={`/messages/${thread.id}`} className="flex gap-4 p-4">
-                  {/* Group threads draw two overlapping faces; venue and band threads use an icon. */}
-                  {display.icon ? (
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-foreground text-white">
-                      {display.icon === 'venue' ? <Mic size={18} /> : <Music2 size={18} />}
-                    </div>
-                  ) : display.faces.length > 1 ? (
-                    <div className="relative h-12 w-12 shrink-0">
-                      <Avatar
-                        src={display.faces[0].avatarUrl}
-                        name={display.faces[0].name}
-                        size="md"
-                        className="absolute right-0 top-0 z-10"
-                      />
-                      <Avatar
-                        src={display.faces[1].avatarUrl}
-                        name={display.faces[1].name}
-                        size="md"
-                        className="absolute bottom-0 left-0"
-                      />
-                    </div>
-                  ) : (
-                    <Avatar
-                      src={display.faces[0]?.avatarUrl ?? '/mock/avatars/marcus-chen.svg'}
-                      name={display.faces[0]?.name ?? 'Conversation'}
-                      size="lg"
-                      ring={false}
-                      className="h-12 w-12 border-2 border-border-subtle"
-                    />
-                  )}
+        </div>
+      ) : (
+        <>
+          <div className="px-4 py-3">
+            <label className="flex h-[40px] items-center gap-2 rounded-full border border-border-subtle bg-card px-4">
+              <Search size={14} className="shrink-0 text-foreground-dim" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search jams and people"
+                aria-label="Search jams and people"
+                className="w-full bg-transparent text-[14px] text-foreground placeholder:text-foreground-dim focus:outline-none"
+              />
+            </label>
+          </div>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-0.5 flex items-start justify-between gap-2">
-                      <h3 className="truncate font-serif text-[15px] font-bold text-foreground">
-                        {display.title}
-                      </h3>
-                      <span
-                        className={cn('shrink-0 text-[12px] text-foreground-dim', unread && 'mr-4')}
-                      >
-                        {last ? formatRelativeShort(last.sentAt, now) : ''}
-                      </span>
-                    </div>
-                    <p
-                      className={cn(
-                        'mb-2 truncate text-[14px]',
-                        unread ? 'font-medium text-foreground' : 'text-foreground-dim',
-                      )}
+          <ChipTabs<Filter>
+            items={FILTERS}
+            value={filter}
+            onChange={setFilter}
+            className="px-4 pb-4"
+          />
+
+          <div className="flex flex-col gap-3 px-4">
+            {rows.length === 0 ? (
+              <EmptyState
+                title={query ? 'Nothing matches that' : 'No conversations yet'}
+                body={
+                  query
+                    ? 'Try a different name, or clear the search.'
+                    : 'Threads open when a jam is confirmed or someone replies to a request.'
+                }
+                action={
+                  query ? (
+                    <Button size="sm" variant="secondary" onClick={() => setQuery('')}>
+                      Clear search
+                    </Button>
+                  ) : (
+                    <Link
+                      href="/discover"
+                      className={buttonClass({ variant: 'secondary', size: 'sm' })}
                     >
-                      {last
-                        ? display.showAuthorInPreview && last.authorId !== 'system'
-                          ? `${authorName(last.authorId).split(' ')[0]}: ${last.body}`
-                          : last.body
-                        : 'No messages yet'}
-                    </p>
-                    <ContextLabel tone={display.contextTone}>{display.contextLabel}</ContextLabel>
-                  </div>
-                </Link>
-                {unread && (
-                  <span
-                    className="absolute right-4 top-4 h-2.5 w-2.5 rounded-full bg-primary"
-                    aria-label={`${thread.unreadCount} unread`}
-                  />
-                )}
-              </Card>
-            )
-          })
-        )}
-      </div>
+                      Find musicians
+                    </Link>
+                  )
+                }
+              />
+            ) : (
+              rows.map(({ thread, display, last }) => {
+                const unread = thread.unreadCount > 0
+                return (
+                  <Card key={thread.id} className="relative p-0">
+                    <Link href={`/messages/${thread.id}`} className="flex gap-4 p-4">
+                      {/* Group threads draw two overlapping faces; venue and band threads use an icon. */}
+                      {display.icon ? (
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-foreground text-white">
+                          {display.icon === 'venue' ? <Mic size={18} /> : <Music2 size={18} />}
+                        </div>
+                      ) : display.faces.length > 1 ? (
+                        <div className="relative h-12 w-12 shrink-0">
+                          <Avatar
+                            src={display.faces[0].avatarUrl}
+                            name={display.faces[0].name}
+                            size="md"
+                            className="absolute right-0 top-0 z-10"
+                          />
+                          <Avatar
+                            src={display.faces[1].avatarUrl}
+                            name={display.faces[1].name}
+                            size="md"
+                            className="absolute bottom-0 left-0"
+                          />
+                        </div>
+                      ) : (
+                        <Avatar
+                          src={display.faces[0]?.avatarUrl ?? '/mock/avatars/marcus-chen.svg'}
+                          name={display.faces[0]?.name ?? 'Conversation'}
+                          size="lg"
+                          ring={false}
+                          className="h-12 w-12 border-2 border-border-subtle"
+                        />
+                      )}
+
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-0.5 flex items-start justify-between gap-2">
+                          <h3 className="truncate font-serif text-[15px] font-bold text-foreground">
+                            {display.title}
+                          </h3>
+                          <span
+                            className={cn(
+                              'shrink-0 text-[12px] text-foreground-dim',
+                              unread && 'mr-4',
+                            )}
+                          >
+                            {last ? formatRelativeShort(last.sentAt, now) : ''}
+                          </span>
+                        </div>
+                        <p
+                          className={cn(
+                            'mb-2 truncate text-[14px]',
+                            unread ? 'font-medium text-foreground' : 'text-foreground-dim',
+                          )}
+                        >
+                          {last
+                            ? display.showAuthorInPreview && last.authorId !== 'system'
+                              ? `${authorName(last.authorId).split(' ')[0]}: ${last.body}`
+                              : last.body
+                            : 'No messages yet'}
+                        </p>
+                        <ContextLabel tone={display.contextTone}>
+                          {display.contextLabel}
+                        </ContextLabel>
+                      </div>
+                    </Link>
+                    {unread && (
+                      <span
+                        className="absolute right-4 top-4 h-2.5 w-2.5 rounded-full bg-primary"
+                        aria-label={`${thread.unreadCount} unread`}
+                      />
+                    )}
+                  </Card>
+                )
+              })
+            )}
+          </div>
+        </>
+      )}
     </AppShell>
   )
 }

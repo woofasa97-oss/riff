@@ -18,6 +18,8 @@ export function SignupView() {
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -29,7 +31,14 @@ export function SignupView() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name, username, password }),
+        // Email is optional (recovery only); the server refuses any signup without acceptedTerms.
+        body: JSON.stringify({
+          name,
+          username,
+          password,
+          acceptedTerms: true,
+          ...(email.trim() ? { email: email.trim() } : {}),
+        }),
       })
       if (res.ok) {
         window.location.href = '/onboarding/location'
@@ -131,8 +140,55 @@ export function SignupView() {
                 />
                 <p className="mt-1.5 text-[12px] text-foreground-dim">At least 8 characters</p>
               </div>
+              <div>
+                <label
+                  htmlFor="signup-email"
+                  className="mb-1.5 block text-[12px] font-medium text-foreground-dim"
+                >
+                  Email (optional) — for account recovery
+                </label>
+                <input
+                  id="signup-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className={FIELD}
+                />
+                <p className="mt-1.5 text-[12px] text-foreground-dim">
+                  We&rsquo;ll only use it to help you back in.
+                </p>
+              </div>
             </div>
           </Card>
+
+          {/* Required: the server 400s a signup without acceptedTerms, so gate the button too. */}
+          <label
+            htmlFor="signup-terms"
+            className="mt-4 flex cursor-pointer items-start gap-3 text-[13px] leading-snug text-foreground-dim"
+          >
+            <input
+              id="signup-terms"
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-0.5 h-5 w-5 shrink-0 rounded-[6px] border-border-subtle text-primary accent-primary focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <span>
+              I agree to the{' '}
+              <Link href="/terms" className="font-medium text-primary underline">
+                Terms
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="font-medium text-primary underline">
+                Privacy Policy
+              </Link>
+            </span>
+          </label>
 
           {error && (
             <p role="alert" className="mt-4 text-[13px] text-destructive">
@@ -144,7 +200,7 @@ export function SignupView() {
             type="submit"
             fullWidth
             className="mt-6 font-semibold"
-            disabled={busy || !name.trim() || !username || !password}
+            disabled={busy || !name.trim() || !username || !password || !acceptedTerms}
           >
             {busy ? 'Creating your card…' : 'Create account'}
           </Button>
