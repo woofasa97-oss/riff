@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { SendHorizontal, Share2, Users } from 'lucide-react'
+import { SendHorizontal, Share2, Trophy, Users } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { TopBar } from '@/components/riff/TopBar'
 import { Button, buttonClass } from '@/components/ui/Button'
@@ -11,7 +11,7 @@ import { iconButtonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
 import { compactCount } from '@/lib/labels'
 import { useRiffStore } from '@/lib/store'
-import { getBand, getBattle, voteShare } from '@/mocks'
+import { ROUND_LABEL, getBand, getBattle, voteShare } from '@/mocks'
 import type { Band, Battle } from '@/types'
 
 /** Handle colours cycle through the chart tokens, keyed by handle so they stay stable. */
@@ -75,6 +75,153 @@ function ChallengerCard({
   )
 }
 
+/** One band as a compact, read-only row in a recap. Links to the band profile. */
+function RecapBandCard({ band, pct, won }: { band: Band; pct: number; won: boolean }) {
+  return (
+    <Link
+      href={`/bands/${band.id}`}
+      className={cn(
+        'flex items-center gap-3 rounded-[16px] border p-3 transition-transform active:scale-[0.99]',
+        won ? 'border-[#facc15]/30 bg-[#facc15]/[0.06]' : 'border-white/10 bg-white/[0.04]',
+      )}
+    >
+      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-[10px]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={band.coverUrl} alt="" className="h-full w-full object-cover" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="truncate font-serif text-[15px] font-bold text-white">{band.name}</span>
+          {won && <Trophy size={12} className="shrink-0 text-[#facc15]" />}
+        </div>
+        <p className="truncate text-[12px] italic text-white/50">
+          {band.genre} · {band.city}
+        </p>
+      </div>
+      <span
+        className={cn('shrink-0 text-[13px] font-bold', won ? 'text-[#facc15]' : 'text-white/40')}
+      >
+        {pct}%
+      </span>
+    </Link>
+  )
+}
+
+/**
+ * Read-only recap for a battle that is not live (finished, scheduled, or anything else).
+ * No voting, no chat, no "watching" count — just the result and both bands.
+ */
+function BattleRecap({
+  battle,
+  bandA,
+  bandB,
+  share,
+}: {
+  battle: Battle
+  bandA: Band
+  bandB: Band
+  share: { a: number; b: number }
+}) {
+  const winner = battle.winnerBandId ? getBand(battle.winnerBandId) : undefined
+  const winnerIsA = winner?.id === bandA.id
+  const loser = winner ? (winnerIsA ? bandB : bandA) : undefined
+  const winPct = winnerIsA ? share.a : share.b
+  const losePct = winnerIsA ? share.b : share.a
+
+  return (
+    <AppShell
+      activeTab="live"
+      surface="dark"
+      header={
+        <TopBar
+          surface="dark"
+          actions={
+            <span className={cn(iconButtonClass('dark'), 'pointer-events-none opacity-60')}>
+              <Share2 size={14} />
+            </span>
+          }
+        />
+      }
+      mainClassName="space-y-4 px-4 pb-6"
+    >
+      <div className="flex flex-col gap-1 px-1">
+        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
+          {ROUND_LABEL[battle.round]} · Recap
+        </span>
+        <h1 className="font-serif text-[24px] font-bold leading-tight text-white">
+          Battle of the Bands
+        </h1>
+        <p className="text-[13px] font-medium text-white/50">{battle.stageLabel}</p>
+      </div>
+
+      {/* WINNER BANNER — or the matchup, if this one has not been decided yet. */}
+      {winner && loser ? (
+        <div className="relative overflow-hidden rounded-[20px] border border-[#facc15]/30 bg-white/[0.06] p-6 text-center backdrop-blur-xl">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#facc15]/15">
+            <Trophy size={24} className="text-[#facc15]" />
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#facc15]">
+            Winner
+          </span>
+          <Link
+            href={`/bands/${winner.id}`}
+            className="mt-1 block font-serif text-[26px] font-bold leading-tight text-white"
+          >
+            {winner.name}
+          </Link>
+          <p className="mt-2 text-[14px] text-white/70">
+            {winner.name} beat {loser.name}{' '}
+            <span className="font-bold text-white">
+              {winPct}/{losePct}
+            </span>
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-[20px] border border-white/10 bg-white/[0.06] p-6 text-center backdrop-blur-xl">
+          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
+            {battle.status === 'scheduled' ? 'Upcoming' : 'Result pending'}
+          </span>
+          <p className="mt-2 text-[15px] font-medium text-white">
+            <span className="font-serif font-bold">{bandA.name}</span> vs{' '}
+            <span className="font-serif font-bold">{bandB.name}</span>
+          </p>
+        </div>
+      )}
+
+      {/* FINAL VOTE SPLIT — same bar as the live view, framed as final. */}
+      <div className="flex flex-col gap-2 rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[15px] font-bold text-primary">{share.a}%</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/40">
+            Final result
+          </span>
+          <span className="text-[15px] font-bold text-accent">{share.b}%</span>
+        </div>
+        <div
+          className="flex h-3 w-full overflow-hidden rounded-full"
+          role="img"
+          aria-label={`Final: ${bandA.name} ${share.a} percent, ${bandB.name} ${share.b} percent`}
+        >
+          <div className="h-full bg-primary" style={{ width: `${share.a}%` }} />
+          <div className="h-full bg-accent" style={{ width: `${share.b}%` }} />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <RecapBandCard band={bandA} pct={share.a} won={winner?.id === bandA.id} />
+        <RecapBandCard band={bandB} pct={share.b} won={winner?.id === bandB.id} />
+      </div>
+
+      <Link
+        href="/battles/bracket"
+        className="mx-auto mt-2 block text-center text-[13px] font-medium text-white/60 underline underline-offset-4"
+      >
+        Back to bracket
+      </Link>
+    </AppShell>
+  )
+}
+
 export function BattleView({ battleId }: { battleId: string }) {
   const [draft, setDraft] = useState('')
   const votes = useRiffStore((s) => s.battleVotes)
@@ -105,6 +252,11 @@ export function BattleView({ battleId }: { battleId: string }) {
         />
       </AppShell>
     )
+  }
+
+  // Anything not live gets the read-only recap: no voting, no chat, no watching count.
+  if (battle.status !== 'live') {
+    return <BattleRecap battle={battle} bandA={bandA} bandB={bandB} share={share} />
   }
 
   const myVote = votes[battle.id]

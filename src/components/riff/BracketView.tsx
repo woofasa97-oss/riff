@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Check, Play, Share2, Trophy } from 'lucide-react'
+import { Check, ChevronRight, Play, Share2, Trophy } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -81,6 +81,55 @@ function MatchCard({ battle, connectors }: { battle: Battle; connectors: boolean
   const share = voteShare(battle)
   const live = battle.status === 'live'
 
+  const card = (
+    <div
+      className={cn(
+        'relative overflow-hidden',
+        live
+          ? 'rounded-[16px] border border-primary/40 bg-surface-dark/80 shadow-[0_0_15px_rgba(138,121,171,0.2)] backdrop-blur-xl'
+          : `rounded-[12px] ${GLASS}`,
+      )}
+    >
+      {live && (
+        <div className="flex items-center justify-between border-b border-white/5 bg-white/5 p-3">
+          <span className="rounded-[3px] bg-live px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none tracking-wider text-white">
+            Live
+          </span>
+          <Link
+            href={`/battles/${battle.id}`}
+            className="flex items-center gap-1 rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[11px] font-bold text-primary"
+          >
+            <Play size={9} fill="currentColor" /> Watch now
+          </Link>
+        </div>
+      )}
+
+      <Side
+        bandId={battle.bandAId}
+        pct={share.a}
+        won={battle.winnerBandId === battle.bandAId}
+        bordered
+        emphasis={live}
+        tone="text-primary"
+      />
+      <Side
+        bandId={battle.bandBId}
+        pct={share.b}
+        won={battle.winnerBandId === battle.bandBId}
+        bordered={false}
+        emphasis={live}
+        tone="text-accent"
+      />
+
+      {/* Finished cards navigate as a whole; a subtle hint says where to. */}
+      {!live && (
+        <div className="flex items-center justify-end gap-0.5 border-t border-white/5 px-2.5 py-1.5 text-[10px] font-semibold text-white/45">
+          Recap <ChevronRight size={11} />
+        </div>
+      )}
+    </div>
+  )
+
   return (
     // The connectors live on this wrapper, not on the card — the card clips its own overflow.
     <div className="relative">
@@ -90,45 +139,17 @@ function MatchCard({ battle, connectors }: { battle: Battle; connectors: boolean
           <span className="absolute -right-6 top-1/2 h-px w-6 bg-white/20" aria-hidden />
         </>
       )}
-      <div
-        className={cn(
-          'relative overflow-hidden',
-          live
-            ? 'rounded-[16px] border border-primary/40 bg-surface-dark/80 shadow-[0_0_15px_rgba(138,121,171,0.2)] backdrop-blur-xl'
-            : `rounded-[12px] ${GLASS}`,
-        )}
-      >
-        {live && (
-          <div className="flex items-center justify-between border-b border-white/5 bg-white/5 p-3">
-            <span className="rounded-[3px] bg-live px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none tracking-wider text-white">
-              Live
-            </span>
-            <Link
-              href={`/battles/${battle.id}`}
-              className="flex items-center gap-1 rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[11px] font-bold text-primary"
-            >
-              <Play size={9} fill="currentColor" /> Watch now
-            </Link>
-          </div>
-        )}
-
-        <Side
-          bandId={battle.bandAId}
-          pct={share.a}
-          won={battle.winnerBandId === battle.bandAId}
-          bordered
-          emphasis={live}
-          tone="text-primary"
-        />
-        <Side
-          bandId={battle.bandBId}
-          pct={share.b}
-          won={battle.winnerBandId === battle.bandBId}
-          bordered={false}
-          emphasis={live}
-          tone="text-accent"
-        />
-      </div>
+      {/* Live keeps its inner "Watch now" Link (no nested anchors); every other card is a whole tap target. */}
+      {live ? (
+        card
+      ) : (
+        <Link
+          href={`/battles/${battle.id}`}
+          className="block rounded-[12px] transition-transform active:scale-[0.98]"
+        >
+          {card}
+        </Link>
+      )}
     </div>
   )
 }
@@ -304,7 +325,15 @@ export function BracketView() {
               href={`/battles/${finalMatch.id}`}
               className="mt-3 flex items-center justify-center gap-1.5 rounded-full border border-primary/30 bg-primary/20 px-3 py-2 text-[12px] font-bold text-primary"
             >
-              <Play size={11} fill="currentColor" /> Watch now
+              {finalMatch.live ? (
+                <>
+                  <Play size={11} fill="currentColor" /> Watch now
+                </>
+              ) : (
+                <>
+                  View recap <ChevronRight size={13} />
+                </>
+              )}
             </Link>
           </div>
         </div>

@@ -29,6 +29,8 @@ const SETTINGS_ROWS = [
   { label: 'Saved musicians', href: '/me/saved' },
   { label: 'Past jams', href: '/jams?tab=past' },
   { label: 'Settings and privacy', href: '/me/settings' },
+  { label: 'Help & FAQ', href: '/help' },
+  { label: 'About Riff', href: '/about' },
   { label: 'Safety centre', href: '/me/safety' },
 ]
 

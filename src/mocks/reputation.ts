@@ -196,6 +196,14 @@ function materialiseBaselineVouches(): Vouch[] {
 
 export const recordings: Recording[] = [
   {
+    id: 'rec-fusion-night',
+    title: 'Fusion Night',
+    venueName: 'The Attic',
+    recordedAt: '2026-08-14T22:10:00-04:00',
+    durationSec: 1887, // 31:27
+    url: '/mock/recordings/rec-fusion-night.m4a',
+  },
+  {
     id: 'rec-neosoul-0821',
     title: 'Neo-Soul Session',
     venueName: 'Sonic Basement',
@@ -210,7 +218,11 @@ export const recordings: Recording[] = [
  * co-attendees have already said yes and the decision is the current user's.
  */
 export const recordingConsents: Record<string, string[]> = {
+  // Neo-Soul: three of four agreed — this is the un-settled one the recap screen opens on.
   'jam-neosoul-0821': ['sarah-jenkins', 'leo-rossi', 'nina-alvarez'],
+  // Fusion Night: everyone agreed, so its recording is published and shows on the three
+  // attendees' profiles (otherwise every profile reads "No recordings yet").
+  'jam-fusion-night': ['marcus-chen', 'sarah-jenkins', 'theo-park'],
 }
 
 /**

@@ -89,6 +89,7 @@ export const jams: Jam[] = [
     openSeats: [],
     isOpenCall: false,
     threadId: 'thread-fusion-night',
+    recordingId: 'rec-fusion-night',
     recapId: 'recap-fusion-night',
   },
   {
