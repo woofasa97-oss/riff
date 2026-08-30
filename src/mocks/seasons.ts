@@ -6,10 +6,21 @@ export const seasons: Season[] = [
     number: 4,
     scene: 'Jazz Scene',
     city: 'Brooklyn',
-    startsAt: '2026-06-01T00:00:00-04:00',
+    startsAt: '2026-08-01T00:00:00-04:00',
+    // Registration is open at seed time and the season runs a few weeks out, so a fresh
+    // install always has a joinable competition ahead of it (db.ts shifts these to "now").
+    registrationClosesAt: '2026-09-10T23:59:59-04:00',
     endsAt: '2026-09-30T23:59:59-04:00',
+    status: 'registration',
+    entryFeeCredits: 150,
+    basePoolCredits: 1000,
+    // Winner takes half, runner-up a third, third place the rest.
+    payoutSplit: [0.5, 0.3, 0.2],
   },
 ]
+
+/** Every new account starts with this many Riff Credits — enough to try entering once. */
+export const SIGNUP_GRANT_CREDITS = 500
 
 export const currentSeasonId = 'season-4'
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Compass, Guitar, Map, RadioTower } from 'lucide-react'
+import { Compass, Guitar, Map, RadioTower, User } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn } from '@/lib/cn'
 import { useCurrentUser } from '@/lib/store'
@@ -34,6 +34,8 @@ function TabIcon({ id, active, dark }: { id: TabId; active: boolean; dark: boole
     case 'live':
       return <RadioTower size={size} strokeWidth={active ? 2.2 : 1.8} />
     case 'me': {
+      // A guest has no avatar yet — a plain person icon reads as "your profile / sign up".
+      if (!me) return <User size={size} strokeWidth={active ? 2.2 : 1.8} />
       return (
         <Avatar
           src={me.avatarUrl}

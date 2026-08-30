@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Compass } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { buttonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
@@ -35,6 +36,20 @@ export function WelcomeView() {
           className={cn(buttonClass({ fullWidth: true }), 'font-semibold shadow-sm')}
         >
           Create your player card
+        </Link>
+
+        {/* Guest mode's front door: a real button, styled to sit under the primary — not a text link. */}
+        <Link
+          href="/discover"
+          className={cn(
+            'inline-flex h-[48px] w-full select-none items-center justify-center gap-2 rounded-[12px]',
+            'border border-white/30 bg-white/[0.12] text-[15px] font-semibold text-white backdrop-blur-md',
+            'transition-transform active:scale-95',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          )}
+        >
+          <Compass size={16} />
+          Look around first
         </Link>
 
         <Link

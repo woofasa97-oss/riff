@@ -324,6 +324,16 @@ export interface Band {
 // Seasons, battles, live
 // ---------------------------------------------------------------------------
 
+/**
+ * A season is the paid competition — esports for bands. Casual battles (the live-battle
+ * screen) are free and unlimited; entering THIS is what costs a fee and pays out.
+ *
+ * Money is Riff Credits, a mock currency (docs/DEPLOY-RENDER.md) — no real payment rail. The
+ * prize pool is the base pool plus every entry fee; at season end the top places split it
+ * (payoutSplit), credited to the winners' wallets.
+ */
+export type SeasonStatus = 'registration' | 'live' | 'finished'
+
 export interface Season {
   id: string
   number: number
@@ -332,6 +342,46 @@ export interface Season {
   city: string
   startsAt: string
   endsAt: string
+  status: SeasonStatus
+  /** What it costs to enter, in Riff Credits. */
+  entryFeeCredits: number
+  /** Seeded prize money before any entry fees are added. */
+  basePoolCredits: number
+  /** Registration closes here; after endsAt the season settles. */
+  registrationClosesAt: string
+  /** Fractions of the pool paid to 1st, 2nd, 3rd… — must sum to 1. */
+  payoutSplit: number[]
+}
+
+/** One competitor's entry into a season's competition. */
+export interface CompetitionEntry {
+  id: string
+  seasonId: string
+  /** The competing act — a real user (their handle is the act) for v1. */
+  competitorId: string
+  /** Display name of the act at entry time. */
+  competitorName: string
+  feePaidCredits: number
+  enteredAt: string
+  /** Final placement once the season settles (1 = winner). */
+  finalRank?: number
+  /** Winnings credited at settlement, in Riff Credits. */
+  payoutCredits?: number
+}
+
+/** A viewer's Riff Credits balance and its history. Mock money — never real currency. */
+export interface Wallet {
+  balanceCredits: number
+  transactions: WalletTransaction[]
+}
+
+export interface WalletTransaction {
+  id: string
+  /** Negative for spends (entry fee), positive for grants and payouts. */
+  amountCredits: number
+  kind: 'signup_grant' | 'entry_fee' | 'prize_payout' | 'refund'
+  memo: string
+  createdAt: string
 }
 
 export interface LeaderboardEntry {

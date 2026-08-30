@@ -14,13 +14,14 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Tabs } from '@/components/ui/Tabs'
 import { formatRelativeShort, formatShortDateTime } from '@/lib/datetime'
-import { useRiffStore } from '@/lib/store'
+import { useIsGuest, useRiffStore } from '@/lib/store'
 import { getMusician, listJams } from '@/mocks'
 
 type TabKey = 'upcoming' | 'requests' | 'past'
 
 export function JamsView({ initialTab = 'upcoming' }: { initialTab?: TabKey } = {}) {
   const [tab, setTab] = useState<TabKey>(initialTab)
+  const isGuest = useIsGuest()
   const viewerId = useRiffStore((s) => s.viewerId)
   const now = useRiffStore((s) => s.now)
   const jams = useRiffStore((s) => s.jams)
@@ -137,225 +138,247 @@ export function JamsView({ initialTab = 'upcoming' }: { initialTab?: TabKey } = 
       }
       mainClassName="px-4 py-6"
     >
-      {tab === 'upcoming' && (
+      {isGuest ? (
+        // A guest owns no jams, requests or open calls — send them to make a card instead of
+        // three empty tabs. The tab chrome above stays; its lists are all empty for a guest.
+        <EmptyState
+          icon={<CalendarPlus size={22} />}
+          title="Sign up to line up jams"
+          body="Confirmed jams, the requests waiting on you, and your own open calls all live here once you have a player card."
+          action={
+            <div className="flex gap-2">
+              <Link href="/signup" className={buttonClass({ size: 'sm' })}>
+                Create player card
+              </Link>
+              <Link href="/discover" className={buttonClass({ variant: 'secondary', size: 'sm' })}>
+                Browse musicians
+              </Link>
+            </div>
+          }
+        />
+      ) : (
         <>
-          {upcoming.length === 0 ? (
-            <EmptyState
-              icon={<Guitar size={22} />}
-              title="Nothing on the calendar"
-              body="Find someone free tonight and send a request. Nothing is confirmed until they accept."
-              action={
-                <div className="flex gap-2">
-                  <Link href="/discover" className={buttonClass({ size: 'sm' })}>
-                    Find musicians
-                  </Link>
-                  <Link
-                    href="/jams/new"
-                    className={buttonClass({ variant: 'secondary', size: 'sm' })}
-                  >
-                    Post a jam
-                  </Link>
-                </div>
-              }
-            />
-          ) : (
+          {tab === 'upcoming' && (
             <>
-              {thisWeek.length > 0 && (
-                <section className="mb-6">
-                  <SectionHeader>This week</SectionHeader>
-                  {thisWeek.map((jam, i) =>
-                    i === 0 ? (
-                      <JamHeroCard key={jam.id} jam={jam} now={now} viewerId={viewerId} />
-                    ) : (
-                      <JamCompactCard key={jam.id} jam={jam} />
-                    ),
-                  )}
-                </section>
-              )}
-              {later.length > 0 && (
-                <section className="mb-6">
-                  <SectionHeader>Later</SectionHeader>
-                  {later.map((jam) => (
-                    <JamCompactCard key={jam.id} jam={jam} />
-                  ))}
-                </section>
-              )}
-            </>
-          )}
-
-          {drafts.length > 0 && (
-            <section className="mb-6">
-              <SectionHeader>Drafts</SectionHeader>
-              {drafts.map((jam) => (
-                <JamCompactCard
-                  key={jam.id}
-                  jam={jam}
-                  trailing={
-                    <Badge tone="neutral" className="px-2.5 py-1 text-[12px]">
-                      Draft · only you can see it
-                    </Badge>
+              {upcoming.length === 0 ? (
+                <EmptyState
+                  icon={<Guitar size={22} />}
+                  title="Nothing on the calendar"
+                  body="Find someone free tonight and send a request. Nothing is confirmed until they accept."
+                  action={
+                    <div className="flex gap-2">
+                      <Link href="/discover" className={buttonClass({ size: 'sm' })}>
+                        Find musicians
+                      </Link>
+                      <Link
+                        href="/jams/new"
+                        className={buttonClass({ variant: 'secondary', size: 'sm' })}
+                      >
+                        Post a jam
+                      </Link>
+                    </div>
                   }
                 />
-              ))}
-            </section>
-          )}
+              ) : (
+                <>
+                  {thisWeek.length > 0 && (
+                    <section className="mb-6">
+                      <SectionHeader>This week</SectionHeader>
+                      {thisWeek.map((jam, i) =>
+                        i === 0 ? (
+                          <JamHeroCard key={jam.id} jam={jam} now={now} viewerId={viewerId} />
+                        ) : (
+                          <JamCompactCard key={jam.id} jam={jam} />
+                        ),
+                      )}
+                    </section>
+                  )}
+                  {later.length > 0 && (
+                    <section className="mb-6">
+                      <SectionHeader>Later</SectionHeader>
+                      {later.map((jam) => (
+                        <JamCompactCard key={jam.id} jam={jam} />
+                      ))}
+                    </section>
+                  )}
+                </>
+              )}
 
-          {applications.length > 0 && (
-            <section className="mb-6">
-              <SectionHeader>Open calls you applied to</SectionHeader>
-              {applications.map((application) => {
-                const jam = jams.find((j) => j.id === application.jamId)
-                if (!jam) return null
-                return (
-                  <Card key={application.id} className="mb-3 p-4">
-                    <h3 className="mb-2 font-serif text-[16px] font-bold leading-tight text-foreground">
-                      {jam.title}
-                    </h3>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-[13px] text-foreground-dim">
-                        {(() => {
-                          const when = formatRelativeShort(application.appliedAt, now)
-                          return /^\d/.test(when)
-                            ? `Applied ${when} ago`
-                            : `Applied ${when === 'now' ? 'just now' : when.toLowerCase()}`
-                        })()}
-                      </span>
-                      <Badge tone="warning" className="px-2.5 py-1 text-[12px]">
-                        Pending
-                      </Badge>
-                    </div>
-                  </Card>
-                )
-              })}
-            </section>
-          )}
-
-          {myOpenCalls.length > 0 && (
-            <section className="mb-6">
-              <SectionHeader>Open calls you posted</SectionHeader>
-              {myOpenCalls.map(({ jam, applicants }) => (
-                <Card key={jam.id} className="mb-3 p-4">
-                  <Link href={`/jams/${jam.id}`} className="block">
-                    <h3 className="mb-2 font-serif text-[16px] font-bold leading-tight text-foreground">
-                      {jam.title}
-                    </h3>
-                  </Link>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-[13px] text-foreground-dim">
-                      {formatShortDateTime(jam.startsAt)}
-                    </span>
-                    <Badge tone="primary" className="px-2.5 py-1 text-[12px]">
-                      {applicants.length} applied
-                    </Badge>
-                  </div>
-                </Card>
-              ))}
-            </section>
-          )}
-        </>
-      )}
-
-      {tab === 'requests' && (
-        <>
-          {requests.length === 0 && outgoing.length === 0 ? (
-            <EmptyState
-              icon={<Inbox size={22} />}
-              title="No requests waiting"
-              body="When someone asks you to play, it lands here. You always get to say no."
-            />
-          ) : (
-            <>
-              {requests.length > 0 && (
+              {drafts.length > 0 && (
                 <section className="mb-6">
-                  <SectionHeader>Waiting on you</SectionHeader>
-                  {requests.map((request) => (
-                    <Link key={request.id} href={`/requests/${request.id}`} className="block">
-                      <RequestCard request={request} now={now} />
-                    </Link>
+                  <SectionHeader>Drafts</SectionHeader>
+                  {drafts.map((jam) => (
+                    <JamCompactCard
+                      key={jam.id}
+                      jam={jam}
+                      trailing={
+                        <Badge tone="neutral" className="px-2.5 py-1 text-[12px]">
+                          Draft · only you can see it
+                        </Badge>
+                      }
+                    />
                   ))}
                 </section>
               )}
-              {outgoing.length > 0 && (
+
+              {applications.length > 0 && (
                 <section className="mb-6">
-                  <SectionHeader>Waiting on them</SectionHeader>
-                  {outgoing.map((request) => {
-                    const to = getMusician(request.toId)
+                  <SectionHeader>Open calls you applied to</SectionHeader>
+                  {applications.map((application) => {
+                    const jam = jams.find((j) => j.id === application.jamId)
+                    if (!jam) return null
                     return (
-                      <Card key={request.id} className="mb-3 p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <h3 className="truncate font-serif text-[15px] font-bold text-foreground">
-                              {to?.name ?? 'Musician'}
-                            </h3>
-                            <p className="mt-0.5 text-[13px] text-foreground-dim">
-                              {/* "now"/"Yesterday" carry their own tense; only "3h" wants "ago". */}
-                              {(() => {
-                                const when = formatRelativeShort(request.createdAt, now)
-                                return /^\d/.test(when)
-                                  ? `Sent ${when} ago`
-                                  : `Sent ${when === 'now' ? 'just now' : when}`
-                              })()}{' '}
-                              ·{' '}
-                              {request.status === 'counter-proposed'
-                                ? 'they suggested another time'
-                                : 'no reply yet'}
-                            </p>
-                          </div>
-                          <Badge
-                            tone={request.status === 'counter-proposed' ? 'accent' : 'warning'}
-                            className="shrink-0 px-2.5 py-1 text-[12px]"
-                          >
-                            {request.status === 'counter-proposed' ? 'Countered' : 'Pending'}
+                      <Card key={application.id} className="mb-3 p-4">
+                        <h3 className="mb-2 font-serif text-[16px] font-bold leading-tight text-foreground">
+                          {jam.title}
+                        </h3>
+                        <div className="mt-3 flex items-center justify-between">
+                          <span className="text-[13px] text-foreground-dim">
+                            {(() => {
+                              const when = formatRelativeShort(application.appliedAt, now)
+                              return /^\d/.test(when)
+                                ? `Applied ${when} ago`
+                                : `Applied ${when === 'now' ? 'just now' : when.toLowerCase()}`
+                            })()}
+                          </span>
+                          <Badge tone="warning" className="px-2.5 py-1 text-[12px]">
+                            Pending
                           </Badge>
                         </div>
                       </Card>
                     )
                   })}
-                  <p className="mt-1 px-1 text-[12px] text-foreground-dim">
-                    Nothing is confirmed until they accept.
-                  </p>
+                </section>
+              )}
+
+              {myOpenCalls.length > 0 && (
+                <section className="mb-6">
+                  <SectionHeader>Open calls you posted</SectionHeader>
+                  {myOpenCalls.map(({ jam, applicants }) => (
+                    <Card key={jam.id} className="mb-3 p-4">
+                      <Link href={`/jams/${jam.id}`} className="block">
+                        <h3 className="mb-2 font-serif text-[16px] font-bold leading-tight text-foreground">
+                          {jam.title}
+                        </h3>
+                      </Link>
+                      <div className="mt-3 flex items-center justify-between">
+                        <span className="text-[13px] text-foreground-dim">
+                          {formatShortDateTime(jam.startsAt)}
+                        </span>
+                        <Badge tone="primary" className="px-2.5 py-1 text-[12px]">
+                          {applicants.length} applied
+                        </Badge>
+                      </div>
+                    </Card>
+                  ))}
                 </section>
               )}
             </>
           )}
+
+          {tab === 'requests' && (
+            <>
+              {requests.length === 0 && outgoing.length === 0 ? (
+                <EmptyState
+                  icon={<Inbox size={22} />}
+                  title="No requests waiting"
+                  body="When someone asks you to play, it lands here. You always get to say no."
+                />
+              ) : (
+                <>
+                  {requests.length > 0 && (
+                    <section className="mb-6">
+                      <SectionHeader>Waiting on you</SectionHeader>
+                      {requests.map((request) => (
+                        <Link key={request.id} href={`/requests/${request.id}`} className="block">
+                          <RequestCard request={request} now={now} />
+                        </Link>
+                      ))}
+                    </section>
+                  )}
+                  {outgoing.length > 0 && (
+                    <section className="mb-6">
+                      <SectionHeader>Waiting on them</SectionHeader>
+                      {outgoing.map((request) => {
+                        const to = getMusician(request.toId)
+                        return (
+                          <Card key={request.id} className="mb-3 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <h3 className="truncate font-serif text-[15px] font-bold text-foreground">
+                                  {to?.name ?? 'Musician'}
+                                </h3>
+                                <p className="mt-0.5 text-[13px] text-foreground-dim">
+                                  {/* "now"/"Yesterday" carry their own tense; only "3h" wants "ago". */}
+                                  {(() => {
+                                    const when = formatRelativeShort(request.createdAt, now)
+                                    return /^\d/.test(when)
+                                      ? `Sent ${when} ago`
+                                      : `Sent ${when === 'now' ? 'just now' : when}`
+                                  })()}{' '}
+                                  ·{' '}
+                                  {request.status === 'counter-proposed'
+                                    ? 'they suggested another time'
+                                    : 'no reply yet'}
+                                </p>
+                              </div>
+                              <Badge
+                                tone={request.status === 'counter-proposed' ? 'accent' : 'warning'}
+                                className="shrink-0 px-2.5 py-1 text-[12px]"
+                              >
+                                {request.status === 'counter-proposed' ? 'Countered' : 'Pending'}
+                              </Badge>
+                            </div>
+                          </Card>
+                        )
+                      })}
+                      <p className="mt-1 px-1 text-[12px] text-foreground-dim">
+                        Nothing is confirmed until they accept.
+                      </p>
+                    </section>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {tab === 'past' &&
+            (past.length === 0 ? (
+              <EmptyState
+                icon={<CalendarPlus size={22} />}
+                title="No sessions yet"
+                body="Played sessions show up here, and each one is a chance to build your reputation."
+              />
+            ) : (
+              <>
+                <SectionHeader>Played</SectionHeader>
+                {past.map((jam) => (
+                  <JamCompactCard
+                    key={jam.id}
+                    jam={jam}
+                    trailing={
+                      hasRecap(jam.id) ? (
+                        <Badge tone="success" className="px-2.5 py-1 text-[12px]">
+                          Recap posted
+                        </Badge>
+                      ) : (
+                        <Link
+                          href={`/jams/${jam.id}/recap`}
+                          className="rounded-full bg-primary px-3 py-1 text-[12px] font-medium text-primary-foreground transition-transform active:scale-95"
+                        >
+                          Post recap
+                        </Link>
+                      )
+                    }
+                  />
+                ))}
+                <p className="mt-4 px-1 text-center text-[12px] text-foreground-dim">
+                  Recaps are what build your reliability, repeats and vouches.
+                </p>
+              </>
+            ))}
         </>
       )}
-
-      {tab === 'past' &&
-        (past.length === 0 ? (
-          <EmptyState
-            icon={<CalendarPlus size={22} />}
-            title="No sessions yet"
-            body="Played sessions show up here, and each one is a chance to build your reputation."
-          />
-        ) : (
-          <>
-            <SectionHeader>Played</SectionHeader>
-            {past.map((jam) => (
-              <JamCompactCard
-                key={jam.id}
-                jam={jam}
-                trailing={
-                  hasRecap(jam.id) ? (
-                    <Badge tone="success" className="px-2.5 py-1 text-[12px]">
-                      Recap posted
-                    </Badge>
-                  ) : (
-                    <Link
-                      href={`/jams/${jam.id}/recap`}
-                      className="rounded-full bg-primary px-3 py-1 text-[12px] font-medium text-primary-foreground transition-transform active:scale-95"
-                    >
-                      Post recap
-                    </Link>
-                  )
-                }
-              />
-            ))}
-            <p className="mt-4 px-1 text-center text-[12px] text-foreground-dim">
-              Recaps are what build your reliability, repeats and vouches.
-            </p>
-          </>
-        ))}
     </AppShell>
   )
 }

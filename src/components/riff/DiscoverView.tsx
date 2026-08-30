@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { CalendarDays, Check, ChevronRight, Compass, Search, X } from 'lucide-react'
+import { CalendarDays, Check, ChevronRight, Compass, Eye, Search, X } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { MusicianCard } from '@/components/riff/MusicianCard'
 import { OpenCallCard } from '@/components/riff/OpenCallCard'
@@ -12,7 +12,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ChipTabs } from '@/components/ui/Tabs'
 import { cn } from '@/lib/cn'
 import { intentLabel } from '@/lib/labels'
-import { useRiffStore } from '@/lib/store'
+import { useIsGuest, useRiffStore } from '@/lib/store'
 import { listNearbyMusicians } from '@/mocks'
 import type { Intent, Jam } from '@/types'
 
@@ -32,6 +32,7 @@ export function DiscoverView() {
   const jams = useRiffStore((s) => s.jams)
   const allMusicians = useRiffStore((s) => s.musicians)
   const viewerId = useRiffStore((s) => s.viewerId)
+  const isGuest = useIsGuest()
 
   const [intent, setIntent] = useState<IntentFilter>('all')
   const [tonightOnly, setTonightOnly] = useState(false)
@@ -150,6 +151,22 @@ export function DiscoverView() {
       }
       mainClassName="flex flex-col gap-5 pb-6 pt-2"
     >
+      {isGuest && (
+        <div className="shrink-0 px-4">
+          <div className="flex items-center gap-2.5 rounded-[12px] border border-border-subtle bg-surface-muted px-3 py-1.5 shadow-sm">
+            <Eye size={15} className="shrink-0 text-primary" />
+            <p className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-foreground">
+              You&apos;re just looking — create your player card to jam.
+            </p>
+            <Link href="/signup" className={cn(buttonClass({ size: 'sm' }), 'shrink-0 px-4')}>
+              Sign up
+            </Link>
+            {/* Reads as a dismiss so the strip feels light; it stays put — guest mode is persistent. */}
+            <X size={14} aria-hidden className="shrink-0 text-foreground-dim" />
+          </div>
+        </div>
+      )}
+
       <ChipTabs<IntentFilter>
         items={INTENT_CHIPS}
         value={intent}

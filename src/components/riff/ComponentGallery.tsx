@@ -77,13 +77,16 @@ export function ComponentGallery() {
   const [toggleA, setToggleA] = useState(true)
   const [toggleB, setToggleB] = useState(false)
   const [showedUp, setShowedUp] = useState(true)
-  const [radius, setRadius] = useState(() => Math.min(10, Math.max(1, user.travelRadiusMi)))
+  const [radius, setRadius] = useState(() => Math.min(10, Math.max(1, user?.travelRadiusMi ?? 3)))
   const [modalOpen, setModalOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [grid, setGrid] = useState<Record<Weekday, Slot[]>>(emptyGrid)
   const [instruments, setInstruments] = useState<Instrument[]>([])
   const [intent, setIntent] = useState<Intent | undefined>(undefined)
   const [vouchTags, setVouchTags] = useState<VouchTag[]>([])
+
+  // Dev-only surface — requires a signed-in viewer for the live-data samples.
+  if (!user) return null
 
   const demoDuration = sarah?.clip?.durationSec ?? 24
 

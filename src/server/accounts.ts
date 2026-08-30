@@ -1,5 +1,7 @@
 /** Account creation — the bridge between a users row and its musician profile. SERVER-ONLY. */
+import crypto from 'node:crypto'
 import { db } from '@/server/db'
+import { SIGNUP_GRANT_CREDITS } from '@/mocks'
 import { hashPassword, verifyPassword, DECOY_HASH, DECOY_SALT } from '@/server/auth'
 import { WorldError } from '@/server/world'
 
@@ -33,6 +35,17 @@ export function createAccount(name: string, username: string, password: string):
         note: '',
       }),
       JSON.stringify({ attendances: 0, showedUp: 0, vouches: 0, repeatJamsOffset: 0 }),
+      now,
+    )
+    // Every new account starts with a stake of Riff Credits (mock money) so they can try
+    // entering the competition without a payment step. Recorded as a ledger grant.
+    d.prepare(`INSERT INTO wallets VALUES (?,?)`).run(id, SIGNUP_GRANT_CREDITS)
+    d.prepare(`INSERT INTO wallet_txns VALUES (?,?,?,?,?,?)`).run(
+      `wtx-${crypto.randomUUID().slice(0, 12)}`,
+      id,
+      SIGNUP_GRANT_CREDITS,
+      'signup_grant',
+      'Welcome to Riff — starting credits',
       now,
     )
   })

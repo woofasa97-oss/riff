@@ -27,6 +27,7 @@ import {
   threads as seedThreads,
   venues as seedVenues,
   vouches as seedVouches,
+  seasons as seedSeasons,
   CURRENT_USER_ID as SEED_ANCHOR_USER,
   NOW as FIXTURE_NOW,
 } from '@/mocks'
@@ -173,6 +174,31 @@ function migrate(d: Database.Database) {
       tags TEXT NOT NULL, note TEXT NOT NULL, sessions_together INTEGER NOT NULL,
       jam_id TEXT NOT NULL, created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS seasons (
+      id TEXT PRIMARY KEY, number INTEGER NOT NULL, scene TEXT NOT NULL, city TEXT NOT NULL,
+      starts_at TEXT NOT NULL, registration_closes_at TEXT NOT NULL, ends_at TEXT NOT NULL,
+      status TEXT NOT NULL, entry_fee_credits INTEGER NOT NULL, base_pool_credits INTEGER NOT NULL,
+      payout_split TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS competition_entries (
+      id TEXT PRIMARY KEY, season_id TEXT NOT NULL, competitor_id TEXT NOT NULL,
+      competitor_name TEXT NOT NULL, fee_paid_credits INTEGER NOT NULL, entered_at TEXT NOT NULL,
+      final_rank INTEGER, payout_credits INTEGER,
+      UNIQUE (season_id, competitor_id)
+    );
+
+    -- One wallet row per real user. Mock currency (Riff Credits) — never real money.
+    CREATE TABLE IF NOT EXISTS wallets (
+      user_id TEXT PRIMARY KEY, balance_credits INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS wallet_txns (
+      id TEXT PRIMARY KEY, user_id TEXT NOT NULL, amount_credits INTEGER NOT NULL,
+      kind TEXT NOT NULL, memo TEXT NOT NULL, created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_wallet_txns_user ON wallet_txns(user_id, created_at);
 
     CREATE TABLE IF NOT EXISTS notifications (
       id TEXT PRIMARY KEY, user_id TEXT NOT NULL, kind TEXT NOT NULL, actor_id TEXT,
@@ -371,6 +397,43 @@ function seed(d: Database.Database) {
         n.read ? 1 : 0,
       )
     }
+
+    const sIns = d.prepare(`INSERT INTO seasons VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
+    for (const se of seedSeasons) {
+      sIns.run(
+        se.id,
+        se.number,
+        se.scene,
+        se.city,
+        shift(se.startsAt),
+        shift(se.registrationClosesAt),
+        shift(se.endsAt),
+        se.status,
+        se.entryFeeCredits,
+        se.basePoolCredits,
+        JSON.stringify(se.payoutSplit),
+      )
+    }
+    // A few seed acts already paid in, so the prize pool reads as a live competition rather
+    // than an empty shell. They are competitors only — no wallet, no login.
+    const ceIns = d.prepare(`INSERT INTO competition_entries VALUES (?,?,?,?,?,?,?,?)`)
+    const seedEntrants: [string, string][] = [
+      ['nina-alvarez', 'Nina Alvarez'],
+      ['ruby-sims', 'Ruby Sims'],
+      ['theo-park', 'Theo Park'],
+    ]
+    seedEntrants.forEach(([id, name], i) => {
+      ceIns.run(
+        `ce-seed-${id}`,
+        seedSeasons[0].id,
+        id,
+        name,
+        seedSeasons[0].entryFeeCredits,
+        shift(new Date(Date.parse(FIXTURE_NOW) - (i + 1) * 86_400_000).toISOString()),
+        null,
+        null,
+      )
+    })
 
     d.prepare(`INSERT INTO meta VALUES ('seeded_at', ?)`).run(now)
     d.prepare(`INSERT INTO meta VALUES ('seed_shift_days', ?)`).run(String(shiftDays))

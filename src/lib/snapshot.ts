@@ -1,14 +1,17 @@
 import type {
+  CompetitionEntry,
   Jam,
   JamRequest,
   Message,
   Musician,
   Notification,
   OpenCallApplication,
+  Season,
   SessionRecap,
   Thread,
   Venue,
   Vouch,
+  Wallet,
 } from '@/types'
 
 /**
@@ -19,7 +22,10 @@ import type {
  */
 export interface WorldSnapshot {
   now: string
+  /** Empty string for a guest (no account). Use `isGuest` to branch. */
   viewerId: string
+  /** No account: the public world only, and every mutation is gated behind sign-up. */
+  isGuest: boolean
   profileComplete: boolean
   musicians: Musician[]
   /** Address-stripped — see Venue.address. */
@@ -34,4 +40,9 @@ export interface WorldSnapshot {
   consents: Record<string, string[]>
   vouches: Vouch[]
   notifications: Notification[]
+  /** The current paid competition and its standings. */
+  season: Season
+  competitionEntries: CompetitionEntry[]
+  /** The viewer's Riff Credits — null for a guest. */
+  wallet: Wallet | null
 }

@@ -1,20 +1,23 @@
 'use client'
 
 import Link from 'next/link'
-import { Eye, RadioTower, Swords, Trophy } from 'lucide-react'
+import { Coins, Eye, RadioTower, Swords, Trophy } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { TopBar } from '@/components/riff/TopBar'
 import { Button, buttonClass } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
+import { prizePool, SEASON_STATUS_LABEL } from '@/lib/competition'
 import { formatDurationMinutes, minutesSince } from '@/lib/datetime'
-import { compactCount } from '@/lib/labels'
+import { compactCount, formatCredits } from '@/lib/labels'
 import { useRiffStore } from '@/lib/store'
 import { getBand, getLiveBattle, getVenue, listLiveSessions, voteShare } from '@/mocks'
 
 /** What is broadcasting now: jam sessions first, then the season's live battle. */
 export function LiveListView() {
   const now = useRiffStore((s) => s.now)
+  const season = useRiffStore((s) => s.season)
+  const entries = useRiffStore((s) => s.competitionEntries)
   const sessions = listLiveSessions()
   const battle = getLiveBattle()
   const bandA = battle ? getBand(battle.bandAId) : undefined
@@ -115,6 +118,27 @@ export function LiveListView() {
 
           <section>
             <SectionHeader>This season</SectionHeader>
+            {/* The season is the paid competition; the free battles above are the on-ramp. */}
+            <Link
+              href="/competition"
+              className="mb-3 block overflow-hidden rounded-[16px] bg-gradient-to-br from-primary to-accent p-4 text-white shadow-lg transition-transform active:scale-95"
+            >
+              <div className="mb-2 flex items-center gap-1.5">
+                <Coins size={13} />
+                <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-white/80">
+                  {SEASON_STATUS_LABEL[season.status]}
+                </span>
+              </div>
+              <div className="font-serif text-[18px] font-bold leading-tight">
+                Season {season.number} Competition
+              </div>
+              <div className="mt-0.5 text-[13px] font-medium text-white/85">
+                {formatCredits(prizePool(season, entries))} prize pool
+              </div>
+            </Link>
+            <p className="mb-3 text-[12px] text-foreground-dim">
+              Casual battles are free to play — the season is the paid competition.
+            </p>
             <div className="flex gap-3">
               <Link
                 href="/battles/bracket"

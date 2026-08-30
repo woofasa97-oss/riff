@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Calendar, Check, CircleCheck, Inbox, MapPin, Zap } from 'lucide-react'
+import { GuestGate } from '@/components/riff/GuestGate'
 import { AppShell } from '@/components/riff/AppShell'
 import { AudioClipPlayer } from '@/components/riff/AudioClipPlayer'
 import { SubScreenHeader } from '@/components/riff/TopBar'
@@ -18,7 +19,13 @@ import { cn } from '@/lib/cn'
 import { formatShortDateTime } from '@/lib/datetime'
 import { instrumentLabel, intentLabel, shortNeighborhood, vouchTagLabel } from '@/lib/labels'
 import { vouchesFor } from '@/lib/reputation'
-import { useCurrentUser, useMusicianStats, useReputationContext, useRiffStore } from '@/lib/store'
+import {
+  useCurrentUser,
+  useIsGuest,
+  useMusicianStats,
+  useReputationContext,
+  useRiffStore,
+} from '@/lib/store'
 import { getMusician, getVenue, venues } from '@/mocks'
 import type { VouchTag } from '@/types'
 
@@ -31,6 +38,7 @@ import type { VouchTag } from '@/types'
  * All three exits from docs/SPEC.md §4.4 are here: accept, counter, decline politely.
  */
 export function IncomingRequestView({ requestId }: { requestId: string }) {
+  const guest = useIsGuest()
   const router = useRouter()
   // Read from the store, not the fixtures, so answering updates the Requests tab live.
   const requests = useRiffStore((s) => s.requests)
@@ -58,8 +66,8 @@ export function IncomingRequestView({ requestId }: { requestId: string }) {
 
   // Counter-proposals come from the viewer's OWN grid — they are saying when THEY are free.
   const mySlots = useMemo(
-    () => nextAvailableSlots(currentUser.availability, now, 3),
-    [currentUser.availability, now],
+    () => (currentUser ? nextAvailableSlots(currentUser.availability, now, 3) : []),
+    [currentUser, now],
   )
 
   // What co-attendees have actually said about the requester, most-said first.
@@ -71,6 +79,9 @@ export function IncomingRequestView({ requestId }: { requestId: string }) {
     }
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4)
   }, [request, ctx])
+
+  // A guest reached an account-only screen — gate after all hooks, before any request UI.
+  if (guest) return <GuestGate feature="reply to jam requests" backHref="/jams" />
 
   const header = <SubScreenHeader title="Jam request" backHref="/jams?tab=requests" />
 

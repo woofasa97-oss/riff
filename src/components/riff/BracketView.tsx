@@ -8,6 +8,8 @@ import { SubScreenHeader } from '@/components/riff/TopBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { iconButtonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
+import { isEntered, prizePool, projectedPayouts } from '@/lib/competition'
+import { formatCredits } from '@/lib/labels'
 import { useRiffStore } from '@/lib/store'
 import {
   ROUND_LABEL,
@@ -141,8 +143,13 @@ export function BracketView() {
   const [scope, setScope] = useState<BattleScope>('local')
   const season = getCurrentSeason()
   const viewerId = useRiffStore((s) => s.viewerId)
+  const entries = useRiffStore((s) => s.competitionEntries)
   const myBand = listBandsFor(viewerId)[0]
   const voted = useRiffStore((s) => s.battleVotes)
+
+  const pool = prizePool(season, entries)
+  // viewerId is '' for a guest, so this is safely false — no entry has an empty id.
+  const entered = isEntered(entries, viewerId)
 
   const rounds = useMemo(() => {
     const visible = listBattles(scope, viewerId)
@@ -202,6 +209,26 @@ export function BracketView() {
       }
       mainClassName="flex flex-col"
     >
+      {/* Frames the bracket as the paid season, not a free-for-all. */}
+      <div className="shrink-0 px-4 pb-4 pt-1">
+        <div
+          className={cn(
+            'flex items-center justify-between gap-3 rounded-[12px] px-4 py-2.5',
+            GLASS,
+          )}
+        >
+          <div className="min-w-0">
+            <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+              Prize pool
+            </div>
+            <div className="font-serif text-[15px] font-bold text-white">{formatCredits(pool)}</div>
+          </div>
+          <Link href="/competition" className="shrink-0 text-[12px] font-semibold text-primary">
+            View competition
+          </Link>
+        </div>
+      </div>
+
       <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-4 pb-4">
         {SCOPES.map((s) => (
           <button
@@ -282,6 +309,12 @@ export function BracketView() {
                 {myRun.badge?.replace(`Season ${season.number} · `, '') ?? 'Not entered'}
               </span>
             </div>
+            {entered && (
+              <p className="mt-1 text-[12px] font-medium text-primary">
+                You&apos;re entered — {formatCredits(projectedPayouts(season, entries)[0])} to the
+                winner
+              </p>
+            )}
             {myRun.line && (
               <p className="mt-1 text-[13px] text-white/70">
                 {myRun.line.verb}{' '}

@@ -3,7 +3,7 @@ import { Geist, Lora } from 'next/font/google'
 import { RiffProvider } from '@/lib/store'
 import { SessionReset } from '@/components/riff/SessionReset'
 import { viewerFromCookies } from '@/server/auth'
-import { buildSnapshot } from '@/server/world'
+import { buildSnapshot, buildGuestSnapshot } from '@/server/world'
 import type { WorldSnapshot } from '@/lib/snapshot'
 import './globals.css'
 
@@ -49,6 +49,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     } catch {
       staleCookie = true
     }
+  } else {
+    // No account: the public world. Guests browse; every action prompts sign-up.
+    snapshot = buildGuestSnapshot()
   }
   return (
     <html lang="en" className={`${geist.variable} ${lora.variable}`}>

@@ -4,11 +4,13 @@ import { createContext, createElement, useContext, useEffect, useRef, useState }
 import { usePathname, useRouter } from 'next/navigation'
 import { createStore, useStore, type StoreApi } from 'zustand'
 import { liveSessions as seedLive, battleChatSeed, getMusician, registerWorld } from '@/mocks'
+import { GuestAccountSheet } from '@/components/riff/GuestAccountSheet'
 import { deriveStats, type ReputationContext } from '@/lib/reputation'
 import type { WorldSnapshot } from '@/lib/snapshot'
 import type {
   AudioClip,
   Availability,
+  CompetitionEntry,
   Genre,
   Instrument,
   Intent,
@@ -21,9 +23,11 @@ import type {
   Notification,
   OpenCallApplication,
   RecapVouch,
+  Season,
   SessionRecap,
   Thread,
   Vouch,
+  Wallet,
 } from '@/types'
 
 /**
@@ -52,6 +56,8 @@ export interface ProfileOverrides {
 interface RiffState {
   // --- server-owned, snapshot-replaced ---
   viewerId: string
+  /** No account: read-only, every action prompts sign-up. */
+  isGuest: boolean
   now: string
   profileComplete: boolean
   musicians: Musician[]
@@ -64,6 +70,9 @@ interface RiffState {
   recordingConsents: Record<string, string[]>
   vouches: Vouch[]
   notifications: Notification[]
+  season: Season
+  competitionEntries: CompetitionEntry[]
+  wallet: Wallet | null
 
   // --- session-local (never persisted; Phase-6 flavor) ---
   followedBandIds: string[]
@@ -72,10 +81,18 @@ interface RiffState {
   battleChat: Record<string, LiveComment[]>
   sessionRatings: Record<string, number>
   localTick: number
+  /** When a guest attempts an action, the feature they wanted — drives the sign-up prompt. */
+  accountPrompt: string | null
 
   // --- sync ---
   applySnapshot: (snapshot: WorldSnapshot) => void
   refresh: () => Promise<void>
+  /**
+   * True if the viewer may act; if a guest, opens the sign-up prompt for `feature` and returns
+   * false. Every gated action calls this first.
+   */
+  requireAccount: (feature: string) => boolean
+  dismissAccountPrompt: () => void
 
   // --- server-backed actions ---
   applyOnboarding: (overrides: ProfileOverrides) => Promise<void>
@@ -120,6 +137,7 @@ interface RiffState {
   setRecordingConsent: (jamId: string, musicianId: string, consents: boolean) => Promise<void>
   markNotificationRead: (id: string) => Promise<void>
   markAllNotificationsRead: () => Promise<void>
+  enterCompetition: () => Promise<CompetitionEntry>
 
   // --- session-local actions ---
   toggleFollowBand: (bandId: string) => void
@@ -132,6 +150,7 @@ interface RiffState {
 function snapshotSlices(snapshot: WorldSnapshot) {
   return {
     viewerId: snapshot.viewerId,
+    isGuest: snapshot.isGuest,
     now: snapshot.now,
     profileComplete: snapshot.profileComplete,
     musicians: snapshot.musicians,
@@ -144,6 +163,9 @@ function snapshotSlices(snapshot: WorldSnapshot) {
     recordingConsents: snapshot.consents,
     vouches: snapshot.vouches,
     notifications: snapshot.notifications,
+    season: snapshot.season,
+    competitionEntries: snapshot.competitionEntries,
+    wallet: snapshot.wallet,
   }
 }
 
@@ -165,13 +187,44 @@ async function callApi(
   return data
 }
 
+/** Thrown when a guest attempts a mutation; callers can ignore it — the prompt is already up. */
+export class AccountRequiredError extends Error {
+  constructor() {
+    super('Account required')
+    this.name = 'AccountRequiredError'
+  }
+}
+
+/** Human phrasing for the sign-up prompt, per dispatched action. */
+const FEATURE_LABELS: Record<string, string> = {
+  sendJamRequest: 'send a jam request',
+  respondToRequest: 'reply to a request',
+  postJam: 'post a jam',
+  applyToOpenCall: 'apply to an open call',
+  withdrawFromJam: 'change a jam',
+  sendMessage: 'send a message',
+  openDirectThread: 'message a musician',
+  postRecap: 'post a recap',
+  setRecordingConsent: 'publish a recording',
+  updateProfile: 'build your profile',
+  enterCompetition: 'enter the competition',
+}
+
 function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
   // Registries must be populated before the first render reads getMusician/getVenue.
   registerWorld(initial.musicians, initial.venues)
 
   return createStore<RiffState>((set, get) => {
-    /** POST an action, adopt the server's answer, hand back the action's own result. */
+    /**
+     * POST an action, adopt the server's answer, hand back the action's own result.
+     * A guest cannot mutate: attempting one opens the sign-up prompt and rejects, so callers'
+     * await paths stop cleanly without a spurious error toast (FEATURE_LABELS names the prompt).
+     */
     async function dispatch<T>(action: string, payload: unknown): Promise<T> {
+      if (get().isGuest) {
+        set({ accountPrompt: FEATURE_LABELS[action] ?? 'do that' })
+        throw new AccountRequiredError()
+      }
       const { result, snapshot } = await callApi(action, payload)
       get().applySnapshot(snapshot)
       return result as T
@@ -186,11 +239,19 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
       battleChat: battleChatSeed,
       sessionRatings: {},
       localTick: 0,
+      accountPrompt: null,
 
       applySnapshot: (snapshot) => {
         registerWorld(snapshot.musicians, snapshot.venues)
         set(snapshotSlices(snapshot))
       },
+
+      requireAccount: (feature) => {
+        if (!get().isGuest) return true
+        set({ accountPrompt: feature })
+        return false
+      },
+      dismissAccountPrompt: () => set({ accountPrompt: null }),
 
       refresh: async () => {
         const res = await fetch('/api/riff')
@@ -248,23 +309,29 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
         }))
         await dispatch('markAllNotificationsRead', {})
       },
+      enterCompetition: () => dispatch<CompetitionEntry>('enterCompetition', {}),
 
-      toggleFollowBand: (bandId) =>
+      toggleFollowBand: (bandId) => {
+        if (!get().requireAccount('follow a band')) return
         set((state) => ({
           followedBandIds: state.followedBandIds.includes(bandId)
             ? state.followedBandIds.filter((id) => id !== bandId)
             : [...state.followedBandIds, bandId],
-        })),
+        }))
+      },
 
       /** One vote per user per battle, and it is final — re-voting is ignored. */
-      voteInBattle: (battleId, side) =>
+      voteInBattle: (battleId, side) => {
+        if (!get().requireAccount('vote in a battle')) return
         set((state) =>
           state.battleVotes[battleId]
             ? state
             : { battleVotes: { ...state.battleVotes, [battleId]: side } },
-        ),
+        )
+      },
 
       sendLiveComment: (sessionId, body, handle) => {
+        if (!get().requireAccount('join the chat')) return
         const tick = get().localTick + 1
         const viewer = getMusician(get().viewerId)
         const comment: LiveComment = {
@@ -283,6 +350,7 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
       },
 
       sendBattleComment: (battleId, body, handle) => {
+        if (!get().requireAccount('join the chat')) return
         const tick = get().localTick + 1
         const viewer = getMusician(get().viewerId)
         const comment: LiveComment = {
@@ -300,8 +368,10 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
         }))
       },
 
-      rateSession: (sessionId, stars) =>
-        set((state) => ({ sessionRatings: { ...state.sessionRatings, [sessionId]: stars } })),
+      rateSession: (sessionId, stars) => {
+        if (!get().requireAccount('rate a session')) return
+        set((state) => ({ sessionRatings: { ...state.sessionRatings, [sessionId]: stars } }))
+      },
     }
   })
 }
@@ -324,6 +394,7 @@ export function RiffProvider({
   const router = useRouter()
   const pathname = usePathname()
   const profileComplete = useStore(store, (s) => s.profileComplete)
+  const isGuest = useStore(store, (s) => s.isGuest)
 
   // Other people's actions arrive by polling — enough for a scene, no sockets needed yet.
   useEffect(() => {
@@ -342,10 +413,27 @@ export function RiffProvider({
   // onboarding first. (Being IN onboarding, or reading your own settings, is of course fine.)
   const inOnboarding = pathname.startsWith('/onboarding')
   useEffect(() => {
-    if (!profileComplete && !inOnboarding) router.replace('/onboarding/location')
-  }, [profileComplete, inOnboarding, router])
+    // Guests are not pushed into onboarding — they have no account to complete.
+    if (!isGuest && !profileComplete && !inOnboarding) router.replace('/onboarding/location')
+  }, [isGuest, profileComplete, inOnboarding, router])
 
-  return createElement(RiffStoreContext.Provider, { value: store }, children)
+  return createElement(
+    RiffStoreContext.Provider,
+    { value: store },
+    children,
+    createElement(AccountPrompt, { key: 'account-prompt' }),
+  )
+}
+
+/**
+ * The sign-up nudge a guest sees the moment they try to act. Mounted once by the provider and
+ * driven by store.accountPrompt, so every gated action anywhere pops the same sheet.
+ */
+function AccountPrompt() {
+  const feature = useRiffStore((s) => s.accountPrompt)
+  const dismiss = useRiffStore((s) => s.dismissAccountPrompt)
+  if (!feature) return null
+  return createElement(GuestAccountSheet, { feature, onDismiss: dismiss })
 }
 
 export function useRiffStore<T>(selector: (state: RiffState) => T): T {
@@ -354,11 +442,16 @@ export function useRiffStore<T>(selector: (state: RiffState) => T): T {
   return useStore(store, selector)
 }
 
-/** The signed-in musician. */
-export function useCurrentUser(): Musician {
+/** The signed-in musician, or null for a guest / before onboarding resolves. */
+export function useCurrentUser(): Musician | null {
   const viewerId = useRiffStore((s) => s.viewerId)
   const musicians = useRiffStore((s) => s.musicians)
-  return musicians.find((m) => m.id === viewerId) as Musician
+  return musicians.find((m) => m.id === viewerId) ?? null
+}
+
+/** Whether the viewer is browsing without an account. */
+export function useIsGuest(): boolean {
+  return useRiffStore((s) => s.isGuest)
 }
 
 export function useUnreadNotificationCount(): number {

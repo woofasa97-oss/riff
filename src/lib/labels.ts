@@ -89,3 +89,8 @@ export const directionsHref = (query: string) =>
 export function compactCount(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
 }
+
+/** "1,600 cr" — Riff Credits, the mock competition currency. */
+export function formatCredits(n: number): string {
+  return `${n.toLocaleString('en-US')} cr`
+}

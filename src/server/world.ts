@@ -20,7 +20,11 @@ import type {
   Genre,
   Instrument,
   Intent,
+  CompetitionEntry,
+  Season,
   Slot,
+  Wallet,
+  WalletTransaction,
   Weekday,
   Jam,
   JamRequest,
@@ -40,7 +44,7 @@ import type { WorldSnapshot } from '@/lib/snapshot'
 export class WorldError extends Error {
   constructor(
     message: string,
-    readonly status: 400 | 403 | 404 | 409 = 400,
+    readonly status: 400 | 402 | 403 | 404 | 409 = 400,
   ) {
     super(message)
   }
@@ -336,9 +340,17 @@ export function buildSnapshot(viewerId: string): WorldSnapshot {
 
   const profileComplete = Boolean((viewerRow as { profile_complete?: number }).profile_complete)
 
+  const season = currentSeason(now)
+  const competitionEntries = (
+    d
+      .prepare(`SELECT * FROM competition_entries WHERE season_id = ? ORDER BY entered_at`)
+      .all(season.id) as Record<string, unknown>[]
+  ).map(rowToEntry)
+
   return {
     now,
     viewerId,
+    isGuest: false,
     profileComplete,
     musicians,
     venues,
@@ -351,7 +363,262 @@ export function buildSnapshot(viewerId: string): WorldSnapshot {
     consents,
     vouches,
     notifications,
+    season,
+    competitionEntries,
+    wallet: walletFor(viewerId),
   }
+}
+
+/**
+ * The public world for a viewer with no account. Everything browsable — musicians, open
+ * calls, completed history, the competition, the map — with zero personal data and no
+ * revealed addresses. Distances are measured from the scene centre, since a guest has no
+ * home neighbourhood. Every mutation is refused server-side (guests never reach a mutation:
+ * the API requires a session for POST), so this is read-only by construction.
+ */
+export function buildGuestSnapshot(): WorldSnapshot {
+  const d = db()
+  const now = nowIso()
+  const nowKey = etDateKey(now)
+  settleFinishedJams(now)
+
+  const anchor = mapZones.find((z) => z.name === 'Williamsburg') ?? mapZones[0]
+  const musicians = (d.prepare(`SELECT * FROM musicians`).all() as Record<string, unknown>[])
+    .map((r) => rowToMusician(r, nowKey))
+    .filter((m) => m.instruments.length > 0)
+    .map((m) => ({
+      ...m,
+      distanceMi: zoneDistanceMi(anchor.name, m.neighborhood, `guest|${m.id}`),
+    }))
+
+  const venues = (d.prepare(`SELECT * FROM venues`).all() as Record<string, unknown>[]).map((r) =>
+    rowToVenue(r, false),
+  )
+
+  // Only public jams: open calls and completed history. No private upcoming jams, ever.
+  const jams = (d.prepare(`SELECT * FROM jams`).all() as Record<string, unknown>[])
+    .map(rowToJam)
+    .filter((j) => j.isOpenCall || j.status === 'completed')
+
+  const recaps = (d.prepare(`SELECT * FROM recaps`).all() as Record<string, unknown>[]).map(
+    (r) => ({
+      id: r.id as string,
+      jamId: r.jam_id as string,
+      authorId: r.author_id as string,
+      attendance: JSON.parse(r.attendance as string),
+      vouches: JSON.parse(r.vouches as string),
+      publishRecording: Boolean(r.publish_recording),
+      durationLabel: r.duration_label as string,
+      createdAt: r.created_at as string,
+    }),
+  )
+  const visibleJamIds = new Set(jams.map((j) => j.id))
+  const consents: Record<string, string[]> = {}
+  for (const r of d.prepare(`SELECT jam_id, musician_id FROM consents`).all() as {
+    jam_id: string
+    musician_id: string
+  }[]) {
+    if (!visibleJamIds.has(r.jam_id)) continue
+    ;(consents[r.jam_id] ??= []).push(r.musician_id)
+  }
+  const vouches = (d.prepare(`SELECT * FROM vouches`).all() as Record<string, unknown>[]).map(
+    (v) => ({
+      id: v.id as string,
+      fromId: v.from_id as string,
+      toId: v.to_id as string,
+      tags: JSON.parse(v.tags as string),
+      note: v.note as string,
+      sessionsTogether: v.sessions_together as number,
+      jamId: v.jam_id as string,
+      createdAt: v.created_at as string,
+    }),
+  )
+
+  const season = currentSeason(now)
+  const competitionEntries = (
+    d
+      .prepare(`SELECT * FROM competition_entries WHERE season_id = ? ORDER BY entered_at`)
+      .all(season.id) as Record<string, unknown>[]
+  ).map(rowToEntry)
+
+  return {
+    now,
+    viewerId: '',
+    isGuest: true,
+    profileComplete: false,
+    musicians,
+    venues,
+    jams,
+    requests: [],
+    applications: [],
+    threads: [],
+    messages: [],
+    recaps,
+    consents,
+    vouches,
+    notifications: [],
+    season,
+    competitionEntries,
+    wallet: null,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Competition & wallet — reads
+// ---------------------------------------------------------------------------
+
+function rowToSeason(r: Record<string, unknown>): Season {
+  return {
+    id: r.id as string,
+    number: r.number as number,
+    scene: r.scene as string,
+    city: r.city as string,
+    startsAt: r.starts_at as string,
+    registrationClosesAt: r.registration_closes_at as string,
+    endsAt: r.ends_at as string,
+    status: r.status as Season['status'],
+    entryFeeCredits: r.entry_fee_credits as number,
+    basePoolCredits: r.base_pool_credits as number,
+    payoutSplit: JSON.parse(r.payout_split as string),
+  }
+}
+
+function rowToEntry(r: Record<string, unknown>): CompetitionEntry {
+  return {
+    id: r.id as string,
+    seasonId: r.season_id as string,
+    competitorId: r.competitor_id as string,
+    competitorName: r.competitor_name as string,
+    feePaidCredits: r.fee_paid_credits as number,
+    enteredAt: r.entered_at as string,
+    finalRank: (r.final_rank as number) ?? undefined,
+    payoutCredits: (r.payout_credits as number) ?? undefined,
+  }
+}
+
+/** The one active season. Its status advances lazily as its deadlines pass. */
+function currentSeason(now: string): Season {
+  const d = db()
+  const row = d.prepare(`SELECT * FROM seasons ORDER BY number DESC LIMIT 1`).get() as
+    Record<string, unknown> | undefined
+  if (!row) throw new WorldError('No season configured', 404)
+  let season = rowToSeason(row)
+
+  // Registration → live when it closes; live → finished (and settle) when it ends.
+  if (
+    season.status === 'registration' &&
+    Date.parse(now) >= Date.parse(season.registrationClosesAt)
+  ) {
+    d.prepare(`UPDATE seasons SET status = 'live' WHERE id = ?`).run(season.id)
+    season = { ...season, status: 'live' }
+  }
+  if (season.status !== 'finished' && Date.parse(now) >= Date.parse(season.endsAt)) {
+    settleSeason(season)
+    season = {
+      ...rowToSeason(
+        d.prepare(`SELECT * FROM seasons WHERE id = ?`).get(season.id) as Record<string, unknown>,
+      ),
+    }
+  }
+  return season
+}
+
+export function prizePoolCredits(season: Season): number {
+  const d = db()
+  const fees = (
+    d
+      .prepare(
+        `SELECT COALESCE(SUM(fee_paid_credits), 0) AS s FROM competition_entries WHERE season_id = ?`,
+      )
+      .get(season.id) as { s: number }
+  ).s
+  return season.basePoolCredits + fees
+}
+
+function walletFor(userId: string): Wallet {
+  const d = db()
+  const row = d.prepare(`SELECT balance_credits FROM wallets WHERE user_id = ?`).get(userId) as
+    { balance_credits: number } | undefined
+  const transactions = (
+    d
+      .prepare(`SELECT * FROM wallet_txns WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`)
+      .all(userId) as Record<string, unknown>[]
+  ).map((t): WalletTransaction => ({
+    id: t.id as string,
+    amountCredits: t.amount_credits as number,
+    kind: t.kind as WalletTransaction['kind'],
+    memo: t.memo as string,
+    createdAt: t.created_at as string,
+  }))
+  return { balanceCredits: row?.balance_credits ?? 0, transactions }
+}
+
+/**
+ * End of season: rank entrants and split the pool by payoutSplit, crediting the winners'
+ * wallets. Idempotent — guarded by the season already being 'finished'. Real competitors
+ * (seed acts) have no wallet, so their winnings are recorded on the entry but not paid out.
+ */
+function settleSeason(season: Season) {
+  const d = db()
+  const fresh = d.prepare(`SELECT status FROM seasons WHERE id = ?`).get(season.id) as {
+    status: string
+  }
+  if (fresh.status === 'finished') return
+
+  const entries = (
+    d
+      .prepare(`SELECT * FROM competition_entries WHERE season_id = ? ORDER BY entered_at`)
+      .all(season.id) as Record<string, unknown>[]
+  ).map(rowToEntry)
+  const pool = prizePoolCredits(season)
+
+  const tx = d.transaction(() => {
+    // Deterministic standings without real match results: earliest entrants placed first.
+    // A production settle would rank by bracket outcome; the payout mechanics are the point here.
+    entries.forEach((entry, i) => {
+      const rank = i + 1
+      const share = season.payoutSplit[i] ?? 0
+      const payout = Math.round(pool * share)
+      d.prepare(
+        `UPDATE competition_entries SET final_rank = ?, payout_credits = ? WHERE id = ?`,
+      ).run(rank, payout, entry.id)
+      // Only real accounts have wallets to pay into.
+      if (
+        payout > 0 &&
+        d.prepare(`SELECT 1 FROM wallets WHERE user_id = ?`).get(entry.competitorId)
+      ) {
+        adjustWallet(
+          entry.competitorId,
+          payout,
+          'prize_payout',
+          `Season ${season.number} — placed #${rank}`,
+        )
+      }
+    })
+    d.prepare(`UPDATE seasons SET status = 'finished' WHERE id = ?`).run(season.id)
+  })
+  tx()
+}
+
+function adjustWallet(
+  userId: string,
+  delta: number,
+  kind: WalletTransaction['kind'],
+  memo: string,
+) {
+  const d = db()
+  d.prepare(`UPDATE wallets SET balance_credits = balance_credits + ? WHERE user_id = ?`).run(
+    delta,
+    userId,
+  )
+  d.prepare(`INSERT INTO wallet_txns VALUES (?,?,?,?,?,?)`).run(
+    uid('wtx'),
+    userId,
+    delta,
+    kind,
+    memo,
+    nowIso(),
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -1145,4 +1412,77 @@ export function markNotificationRead(viewerId: string, id: string) {
 
 export function markAllNotificationsRead(viewerId: string) {
   db().prepare(`UPDATE notifications SET read = 1 WHERE user_id = ?`).run(viewerId)
+}
+
+// ---------------------------------------------------------------------------
+// Competition — mutations (money moves here; guard every credit)
+// ---------------------------------------------------------------------------
+
+/**
+ * Enter the current season's paid competition. Charges the entry fee from the viewer's wallet
+ * atomically: the balance check, the debit, and the entry insert all happen inside one
+ * transaction, so a fee can never be charged without an entry (or vice versa) and the balance
+ * can never go negative even under concurrent requests. Idempotent per (season, competitor) via
+ * the UNIQUE constraint.
+ */
+export function enterCompetition(viewerId: string): CompetitionEntry {
+  const d = db()
+  const now = nowIso()
+  const season = currentSeason(now)
+  if (season.status !== 'registration')
+    throw new WorldError('Registration for this season has closed', 409)
+
+  const competitor = d
+    .prepare(`SELECT name, profile_complete FROM musicians WHERE id = ?`)
+    .get(viewerId) as { name: string; profile_complete: number } | undefined
+  if (!competitor) throw new WorldError('Account not found', 404)
+  if (!competitor.profile_complete)
+    throw new WorldError('Finish your player card before entering', 403)
+
+  const already = d
+    .prepare(`SELECT 1 FROM competition_entries WHERE season_id = ? AND competitor_id = ?`)
+    .get(season.id, viewerId)
+  if (already) throw new WorldError('You are already entered', 409)
+
+  const wallet = d
+    .prepare(`SELECT balance_credits FROM wallets WHERE user_id = ?`)
+    .get(viewerId) as { balance_credits: number } | undefined
+  if (!wallet || wallet.balance_credits < season.entryFeeCredits)
+    throw new WorldError('Not enough Riff Credits for the entry fee', 402)
+
+  const entry: CompetitionEntry = {
+    id: uid('ce'),
+    seasonId: season.id,
+    competitorId: viewerId,
+    competitorName: competitor.name,
+    feePaidCredits: season.entryFeeCredits,
+    enteredAt: now,
+  }
+  const tx = d.transaction(() => {
+    // Re-check the balance inside the transaction under the write lock, then debit.
+    const bal = (
+      d.prepare(`SELECT balance_credits FROM wallets WHERE user_id = ?`).get(viewerId) as {
+        balance_credits: number
+      }
+    ).balance_credits
+    if (bal < season.entryFeeCredits) throw new WorldError('Not enough Riff Credits', 402)
+    adjustWallet(viewerId, -season.entryFeeCredits, 'entry_fee', `Season ${season.number} entry`)
+    try {
+      d.prepare(`INSERT INTO competition_entries VALUES (?,?,?,?,?,?,?,?)`).run(
+        entry.id,
+        entry.seasonId,
+        entry.competitorId,
+        entry.competitorName,
+        entry.feePaidCredits,
+        entry.enteredAt,
+        null,
+        null,
+      )
+    } catch {
+      // UNIQUE violation: another request entered us first. Abort so the debit rolls back too.
+      throw new WorldError('You are already entered', 409)
+    }
+  })
+  tx()
+  return entry
 }

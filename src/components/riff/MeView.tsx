@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Bell, ChevronRight, LogOut, Settings, Zap } from 'lucide-react'
+import { Bell, ChevronRight, LogOut, Settings, UserPlus, Zap } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { AvailabilityStrip } from '@/components/riff/AvailabilityStrip'
 import { TopBar } from '@/components/riff/TopBar'
@@ -10,9 +10,16 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Card } from '@/components/ui/Card'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { StatTile } from '@/components/ui/StatTile'
-import { iconButtonClass } from '@/components/ui/Button'
-import { genreLane, instrumentLabel } from '@/lib/labels'
-import { useCurrentUser, useMusicianStats, useUnreadNotificationCount } from '@/lib/store'
+import { buttonClass, iconButtonClass } from '@/components/ui/Button'
+import { formatCredits, genreLane, instrumentLabel } from '@/lib/labels'
+import type { Musician } from '@/types'
+import {
+  useCurrentUser,
+  useIsGuest,
+  useMusicianStats,
+  useRiffStore,
+  useUnreadNotificationCount,
+} from '@/lib/store'
 import { peaksFor } from '@/lib/waveform'
 import { getCurrentSeason, getLeaderboardEntry, listBandsFor } from '@/mocks'
 
@@ -27,8 +34,42 @@ const SETTINGS_ROWS = [
 
 export function MeView() {
   const me = useCurrentUser()
+  const isGuest = useIsGuest()
+  if (isGuest || !me) return <GuestMe />
+  return <SignedInMe me={me} />
+}
+
+/** The ME tab for a guest: this is the moment the app asks them to join. */
+function GuestMe() {
+  return (
+    <AppShell activeTab="me" header={<TopBar />} mainClassName="flex items-center px-6 py-8">
+      <div className="w-full text-center">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--hero-from)] text-primary">
+          <UserPlus size={28} />
+        </div>
+        <h1 className="mb-2 font-serif text-[26px] font-bold text-foreground">Your player card</h1>
+        <p className="mx-auto mb-8 max-w-[280px] text-[14px] text-foreground-dim">
+          You&apos;re browsing as a guest. Claim a handle to build your reputation, get jam
+          requests, and enter the competition.
+        </p>
+        <div className="flex flex-col gap-2">
+          <Link href="/signup" className={buttonClass({ fullWidth: true })}>
+            Create your player card
+          </Link>
+          <Link href="/login" className={buttonClass({ variant: 'secondary', fullWidth: true })}>
+            I already have an account
+          </Link>
+        </div>
+      </div>
+    </AppShell>
+  )
+}
+
+function SignedInMe({ me }: { me: Musician }) {
   const stats = useMusicianStats(me.id)
   const unread = useUnreadNotificationCount()
+  // A signed-in user always has a wallet; guarded null-safe in case a snapshot lands without one.
+  const wallet = useRiffStore((s) => s.wallet)
   // A real sign-up is unranked — the season card below only renders when an entry exists.
   const entry = getLeaderboardEntry(me.id)
   const season = getCurrentSeason()
@@ -175,6 +216,27 @@ export function MeView() {
       {/* SETTINGS */}
       <section className="mb-8 px-4">
         <Card className="overflow-hidden">
+          <Link
+            href="/wallet"
+            className="flex items-center justify-between border-b border-border-hairline p-4"
+          >
+            <span className="text-[15px] font-medium text-foreground">Riff Credits</span>
+            <span className="flex items-center gap-2">
+              {wallet && (
+                <span className="text-[13px] font-semibold text-foreground-dim">
+                  {formatCredits(wallet.balanceCredits)}
+                </span>
+              )}
+              <ChevronRight size={14} className="text-foreground-dim" />
+            </span>
+          </Link>
+          <Link
+            href="/competition"
+            className="flex items-center justify-between border-b border-border-hairline p-4"
+          >
+            <span className="text-[15px] font-medium text-foreground">Season competition</span>
+            <ChevronRight size={14} className="text-foreground-dim" />
+          </Link>
           {SETTINGS_ROWS.map((row) => (
             <Link
               key={row.href}

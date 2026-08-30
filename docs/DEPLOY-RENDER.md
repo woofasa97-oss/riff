@@ -102,3 +102,24 @@ Three operational facts:
    keep accounts. Fine to skip while just trying the app with friends.
 3. **No secrets to configure.** Sessions are random tokens stored hashed in the database, so
    there is no signing key to manage. Passwords are scrypt-hashed with per-user salts.
+
+## Guest mode
+
+The app is browsable without an account. A signed-out visitor gets a read-only "guest snapshot"
+(public musicians, open calls, completed history, the competition, the map — no private data,
+no addresses). `middleware.ts` lets guests roam; the store gates every ACTION behind sign-up
+(the `requireAccount` prompt), and the API refuses any mutation without a session. So guest
+mode is safe by construction: the client makes browsing pleasant, the server enforces the wall.
+
+## The competition and Riff Credits (mock currency)
+
+The season is a paid competition — pay an entry fee to enter, the prize pool is base + all fees,
+top places split it at season end into the winners' wallets. **Riff Credits are mock money.**
+There is no payment processor, no real cash, and nothing collects card details — new accounts
+are simply granted a starting balance (`SIGNUP_GRANT_CREDITS`). This is deliberate: it lets
+people try the pay-to-enter / win-a-prize loop end to end without any real-money surface. If
+Riff ever takes real entry fees, that is a separate, regulated build (payments, KYC, payouts)
+and must not reuse this mock ledger as-is. The wallet lives in the `wallets` / `wallet_txns`
+tables; entries and payouts in `competition_entries`; settlement is in `settleSeason`
+(src/server/world.ts), which currently ranks by entry order as a stand-in for real bracket
+results.

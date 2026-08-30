@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Check, Plus } from 'lucide-react'
+import { GuestGate } from '@/components/riff/GuestGate'
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
 import { InstrumentPicker } from '@/components/riff/InstrumentPicker'
 import { SubScreenHeader } from '@/components/riff/TopBar'
@@ -15,7 +16,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { cn } from '@/lib/cn'
 import { formatShortDateTime, formatTime, relativeDayLabel } from '@/lib/datetime'
 import { instrumentLabel, intentLabel, shortNeighborhood } from '@/lib/labels'
-import { useCurrentUser, useRiffStore } from '@/lib/store'
+import { useCurrentUser, useIsGuest, useRiffStore } from '@/lib/store'
 import { getVenue, listNearbyMusicians, venues } from '@/mocks'
 import type { Instrument, Intent, Jam } from '@/types'
 
@@ -38,6 +39,7 @@ const startsAtFor = (dateKey: string, hour: number) =>
   `${dateKey}T${String(hour).padStart(2, '0')}:00:00-04:00`
 
 export function PostJamView() {
+  const guest = useIsGuest()
   const router = useRouter()
   const me = useCurrentUser()
   const postJam = useRiffStore((s) => s.postJam)
@@ -61,9 +63,11 @@ export function PostJamView() {
 
   // Store-fed so freshly signed-up players are invitable without a reload.
   const nearby = useMemo(
-    () => listNearbyMusicians({ viewerId: me.id }, allMusicians),
-    [me.id, allMusicians],
+    () => listNearbyMusicians({ viewerId: me?.id ?? '' }, allMusicians),
+    [me, allMusicians],
   )
+
+  // A guest (or a not-yet-onboarded viewer) can't post — gate before the form.
   const invited = useMemo(
     () => nearby.filter((m) => invitedIds.includes(m.id)),
     [nearby, invitedIds],
@@ -94,6 +98,9 @@ export function PostJamView() {
       return { key, label, dayNum: dayNumFmt.format(d) }
     })
   }, [now])
+
+  // A guest (or not-yet-onboarded viewer) can't post — gate after all hooks, before the form.
+  if (guest || !me) return <GuestGate feature="post a jam" backHref="/jams" />
 
   // Validation in the order the form reads; the first missing thing is named under the button.
   const missing =

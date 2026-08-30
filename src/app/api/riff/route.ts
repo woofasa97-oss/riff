@@ -12,9 +12,9 @@ import { WorldError } from '@/server/world'
 
 export async function GET() {
   const viewerId = await viewerFromCookies()
-  if (!viewerId) return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
   try {
-    return NextResponse.json(world.buildSnapshot(viewerId))
+    // No session → the public world for a guest. Signing up is the only gate on mutations.
+    return NextResponse.json(viewerId ? world.buildSnapshot(viewerId) : world.buildGuestSnapshot())
   } catch (e) {
     if (e instanceof WorldError)
       return NextResponse.json({ error: e.message }, { status: e.status })
@@ -71,6 +71,9 @@ export async function POST(req: Request) {
         break
       case 'markAllNotificationsRead':
         world.markAllNotificationsRead(viewerId)
+        break
+      case 'enterCompetition':
+        result = world.enterCompetition(viewerId)
         break
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })

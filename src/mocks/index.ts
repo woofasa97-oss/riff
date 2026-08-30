@@ -76,7 +76,7 @@ export {
   venues,
   vouches,
 }
-export { pointsFromTopTen } from './seasons'
+export { pointsFromTopTen, SIGNUP_GRANT_CREDITS } from './seasons'
 export { MAP_DEFAULT_CENTER, MAP_DEFAULT_ZOOM } from './zones'
 export { ROUND_LABEL, ROUND_ORDER, battleChatSeed, seasonBadgeFor, voteShare } from './battles'
 
