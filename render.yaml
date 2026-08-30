@@ -4,9 +4,11 @@
 # Riff has real accounts: SQLite at RIFF_DB_PATH, seeded from src/mocks/ on first boot.
 # One instance only (SQLite is per-process) — do not scale this service horizontally.
 #
-# ACCOUNT DATA DURABILITY: without a persistent disk, the free plan's filesystem is wiped on
-# every deploy and accounts reset. To keep them, attach a disk (paid feature) by uncommenting
-# the `disk:` block below — RIFF_DB_PATH already points into it.
+# ACCOUNT DATA DURABILITY: with no disk, the app writes SQLite under the (ephemeral) project
+# directory, so accounts reset on every deploy. To keep them across deploys, attach a disk
+# (paid) by uncommenting the `disk:` block AND the RIFF_DB_PATH override beside it, so the
+# database lives on the mount instead. Do not point RIFF_DB_PATH at /var/data without the
+# disk — that directory is not writable and the app would 500 on every page.
 
 services:
   - type: web
@@ -33,13 +35,17 @@ services:
       # `next start` always serves one, so the variable buys nothing and breaks `npm ci`.
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
-      # Where the SQLite database lives. /var/data is the conventional Render disk mount; with
-      # no disk attached it still works, but resets on each deploy (see header note).
-      - key: RIFF_DB_PATH
-        value: /var/data/riff.db
+      # RIFF_DB_PATH is intentionally NOT set here. With no disk, db.ts defaults to
+      # <project>/data/riff.db — writable on Render's ephemeral filesystem — and, as a last
+      # resort, falls back to the OS temp dir. Both reset on deploy; that is the free-plan
+      # trade-off. To persist, uncomment the disk AND the override below together.
 
-    # Uncomment to make accounts survive deploys (requires a paid plan):
+    # Persist accounts across deploys (requires a paid plan). Uncomment BOTH the disk and the
+    # RIFF_DB_PATH override so the database lives on the mounted volume:
     # disk:
     #   name: riff-data
     #   mountPath: /var/data
     #   sizeGB: 1
+    #   # and add this under envVars above:
+    #   #   - key: RIFF_DB_PATH
+    #   #     value: /var/data/riff.db

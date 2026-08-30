@@ -13,6 +13,7 @@
  * August 2026. Seed musicians are flagged `is_seed`; they have no login and never reply.
  */
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import Database from 'better-sqlite3'
 import {
@@ -36,12 +37,35 @@ const DB_PATH = process.env.RIFF_DB_PATH ?? path.join(process.cwd(), 'data', 'ri
 
 let _db: Database.Database | undefined
 
+/**
+ * Open the database at `preferred`, creating its directory. Returns undefined (rather than
+ * throwing) if the location is not writable — e.g. RIFF_DB_PATH points at a disk mount that is
+ * not attached, which is exactly how this app once white-screened on Render.
+ */
+function tryOpen(preferred: string): Database.Database | undefined {
+  try {
+    fs.mkdirSync(path.dirname(preferred), { recursive: true })
+    const conn = new Database(preferred)
+    conn.pragma('journal_mode = WAL')
+    conn.pragma('foreign_keys = ON')
+    return conn
+  } catch (err) {
+    console.error(`[riff] could not open database at ${preferred}:`, (err as Error).message)
+    return undefined
+  }
+}
+
 export function db(): Database.Database {
   if (_db) return _db
-  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true })
-  _db = new Database(DB_PATH)
-  _db.pragma('journal_mode = WAL')
-  _db.pragma('foreign_keys = ON')
+  // Prefer the configured path; if it is unwritable, fall back to the OS temp dir so the app
+  // still loads (ephemeral, but a running prototype beats a 500 on every page). The fallback is
+  // only reached on misconfiguration — a correctly mounted disk opens on the first try.
+  const conn = tryOpen(DB_PATH) ?? tryOpen(path.join(os.tmpdir(), 'riff.db'))
+  if (!conn) throw new Error('Riff could not open a database in any writable location')
+  if (conn.name !== DB_PATH) {
+    console.warn(`[riff] using fallback database at ${conn.name} — set RIFF_DB_PATH to a writable path`)
+  }
+  _db = conn
   migrate(_db)
   seed(_db)
   return _db
