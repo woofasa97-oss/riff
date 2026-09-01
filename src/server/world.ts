@@ -37,6 +37,13 @@ import type {
   Thread,
   Venue,
   Vouch,
+  VenueSlot,
+  GeoPoint,
+  Studio,
+  StreetPerformer,
+  MusicShop,
+  MapListing,
+  ListingKind,
 } from '@/types'
 import type { WorldSnapshot } from '@/lib/snapshot'
 
@@ -369,6 +376,7 @@ export function buildSnapshot(viewerId: string): WorldSnapshot {
     season,
     competitionEntries,
     wallet: walletFor(viewerId),
+    listings: listingsForViewer(viewerId),
   }
 }
 
@@ -463,6 +471,7 @@ export function buildGuestSnapshot(): WorldSnapshot {
     season,
     competitionEntries,
     wallet: null,
+    listings: publishedListings(),
   }
 }
 
@@ -1839,4 +1848,279 @@ export function enterCompetition(viewerId: string): CompetitionEntry {
     { seasonId: season.id },
   )
   return entry
+}
+
+// ---------------------------------------------------------------------------
+// Member-created map listings — studios, street acts, shops. Airbnb-style curation: a listing
+// must clear an automated quality gate (required fields, sane values, a profile-complete owner)
+// at submit; passing IS the review, so it publishes. The owner's Riff reputation is the anchor.
+// ---------------------------------------------------------------------------
+
+const SHOP_KINDS = ['instruments', 'vinyl', 'repair', 'gear'] as const
+const STUDIO_KINDS = ['pro-room', 'home-rig'] as const
+
+function rowToListing(r: Record<string, unknown>): MapListing {
+  const kind = r.kind as ListingKind
+  const obj = JSON.parse(r.data as string)
+  const base = {
+    id: r.id as string,
+    ownerId: r.owner_id as string,
+    kind,
+    status: r.status as MapListing['status'],
+    createdAt: r.created_at as string,
+  }
+  if (kind === 'studio') return { ...base, studio: obj as Studio }
+  if (kind === 'street') return { ...base, street: obj as StreetPerformer }
+  return { ...base, shop: obj as MusicShop }
+}
+
+/** Deterministic small offset from a zone centre so a listing pin doesn't sit exactly on it. */
+function jitter(seed: string, spread = 0.006): { dLat: number; dLng: number } {
+  let h = 0
+  for (const c of seed) h = (h * 31 + c.charCodeAt(0)) & 0xffffff
+  return {
+    dLat: ((h & 0xfff) / 0xfff - 0.5) * 2 * spread,
+    dLng: (((h >> 12) & 0xfff) / 0xfff - 0.5) * 2 * spread,
+  }
+}
+function zonePoint(neighborhood: string, seed: string): { point: GeoPoint; city: string } {
+  const z = mapZones.find((zz) => zz.name === neighborhood)
+  if (!z) throw new WorldError('Pick a neighbourhood from the list')
+  const { dLat, dLng } = jitter(seed)
+  return {
+    point: { lat: z.center.lat + dLat, lng: z.center.lng + dLng },
+    city: `${z.borough}, NY`,
+  }
+}
+function nonEmptyStrings(v: unknown, max = 12): string[] {
+  if (!Array.isArray(v)) return []
+  return [...new Set(v.map((x) => String(x).trim()).filter(Boolean))].slice(0, max)
+}
+/** Three upcoming slots so a fresh studio is bookable without a separate availability step. */
+function upcomingSlots(): VenueSlot[] {
+  const base = Date.parse(nowIso())
+  return [1, 2, 3].map((d) => ({
+    id: uid('slot'),
+    label: '',
+    startsAt: new Date(base + d * 86_400_000).toISOString(),
+    available: true,
+  }))
+}
+
+function buildStudio(id: string, ownerId: string, input: Record<string, unknown>): Studio {
+  const name = String(input.name ?? '').trim().slice(0, 60)
+  if (name.length < 2) throw new WorldError('Give your studio a name')
+  const kind = STUDIO_KINDS.includes(input.kind as never)
+    ? (input.kind as Studio['kind'])
+    : (() => {
+        throw new WorldError('Pick a studio type')
+      })()
+  const neighborhood = String(input.neighborhood ?? '')
+  const { point, city } = zonePoint(neighborhood, id)
+  const rate = Math.round(Number(input.hourlyRateUsd))
+  if (!Number.isFinite(rate) || rate < 5 || rate > 300)
+    throw new WorldError('Set an hourly rate between $5 and $300')
+  const capacity = Math.round(Number(input.capacity) || 0)
+  if (capacity < 1 || capacity > 20) throw new WorldError('Set a capacity between 1 and 20')
+  const gear = nonEmptyStrings(input.gear)
+  if (gear.length === 0) throw new WorldError('List at least one piece of gear')
+  const address =
+    kind === 'pro-room' && input.address ? String(input.address).trim().slice(0, 120) : undefined
+  return {
+    id,
+    name,
+    kind,
+    hostId: ownerId,
+    neighborhood,
+    city,
+    location: point,
+    address,
+    addressRevealed: kind === 'pro-room',
+    distanceMi: 0,
+    hourlyRateUsd: rate,
+    photoUrl: '/mock/studios/_community.svg',
+    rating: 0,
+    reviewCount: 0,
+    capacity,
+    gear,
+    amenities: nonEmptyStrings(input.amenities),
+    instantBook: kind === 'pro-room' ? Boolean(input.instantBook) : false,
+    slots: upcomingSlots(),
+  }
+}
+
+function buildShop(id: string, _ownerId: string, input: Record<string, unknown>): MusicShop {
+  const name = String(input.name ?? '').trim().slice(0, 60)
+  if (name.length < 2) throw new WorldError('Give your shop a name')
+  const kind = SHOP_KINDS.includes(input.kind as never)
+    ? (input.kind as MusicShop['kind'])
+    : (() => {
+        throw new WorldError('Pick a shop type')
+      })()
+  const neighborhood = String(input.neighborhood ?? '')
+  const { point, city } = zonePoint(neighborhood, id)
+  const address = String(input.address ?? '').trim().slice(0, 120)
+  if (address.length < 3) throw new WorldError('A shop needs a storefront address')
+  const tags = nonEmptyStrings(input.tags)
+  if (tags.length === 0) throw new WorldError('Add at least one tag (what you sell)')
+  const hoursLabel = String(input.hoursLabel ?? '').trim().slice(0, 40) || 'Hours vary'
+  return {
+    id,
+    name,
+    kind,
+    neighborhood,
+    city,
+    address,
+    location: point,
+    distanceMi: 0,
+    photoUrl: '/mock/shops/_community.svg',
+    rating: 0,
+    reviewCount: 0,
+    tags,
+    openNow: Boolean(input.openNow ?? true),
+    hoursLabel,
+    phone: input.phone ? String(input.phone).trim().slice(0, 40) : undefined,
+    website: input.website ? String(input.website).trim().slice(0, 80) : undefined,
+  }
+}
+
+function buildStreet(
+  id: string,
+  ownerId: string,
+  owner: { name: string; handle: string; avatar_url: string },
+  input: Record<string, unknown>,
+): StreetPerformer {
+  const instruments = (nonEmptyStrings(input.instruments) as Instrument[]).filter((i) =>
+    INSTRUMENTS.includes(i),
+  )
+  if (instruments.length === 0) throw new WorldError('Pick at least one instrument')
+  const genres = (nonEmptyStrings(input.genres) as Genre[]).filter((g) => GENRES.includes(g))
+  const neighborhood = String(input.neighborhood ?? '')
+  const { point } = zonePoint(neighborhood, id)
+  const spotLabel = String(input.spotLabel ?? '').trim().slice(0, 80)
+  if (spotLabel.length < 2) throw new WorldError('Where are you playing? Name the spot')
+  const hours = Math.min(6, Math.max(1, Number(input.durationHours) || 3))
+  const startedAt = nowIso()
+  const until = new Date(Date.parse(startedAt) + hours * 3_600_000).toISOString()
+  return {
+    id,
+    name: String(input.actName ?? owner.name).trim().slice(0, 60) || owner.name,
+    musicianId: ownerId,
+    handle: `@${owner.handle}`,
+    instruments,
+    genres,
+    neighborhood,
+    spotLabel,
+    location: point,
+    startedAt,
+    until,
+    live: true,
+    avatarUrl: owner.avatar_url,
+    blurb: String(input.blurb ?? '').trim().slice(0, 200),
+  }
+}
+
+/** Create a listing. Passing the per-kind quality gate IS the review, so it goes live. */
+export function createListing(
+  viewerId: string,
+  kind: ListingKind,
+  input: Record<string, unknown>,
+): MapListing {
+  const d = db()
+  const owner = d
+    .prepare(`SELECT name, handle, avatar_url, profile_complete, is_seed FROM musicians WHERE id = ?`)
+    .get(viewerId) as
+    | { name: string; handle: string; avatar_url: string; profile_complete: number; is_seed: number }
+    | undefined
+  if (!owner || owner.is_seed) throw new WorldError('Account not found', 404)
+  if (!owner.profile_complete)
+    throw new WorldError('Finish your player card before you list on the map', 403)
+
+  const id = uid('lst')
+  let obj: Studio | StreetPerformer | MusicShop
+  if (kind === 'studio') obj = buildStudio(id, viewerId, input)
+  else if (kind === 'shop') obj = buildShop(id, viewerId, input)
+  else if (kind === 'street') obj = buildStreet(id, viewerId, owner, input)
+  else throw new WorldError('Unknown listing kind')
+
+  const at = nowIso()
+  d.prepare(`INSERT INTO listings VALUES (?,?,?,?,?,?,?)`).run(
+    id,
+    viewerId,
+    kind,
+    'published',
+    JSON.stringify(obj),
+    at,
+    at,
+  )
+  return rowToListing({
+    id,
+    owner_id: viewerId,
+    kind,
+    status: 'published',
+    data: JSON.stringify(obj),
+    created_at: at,
+    updated_at: at,
+  })
+}
+
+function getListingRowOwned(viewerId: string, id: string): Record<string, unknown> {
+  const r = db().prepare(`SELECT * FROM listings WHERE id = ?`).get(id) as
+    | Record<string, unknown>
+    | undefined
+  if (!r) throw new WorldError('Listing not found', 404)
+  if (r.owner_id !== viewerId) throw new WorldError('That is not your listing', 403)
+  return r
+}
+
+/** Edit your own listing — re-runs the quality gate. */
+export function updateListing(
+  viewerId: string,
+  id: string,
+  input: Record<string, unknown>,
+): MapListing {
+  const d = db()
+  const row = getListingRowOwned(viewerId, id)
+  const kind = row.kind as ListingKind
+  const owner = d
+    .prepare(`SELECT name, handle, avatar_url FROM musicians WHERE id = ?`)
+    .get(viewerId) as { name: string; handle: string; avatar_url: string }
+  let obj: Studio | StreetPerformer | MusicShop
+  if (kind === 'studio') obj = buildStudio(id, viewerId, input)
+  else if (kind === 'shop') obj = buildShop(id, viewerId, input)
+  else obj = buildStreet(id, viewerId, owner, input)
+  const at = nowIso()
+  d.prepare(`UPDATE listings SET data = ?, updated_at = ? WHERE id = ?`).run(
+    JSON.stringify(obj),
+    at,
+    id,
+  )
+  return rowToListing({ ...row, data: JSON.stringify(obj), updated_at: at })
+}
+
+/** Pause (hide) or re-publish your own listing. */
+export function setListingStatus(viewerId: string, id: string, status: MapListing['status']) {
+  if (status !== 'published' && status !== 'paused') throw new WorldError('Bad status')
+  getListingRowOwned(viewerId, id)
+  db().prepare(`UPDATE listings SET status = ?, updated_at = ? WHERE id = ?`).run(status, nowIso(), id)
+}
+
+export function deleteListing(viewerId: string, id: string) {
+  getListingRowOwned(viewerId, id)
+  db().prepare(`DELETE FROM listings WHERE id = ?`).run(id)
+}
+
+/** Published listings (visible to everyone) plus the viewer's own (any status, for management). */
+function listingsForViewer(viewerId: string): MapListing[] {
+  const rows = db()
+    .prepare(`SELECT * FROM listings WHERE status = 'published' OR owner_id = ?`)
+    .all(viewerId) as Record<string, unknown>[]
+  return rows.map(rowToListing)
+}
+function publishedListings(): MapListing[] {
+  const rows = db().prepare(`SELECT * FROM listings WHERE status = 'published'`).all() as Record<
+    string,
+    unknown
+  >[]
+  return rows.map(rowToListing)
 }

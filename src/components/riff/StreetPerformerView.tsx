@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Clock, Heart, MapPin, Music2 } from 'lucide-react'
+import { Clock, Heart, MapPin, Music2, Sparkles } from 'lucide-react'
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
@@ -12,7 +12,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { formatTime, relativeDayLabel } from '@/lib/datetime'
 import { genreLabel, instrumentLabel } from '@/lib/labels'
-import { useRiffStore } from '@/lib/store'
+import { useCurrentUser, useListingById, useRiffStore } from '@/lib/store'
 import { getMusician, getStreetPerformer } from '@/mocks'
 
 /**
@@ -23,7 +23,13 @@ export function StreetPerformerView({ performerId }: { performerId: string }) {
   // Anchor all relative copy to the fixed scene clock, never Date.now().
   const now = useRiffStore((s) => s.now)
   const requireAccount = useRiffStore((s) => s.requireAccount)
-  const performer = getStreetPerformer(performerId)
+  // Resolve seeded fixtures first, then fall back to a member-published listing (same shape).
+  const seeded = getStreetPerformer(performerId)
+  const listing = useListingById(performerId)
+  const me = useCurrentUser()
+  const performer = seeded ?? listing?.street
+  const isMember = !seeded && Boolean(listing?.street)
+  const isOwner = isMember && listing?.ownerId === me?.id
   const [tipped, setTipped] = useState(false)
 
   if (!performer) {
@@ -94,6 +100,20 @@ export function StreetPerformerView({ performerId }: { performerId: string }) {
         </h1>
         {performer.handle && (
           <p className="mt-0.5 text-[13px] font-medium text-foreground-dim">{performer.handle}</p>
+        )}
+
+        {isMember && (
+          <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-border-subtle bg-secondary px-2.5 py-1 text-[11px] font-bold text-foreground-dim">
+            <Sparkles size={11} /> New listing
+          </span>
+        )}
+        {isOwner && (
+          <Link
+            href="/me/listings"
+            className="mt-2 text-[12px] font-medium text-map-street underline underline-offset-2"
+          >
+            This is your listing — manage it
+          </Link>
         )}
 
         <div className="mt-3">

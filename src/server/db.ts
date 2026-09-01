@@ -245,6 +245,15 @@ function migrate(d: Database.Database) {
       id TEXT PRIMARY KEY, reporter_id TEXT NOT NULL, target_musician_id TEXT, jam_id TEXT,
       reason TEXT NOT NULL, detail TEXT, created_at TEXT NOT NULL
     );
+
+    -- Member-created map listings (studio / street act / shop). The data column is the JSON of
+    -- the type-specific fields; the rendered id equals this row's id. Curation status lives here.
+    CREATE TABLE IF NOT EXISTS listings (
+      id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, kind TEXT NOT NULL, status TEXT NOT NULL,
+      data TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_listings_owner ON listings(owner_id);
+    CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
   `)
 }
 

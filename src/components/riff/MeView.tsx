@@ -29,6 +29,7 @@ import { getCurrentSeason, getLeaderboardEntry, listBandsFor } from '@/mocks'
 /** Destinations that exist as stubs until their own tickets land. */
 const SETTINGS_ROWS = [
   { label: 'Your bands', href: '/me/bands' },
+  { label: 'Your listings', href: '/me/listings' },
   { label: 'Saved musicians', href: '/me/saved' },
   { label: 'Past jams', href: '/jams?tab=past' },
   { label: 'Settings and privacy', href: '/me/settings' },

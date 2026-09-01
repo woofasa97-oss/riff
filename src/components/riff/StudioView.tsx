@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { CheckCircle2, ChevronLeft, Lock, MapPin, Share2, Star } from 'lucide-react'
+import { CheckCircle2, ChevronLeft, Lock, MapPin, Share2, Sparkles, Star } from 'lucide-react'
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
@@ -14,13 +14,21 @@ import { StatTile } from '@/components/ui/StatTile'
 import { cn } from '@/lib/cn'
 import { formatTime, relativeDayLabel } from '@/lib/datetime'
 import { directionsHref } from '@/lib/labels'
-import { useRiffStore } from '@/lib/store'
+import { useCurrentUser, useListingById, useRiffStore } from '@/lib/store'
 import { getMusician, getStudio } from '@/mocks'
 
 export function StudioView({ studioId }: { studioId: string }) {
   const now = useRiffStore((s) => s.now)
   const requireAccount = useRiffStore((s) => s.requireAccount)
-  const studio = getStudio(studioId)
+  // Resolve seeded fixtures first, then fall back to a member-published listing (same shape).
+  const seeded = getStudio(studioId)
+  const listing = useListingById(studioId)
+  const me = useCurrentUser()
+  const studio = seeded ?? listing?.studio
+  const isMember = !seeded && Boolean(listing?.studio)
+  const isOwner = isMember && listing?.ownerId === me?.id
+  // A brand-new member listing has no rating yet — show "New", not a broken-looking 0.0.
+  const isNew = isMember && studio?.reviewCount === 0
   const [selectedSlot, setSelectedSlot] = useState<string | undefined>(
     () => studio?.slots.find((s) => s.available)?.id,
   )
@@ -113,6 +121,11 @@ export function StudioView({ studioId }: { studioId: string }) {
       </div>
 
       <div className="px-4 pb-6 pt-5">
+        {isMember && (
+          <span className="mb-2 inline-flex items-center gap-1 rounded-full border border-border-subtle bg-secondary px-2.5 py-1 text-[11px] font-bold text-foreground-dim">
+            <Sparkles size={11} /> New listing
+          </span>
+        )}
         <h1 className="mb-1 font-serif text-[28px] font-bold leading-tight text-foreground">
           {studio.name}
         </h1>
@@ -120,17 +133,27 @@ export function StudioView({ studioId }: { studioId: string }) {
         <p className="text-[13px] font-medium text-foreground-dim">
           {kindLabel} · {studio.neighborhood} · {studio.distanceMi} mi
         </p>
+        {isOwner && (
+          <Link
+            href="/me/listings"
+            className="mt-2 inline-block text-[12px] font-medium text-map-studio underline underline-offset-2"
+          >
+            This is your listing — manage it
+          </Link>
+        )}
       </div>
 
       <div className="mb-6 flex justify-between gap-2.5 px-4">
         <StatTile
-          value={studio.rating}
+          value={isNew ? 'New' : studio.rating}
           label="Rating"
-          adornment={<Star size={10} className="text-[#facc15]" fill="currentColor" />}
+          adornment={
+            isNew ? undefined : <Star size={10} className="text-[#facc15]" fill="currentColor" />
+          }
           className="[&_span:first-child]:text-[18px]"
         />
         <StatTile
-          value={studio.reviewCount}
+          value={isNew ? 'New' : studio.reviewCount}
           label="Reviews"
           className="[&_span:first-child]:text-[18px]"
         />

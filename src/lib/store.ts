@@ -1,9 +1,25 @@
 'use client'
 
-import { createContext, createElement, useContext, useEffect, useRef, useState } from 'react'
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createStore, useStore, type StoreApi } from 'zustand'
-import { liveSessions as seedLive, battleChatSeed, getMusician, registerWorld } from '@/mocks'
+import {
+  liveSessions as seedLive,
+  battleChatSeed,
+  getMusician,
+  registerWorld,
+  listStudios,
+  listStreetPerformers,
+  listMusicShops,
+} from '@/mocks'
 import { GuestAccountSheet } from '@/components/riff/GuestAccountSheet'
 import { deriveStats, type ReputationContext } from '@/lib/reputation'
 import type { WorldSnapshot } from '@/lib/snapshot'
@@ -17,14 +33,19 @@ import type {
   Jam,
   JamRequest,
   LiveComment,
+  ListingKind,
+  MapListing,
   Message,
   Musician,
   MusicianStats,
+  MusicShop,
   Notification,
   OpenCallApplication,
   RecapVouch,
   Season,
   SessionRecap,
+  StreetPerformer,
+  Studio,
   Thread,
   Vouch,
   Wallet,
@@ -74,6 +95,8 @@ interface RiffState {
   season: Season
   competitionEntries: CompetitionEntry[]
   wallet: Wallet | null
+  /** Member-created map listings: published community ones + the viewer's own (any status). */
+  listings: MapListing[]
 
   // --- session-local (never persisted; Phase-6 flavor) ---
   followedBandIds: string[]
@@ -150,6 +173,11 @@ interface RiffState {
   markNotificationRead: (id: string) => Promise<void>
   markAllNotificationsRead: () => Promise<void>
   enterCompetition: () => Promise<CompetitionEntry>
+  /** List a studio / street act / shop on the map. Passes the quality gate then goes live. */
+  createListing: (kind: ListingKind, data: Record<string, unknown>) => Promise<MapListing>
+  updateListing: (id: string, data: Record<string, unknown>) => Promise<MapListing>
+  setListingStatus: (id: string, status: 'published' | 'paused') => Promise<void>
+  deleteListing: (id: string) => Promise<void>
 
   // --- session-local actions ---
   toggleFollowBand: (bandId: string) => void
@@ -178,6 +206,7 @@ function snapshotSlices(snapshot: WorldSnapshot) {
     season: snapshot.season,
     competitionEntries: snapshot.competitionEntries,
     wallet: snapshot.wallet,
+    listings: snapshot.listings ?? [],
   }
 }
 
@@ -224,6 +253,10 @@ const FEATURE_LABELS: Record<string, string> = {
   setRecordingConsent: 'publish a recording',
   updateProfile: 'build your profile',
   enterCompetition: 'enter the competition',
+  createListing: 'list on the map',
+  updateListing: 'edit your listing',
+  setListingStatus: 'update your listing',
+  deleteListing: 'remove your listing',
 }
 
 function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
@@ -332,6 +365,10 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
         await dispatch('markAllNotificationsRead', {})
       },
       enterCompetition: () => dispatch<CompetitionEntry>('enterCompetition', {}),
+      createListing: (kind, data) => dispatch<MapListing>('createListing', { kind, data }),
+      updateListing: (id, data) => dispatch<MapListing>('updateListing', { id, data }),
+      setListingStatus: (id, status) => dispatch<void>('setListingStatus', { id, status }),
+      deleteListing: (id) => dispatch<void>('deleteListing', { id }),
 
       toggleFollowBand: (bandId) => {
         if (!get().requireAccount('follow a band')) return
@@ -500,4 +537,57 @@ export function useMusicianStats(musicianId: string): MusicianStats | undefined 
 export function statsFor(musicianId: string, ctx: ReputationContext): MusicianStats | undefined {
   const musician = getMusician(musicianId)
   return musician ? deriveStats(musician, ctx) : undefined
+}
+
+// ---------------------------------------------------------------------------
+// Map listings — merge the seeded fixtures with published member listings so the map and the
+// detail pages show both, and give owners a view of their own listings for management.
+// ---------------------------------------------------------------------------
+
+/** Seeded studios + published community studios. */
+export function useMapStudios(): Studio[] {
+  const listings = useRiffStore((s) => s.listings)
+  const now = useRiffStore((s) => s.now)
+  return useMemo(() => {
+    const community = listings
+      .filter((l) => l.kind === 'studio' && l.status === 'published' && l.studio)
+      .map((l) => l.studio as Studio)
+    return [...listStudios(now), ...community]
+  }, [listings, now])
+}
+
+/** Seeded buskers + published community buskers. */
+export function useMapStreetPerformers(): StreetPerformer[] {
+  const listings = useRiffStore((s) => s.listings)
+  const now = useRiffStore((s) => s.now)
+  return useMemo(() => {
+    const community = listings
+      .filter((l) => l.kind === 'street' && l.status === 'published' && l.street)
+      .map((l) => l.street as StreetPerformer)
+    return [...listStreetPerformers(now), ...community]
+  }, [listings, now])
+}
+
+/** Seeded shops + published community shops. */
+export function useMapShops(): MusicShop[] {
+  const listings = useRiffStore((s) => s.listings)
+  return useMemo(() => {
+    const community = listings
+      .filter((l) => l.kind === 'shop' && l.status === 'published' && l.shop)
+      .map((l) => l.shop as MusicShop)
+    return [...listMusicShops(), ...community]
+  }, [listings])
+}
+
+/** The signed-in viewer's own listings (any status), for the management screen. */
+export function useMyListings(): MapListing[] {
+  const listings = useRiffStore((s) => s.listings)
+  const viewerId = useRiffStore((s) => s.viewerId)
+  return useMemo(() => listings.filter((l) => l.ownerId === viewerId), [listings, viewerId])
+}
+
+/** Whether an id belongs to a member listing the viewer can see (published, or their own). */
+export function useListingById(id: string): MapListing | undefined {
+  const listings = useRiffStore((s) => s.listings)
+  return useMemo(() => listings.find((l) => l.id === id), [listings, id])
 }

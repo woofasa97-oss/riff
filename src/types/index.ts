@@ -574,3 +574,31 @@ export interface MapEvent {
   goingCount: number
   tags: string[]
 }
+
+// ---------------------------------------------------------------------------
+// User-created map listings — members list their own studio, busker act, or shop, which the
+// map merges with the seeded world. Curated Airbnb-style: a listing passes an automated quality
+// gate at submit (required fields, sane values, a profile-complete owner), shows briefly as
+// "in review", then goes live. The owner's Riff reputation is the trust anchor behind it.
+// ---------------------------------------------------------------------------
+
+export type ListingKind = 'studio' | 'street' | 'shop'
+
+/** draft = not submitted · in_review = passed the gate, publishing · published = live · paused = owner hid it */
+export type ListingStatus = 'draft' | 'in_review' | 'published' | 'paused'
+
+/**
+ * A member-owned map listing: ownership + curation status wrapped around one of the typed place
+ * objects. The inner object's `id` equals this listing's `id`, so /studios/[id], /shops/[id] and
+ * /street/[id] resolve a community listing exactly like a seeded one.
+ */
+export interface MapListing {
+  id: string
+  ownerId: string
+  kind: ListingKind
+  status: ListingStatus
+  createdAt: string
+  studio?: Studio
+  street?: StreetPerformer
+  shop?: MusicShop
+}

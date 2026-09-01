@@ -2,6 +2,7 @@ import type {
   CompetitionEntry,
   Jam,
   JamRequest,
+  MapListing,
   Message,
   Musician,
   Notification,
@@ -45,4 +46,6 @@ export interface WorldSnapshot {
   competitionEntries: CompetitionEntry[]
   /** The viewer's Riff Credits — null for a guest. */
   wallet: Wallet | null
+  /** Member-created map listings: all published ones, plus the viewer's own (any status). */
+  listings: MapListing[]
 }

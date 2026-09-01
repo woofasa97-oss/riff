@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Bell, Eye, Lock, MapPin, Radio, Star } from 'lucide-react'
+import { Bell, Eye, Lock, MapPin, Plus, Radio, Star } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { TopBar } from '@/components/riff/TopBar'
 import { ZoneMap, type MapLayers } from '@/components/riff/ZoneMap'
@@ -13,7 +13,13 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/cn'
 import { formatDurationMinutes, formatTime, liveElapsedMinutes, relativeDayLabel } from '@/lib/datetime'
 import { compactCount, genreLabel, instrumentLabel, shortNeighborhood } from '@/lib/labels'
-import { useRiffStore, useUnreadNotificationCount } from '@/lib/store'
+import {
+  useMapShops,
+  useMapStreetPerformers,
+  useMapStudios,
+  useRiffStore,
+  useUnreadNotificationCount,
+} from '@/lib/store'
 import {
   getBand,
   getLiveSession,
@@ -23,9 +29,6 @@ import {
   getStudio,
   getVenue,
   listMapEvents,
-  listMusicShops,
-  listStreetPerformers,
-  listStudios,
   summariseAllZones,
   viewerZone,
   type ZoneFilter,
@@ -91,10 +94,12 @@ export function MapView() {
   const musicians = useRiffStore((s) => s.musicians)
   const now = useRiffStore((s) => s.now)
 
-  // The four public lists are static fixtures — safe for guests, read once.
-  const studios = useMemo(() => listStudios(), [])
-  const streetPerformers = useMemo(() => listStreetPerformers(), [])
-  const shops = useMemo(() => listMusicShops(), [])
+  // Studios, buskers and shops merge the seeded fixtures with published member listings, so a
+  // musician who lists their room, act or shop appears on the map beside the seeded ones.
+  const studios = useMapStudios()
+  const streetPerformers = useMapStreetPerformers()
+  const shops = useMapShops()
+  // Events stay a static fixture — safe for guests, read once.
   const events = useMemo(() => listMapEvents(), [])
 
   const filter: ZoneFilter = useMemo(
@@ -166,16 +171,26 @@ export function MapView() {
       header={
         <TopBar
           actions={
-            <Link
-              href="/notifications"
-              aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
-              className={cn('relative', iconButtonClass())}
-            >
-              <Bell size={16} />
-              {unread > 0 && (
-                <span className="absolute right-0 top-0 h-2 w-2 rounded-full border-2 border-card bg-accent" />
-              )}
-            </Link>
+            <>
+              {/* Unobtrusive way onto the map — list your own studio, act or shop. */}
+              <Link
+                href="/me/listings/new"
+                aria-label="List your studio, act or shop"
+                className={iconButtonClass()}
+              >
+                <Plus size={16} />
+              </Link>
+              <Link
+                href="/notifications"
+                aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+                className={cn('relative', iconButtonClass())}
+              >
+                <Bell size={16} />
+                {unread > 0 && (
+                  <span className="absolute right-0 top-0 h-2 w-2 rounded-full border-2 border-card bg-accent" />
+                )}
+              </Link>
+            </>
           }
         />
       }

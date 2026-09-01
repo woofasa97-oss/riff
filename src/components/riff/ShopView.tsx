@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Globe, Phone, Share2, Star } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Globe, Phone, Share2, Sparkles, Star } from 'lucide-react'
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
 import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -11,6 +11,7 @@ import { StatTile } from '@/components/ui/StatTile'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { cn } from '@/lib/cn'
 import { directionsHref } from '@/lib/labels'
+import { useCurrentUser, useListingById } from '@/lib/store'
 import { getMusicShop } from '@/mocks'
 import type { MusicShop } from '@/types'
 
@@ -22,7 +23,15 @@ const KIND_LABEL: Record<MusicShop['kind'], string> = {
 }
 
 export function ShopView({ shopId }: { shopId: string }) {
-  const shop = getMusicShop(shopId)
+  // Resolve seeded fixtures first, then fall back to a member-published listing (same shape).
+  const seeded = getMusicShop(shopId)
+  const listing = useListingById(shopId)
+  const me = useCurrentUser()
+  const shop = seeded ?? listing?.shop
+  const isMember = !seeded && Boolean(listing?.shop)
+  const isOwner = isMember && listing?.ownerId === me?.id
+  // A brand-new member listing has no rating yet — show "New", not a broken-looking 0.0.
+  const isNew = isMember && shop?.reviewCount === 0
 
   if (!shop) {
     return (
@@ -78,12 +87,25 @@ export function ShopView({ shopId }: { shopId: string }) {
       </div>
 
       <div className="px-4 pb-5 pt-5">
+        {isMember && (
+          <span className="mb-2 inline-flex items-center gap-1 rounded-full border border-border-subtle bg-secondary px-2.5 py-1 text-[11px] font-bold text-foreground-dim">
+            <Sparkles size={11} /> New listing
+          </span>
+        )}
         <h1 className="mb-1 font-serif text-[28px] font-bold leading-tight text-foreground">
           {shop.name}
         </h1>
         <p className="text-[13px] font-medium text-foreground-dim">
           {KIND_LABEL[shop.kind]} · {shop.neighborhood} · {shop.distanceMi} mi
         </p>
+        {isOwner && (
+          <Link
+            href="/me/listings"
+            className="mt-2 inline-block text-[12px] font-medium text-map-shop underline underline-offset-2"
+          >
+            This is your listing — manage it
+          </Link>
+        )}
 
         {/* Open/closed badge + the shop's own hours copy. */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -102,13 +124,15 @@ export function ShopView({ shopId }: { shopId: string }) {
 
       <div className="mb-6 flex gap-3 px-4">
         <StatTile
-          value={shop.rating}
+          value={isNew ? 'New' : shop.rating}
           label="Rating"
-          adornment={<Star size={10} className="text-[#facc15]" fill="currentColor" />}
+          adornment={
+            isNew ? undefined : <Star size={10} className="text-[#facc15]" fill="currentColor" />
+          }
           className="[&_span:first-child]:text-[18px]"
         />
         <StatTile
-          value={shop.reviewCount}
+          value={isNew ? 'New' : shop.reviewCount}
           label="Reviews"
           className="[&_span:first-child]:text-[18px]"
         />

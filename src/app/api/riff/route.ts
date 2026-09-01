@@ -87,6 +87,18 @@ export async function POST(req: Request) {
       case 'enterCompetition':
         result = world.enterCompetition(viewerId)
         break
+      case 'createListing':
+        result = world.createListing(viewerId, payload.kind, payload.data)
+        break
+      case 'updateListing':
+        result = world.updateListing(viewerId, payload.id, payload.data)
+        break
+      case 'setListingStatus':
+        world.setListingStatus(viewerId, payload.id, payload.status)
+        break
+      case 'deleteListing':
+        world.deleteListing(viewerId, payload.id)
+        break
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
     }
