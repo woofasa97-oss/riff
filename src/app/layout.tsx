@@ -72,8 +72,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
   return (
     <html lang="en" className={`${geist.variable} ${lora.variable}`}>
-      {/* max-w-md keeps the 375px column centred instead of stretching to desktop width. */}
-      <body className="relative mx-auto flex h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-background text-foreground antialiased">
+      {/* Mobile: a centred 375px column. Desktop (lg+): a wider centred app frame — AppShell turns
+          into a sidebar + content pane inside it, so the app uses the screen instead of stranding a
+          phone strip. The body stays a flex-COLUMN so pre-auth screens (welcome/login) are unchanged. */}
+      <body className="relative mx-auto flex h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-background text-foreground antialiased lg:max-w-[1040px] lg:border-x lg:border-border-subtle lg:shadow-2xl">
         {staleCookie ? (
           <SessionReset />
         ) : snapshot ? (

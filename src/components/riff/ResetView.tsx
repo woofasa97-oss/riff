@@ -119,7 +119,7 @@ export function ResetView() {
         </Link>
       </header>
 
-      <main className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-4">
+      <main className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-4 lg:mx-auto lg:w-full lg:max-w-md">
         {step === 'done' ? (
           <div className="text-center">
             <div className="mx-auto mb-4 mt-8 flex h-12 w-12 items-center justify-center rounded-full bg-success-soft text-success">

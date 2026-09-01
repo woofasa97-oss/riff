@@ -1,4 +1,4 @@
-import { BottomTabBar, type TabId } from '@/components/riff/BottomTabBar'
+import { BottomTabBar, SideNav, type TabId } from '@/components/riff/BottomTabBar'
 import { cn } from '@/lib/cn'
 
 export type Surface = 'light' | 'dark'
@@ -35,30 +35,40 @@ export function AppShell({
   background?: React.ReactNode
 }) {
   return (
-    <>
-      {surface === 'dark' && (
-        <div className="absolute inset-0 z-0 overflow-hidden bg-surface-dark">{background}</div>
-      )}
+    // Mobile: a column with the bottom tab bar. Desktop (lg+): a row with a left nav rail and the
+    // content pane filling the rest of the centred app frame.
+    <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+      {activeTab !== null && <SideNav activeTab={activeTab ?? undefined} liveIndicator={liveIndicator} />}
+
+      {/* Content pane — the positioning context for the dark surface and any bottom sheet, so
+          neither spills over the nav rail on desktop. */}
       <div
         className={cn(
-          'relative z-10 flex min-h-0 flex-1 flex-col',
+          'relative flex min-h-0 flex-1 flex-col lg:border-l lg:border-border-subtle',
           surface === 'dark' && 'text-white',
         )}
       >
-        {header}
-        <main className={cn('no-scrollbar min-h-0 flex-1 overflow-y-auto', mainClassName)}>
-          {children}
-        </main>
-        {footer}
+        {surface === 'dark' && (
+          <div className="absolute inset-0 z-0 overflow-hidden bg-surface-dark">{background}</div>
+        )}
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col">
+          {header}
+          <main className={cn('no-scrollbar min-h-0 flex-1 overflow-y-auto', mainClassName)}>
+            {children}
+          </main>
+          {footer}
+        </div>
       </div>
+
       {activeTab !== null && (
         <BottomTabBar
           activeTab={activeTab ?? undefined}
           liveIndicator={liveIndicator}
           surface={surface}
+          className="lg:hidden"
         />
       )}
-    </>
+    </div>
   )
 }
 

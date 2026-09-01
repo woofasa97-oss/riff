@@ -54,7 +54,7 @@ export function LoginView() {
         </Link>
       </header>
 
-      <main className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-4">
+      <main className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-4 lg:mx-auto lg:w-full lg:max-w-md">
         <h1 className="mb-2 font-serif text-[28px] font-bold leading-tight text-foreground">
           Welcome back
         </h1>

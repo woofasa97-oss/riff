@@ -56,12 +56,14 @@ export function BottomTabBar({
   activeTab,
   liveIndicator = false,
   surface = 'light',
+  className,
 }: {
   activeTab?: TabId
   /** The pink dot on LIVE, shown when something is broadcasting now. */
   liveIndicator?: boolean
   /** Live and Battle screens invert the bar — see docs/DESIGN-SYSTEM.md. */
   surface?: 'light' | 'dark'
+  className?: string
 }) {
   const pathname = usePathname()
   const dark = surface === 'dark'
@@ -72,6 +74,7 @@ export function BottomTabBar({
       className={cn(
         'pb-safe relative z-20 shrink-0 border-t backdrop-blur-md',
         dark ? 'border-white/10 bg-black/90' : 'border-border-subtle bg-card/95',
+        className,
       )}
     >
       <ul className="flex h-[64px] items-center justify-around px-2">
@@ -111,6 +114,65 @@ export function BottomTabBar({
                 <span className={cn('text-[10px]', active ? 'font-semibold' : 'font-medium')}>
                   {tab.label}
                 </span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
+  )
+}
+
+/**
+ * Desktop navigation rail — the same five destinations as the bottom bar, shown as a vertical
+ * left sidebar on large screens (the bottom bar is hidden there). Sentence-case labels, an active
+ * pill, and the live dot on LIVE. Kept light even on dark-surface screens: it's app chrome.
+ */
+export function SideNav({
+  activeTab,
+  liveIndicator = false,
+}: {
+  activeTab?: TabId
+  liveIndicator?: boolean
+}) {
+  const pathname = usePathname()
+  return (
+    <nav
+      aria-label="Primary"
+      className="hidden w-[220px] shrink-0 flex-col border-r border-border-subtle bg-card/50 px-3 py-5 lg:flex"
+    >
+      <Link
+        href="/map"
+        aria-label="Riff home"
+        className="mb-6 px-3 font-serif text-[24px] font-bold leading-none text-primary"
+      >
+        Riff
+      </Link>
+      <ul className="flex flex-col gap-1">
+        {TABS.map((tab) => {
+          const active = activeTab
+            ? activeTab === tab.id
+            : pathname === tab.href || pathname.startsWith(`${tab.href}/`)
+          const label = tab.label.charAt(0) + tab.label.slice(1).toLowerCase()
+          return (
+            <li key={tab.id}>
+              <Link
+                href={tab.href}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-[15px] transition-colors',
+                  active
+                    ? 'bg-[color:var(--hero-from)] font-semibold text-primary'
+                    : 'font-medium text-foreground-dim hover:bg-surface-muted hover:text-foreground',
+                )}
+              >
+                <span className="relative flex h-[22px] w-[22px] items-center justify-center">
+                  <TabIcon id={tab.id} active={active} dark={false} />
+                  {tab.id === 'live' && liveIndicator && (
+                    <span className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full border border-card bg-accent" />
+                  )}
+                </span>
+                <span>{label}</span>
               </Link>
             </li>
           )

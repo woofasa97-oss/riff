@@ -171,6 +171,14 @@
   }
 }
 
+/* On a wide screen the app is a centred frame; tint the space around it so the frame reads as an
+   app canvas rather than a strip floating on the page background. Mobile is untouched. */
+@media (min-width: 1024px) {
+  html {
+    background: color-mix(in srgb, var(--foreground) 8%, var(--background));
+  }
+}
+
 /* Respect the OS "reduce motion" setting: neutralise looping animations (the live/map pin pulse,
    skeleton shimmer) and long transitions, without removing the elements themselves. */
 @media (prefers-reduced-motion: reduce) {
