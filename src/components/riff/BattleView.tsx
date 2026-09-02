@@ -306,7 +306,9 @@ export function BattleView({ battleId }: { battleId: string }) {
     >
       <div className="flex flex-col gap-1 px-1">
         <h1 className="font-serif text-[24px] font-bold leading-tight text-white">
-          Battle of the Bands: {battle.round === 'final' ? 'Finals' : `${battle.round} finals`}
+          {battle.kind === 'casual'
+            ? 'Battle of the Bands'
+            : `Battle of the Bands: ${battle.round === 'final' ? 'Finals' : `${battle.round} finals`}`}
         </h1>
         <p className="text-[13px] font-medium text-white/50">{battle.stageLabel}</p>
         {/* Honesty note: watching and vote counts here are a preview sample, not a live tally. */}

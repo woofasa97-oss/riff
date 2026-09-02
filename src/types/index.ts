@@ -411,6 +411,12 @@ export interface Battle {
   /** "Stage 04 · Grand Ballroom vs. Warehouse 7" */
   stageLabel: string
   viewerCount?: number
+  /**
+   * 'bracket' = part of the season's single-elimination draw (default when absent). 'casual' = a
+   * free, unlimited head-to-head that isn't in the bracket — several can run live at once and are
+   * browsed from the Live grid, never shown as a bracket round.
+   */
+  kind?: 'bracket' | 'casual'
 }
 
 export interface LiveComment {
