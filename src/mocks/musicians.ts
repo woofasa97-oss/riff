@@ -1,4 +1,4 @@
-import type { Availability, AudioClip, Musician, Slot, Weekday } from '@/types'
+import type { Availability, Musician, Slot, Weekday } from '@/types'
 
 /** The logged-in user. See docs/SPEC.md §2. */
 export const CURRENT_USER_ID = 'marcus-chen'
@@ -27,19 +27,8 @@ function availability(note: string, ...days: string[]): Availability {
  * (docs/SPEC.md §6 stubs the audio players), but the shape has to be stable across renders
  * or the server and client markup diverge.
  */
-function waveform(seed: number, bars = 32): number[] {
-  const peaks: number[] = []
-  let x = seed
-  for (let i = 0; i < bars; i++) {
-    x = (x * 1103515245 + 12345) % 2147483648
-    peaks.push(0.25 + (x / 2147483648) * 0.75)
-  }
-  return peaks
-}
-
-function clip(id: string, durationSec: number, seed: number, recordedAt: string): AudioClip {
-  return { id, url: `/mock/clips/${id}.m4a`, durationSec, waveform: waveform(seed), recordedAt }
-}
+// Seed musicians ship WITHOUT clips: a play button must play real recorded audio, and no seed
+// audio exists. Real members record and upload theirs; seeds honestly show "no clip yet".
 
 export const musicians: Musician[] = [
   {
@@ -55,7 +44,6 @@ export const musicians: Musician[] = [
     distanceMi: 0,
     travelRadiusMi: 3,
     bio: 'Pocket first. Happiest on a Rhodes-and-drums duo that turns into a quartet by 10pm.',
-    clip: clip('clip-marcus', 24, 7, '2026-08-02T18:20:00-04:00'),
     // Thu/Fri/Sat evenings plus Sunday afternoon — the days his fixture jams actually fall on.
     availability: availability(
       'Usually free evenings after 7 PM',
@@ -85,7 +73,6 @@ export const musicians: Musician[] = [
     distanceMi: 3.4,
     travelRadiusMi: 6,
     bio: 'Bassist, ten years in. Looking for a band that rehearses properly and plays out.',
-    clip: clip('clip-sarah', 45, 11, '2026-07-28T20:05:00-04:00'),
     availability: availability(
       'Weeknights and Sunday afternoons',
       '--e',
@@ -114,7 +101,6 @@ export const musicians: Musician[] = [
     distanceMi: 1.1,
     travelRadiusMi: 4,
     bio: 'Rhodes, Juno, and a very heavy gig bag. I will always bring the keys.',
-    clip: clip('clip-leo', 24, 19, '2026-08-11T21:40:00-04:00'),
     availability: availability('Late nights are best', '', '--e', '--e', '', '--e', '--e', ''),
     availableTonight: true,
     verified: false,
@@ -134,7 +120,6 @@ export const musicians: Musician[] = [
     distanceMi: 2.2,
     travelRadiusMi: 5,
     bio: 'Front of the stage. I write fast and I hate a long soundcheck.',
-    clip: clip('clip-nina', 30, 23, '2026-08-19T19:15:00-04:00'),
     availability: availability(
       'Free most evenings, never mornings',
       '--e',
@@ -163,7 +148,6 @@ export const musicians: Musician[] = [
     distanceMi: 2.8,
     travelRadiusMi: 4,
     bio: 'Comping is a personality. Semi-hollow, small amp, no pedalboard essays.',
-    clip: clip('clip-theo', 24, 31, '2026-08-05T17:50:00-04:00'),
     availability: availability(
       'Afternoons, and Thursday nights',
       'ma-',
@@ -192,7 +176,6 @@ export const musicians: Musician[] = [
     distanceMi: 3.9,
     travelRadiusMi: 8,
     bio: 'Tenor. Reads well, plays louder than that suggests.',
-    clip: clip('clip-ruby', 24, 37, '2026-08-16T22:10:00-04:00'),
     availability: availability(
       'Weekends, plus Wednesday evenings',
       '',
@@ -221,7 +204,6 @@ export const musicians: Musician[] = [
     distanceMi: 1.4,
     travelRadiusMi: 3,
     bio: 'Loud shoegaze textures, quiet in rehearsal.',
-    clip: clip('clip-david', 24, 41, '2026-08-09T20:00:00-04:00'),
     availability: availability(
       'Evenings, except Mondays',
       '',
@@ -250,7 +232,6 @@ export const musicians: Musician[] = [
     distanceMi: 0.7,
     travelRadiusMi: 2,
     bio: 'Chords over chops. Studying Robert Glasper like it is a degree.',
-    clip: clip('clip-priya', 24, 43, '2026-08-21T18:30:00-04:00'),
     availability: availability('Sunday afternoons are sacred', '', '-a-', '', '-ae', '', '', 'ma-'),
     availableTonight: false,
     verified: false,
@@ -270,7 +251,6 @@ export const musicians: Musician[] = [
     distanceMi: 2.6,
     travelRadiusMi: 5,
     bio: 'Modular rig, disciplined patching, terrible at packing down.',
-    clip: clip('clip-jonah', 24, 47, '2026-08-13T23:00:00-04:00'),
     availability: availability('Late Fri and Sat', '', '', '--e', '', '--e', '--e', ''),
     availableTonight: true,
     verified: false,
@@ -290,7 +270,6 @@ export const musicians: Musician[] = [
     distanceMi: 3.1,
     travelRadiusMi: 7,
     bio: 'Congas, cajón, and an opinion about click tracks.',
-    clip: clip('clip-camille', 24, 53, '2026-08-18T19:45:00-04:00'),
     availability: availability(
       'Most evenings, all day Saturday',
       '--e',
@@ -319,7 +298,6 @@ export const musicians: Musician[] = [
     distanceMi: 4.2,
     travelRadiusMi: 6,
     bio: 'Nylon string, close mic, songs that are mostly one long bridge.',
-    clip: clip('clip-ana', 24, 59, '2026-08-07T16:20:00-04:00'),
     availability: availability('Weekday afternoons', '-a-', '-a-', '-a-', '', '-a-', '', ''),
     availableTonight: false,
     verified: false,
@@ -339,7 +317,6 @@ export const musicians: Musician[] = [
     distanceMi: 0.9,
     travelRadiusMi: 4,
     bio: 'Upright and P-bass. I will play half as many notes as you expect.',
-    clip: clip('clip-miles', 24, 61, '2026-08-23T21:05:00-04:00'),
     availability: availability('Thursday through Sunday', '', '', '', '--e', '-ae', '-ae', 'ma-'),
     availableTonight: true,
     verified: true,
@@ -359,7 +336,6 @@ export const musicians: Musician[] = [
     distanceMi: 1.6,
     travelRadiusMi: 6,
     bio: 'Loud, fast, and on the grid. Ten years of covers pays for the originals.',
-    clip: clip('clip-ivo', 24, 67, '2026-08-12T20:15:00-04:00'),
     availability: availability(
       'Weekends only, but all weekend',
       '',
@@ -388,7 +364,6 @@ export const musicians: Musician[] = [
     distanceMi: 2.9,
     travelRadiusMi: 5,
     bio: 'Writes hooks on the train. Will not sing over a bad drum sound.',
-    clip: clip('clip-fay', 24, 71, '2026-08-24T18:40:00-04:00'),
     availability: availability(
       'Evenings, Wednesday through Saturday',
       '',

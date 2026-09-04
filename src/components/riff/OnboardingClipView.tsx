@@ -8,6 +8,7 @@ import { WaveformPlayer } from '@/components/riff/WaveformPlayer'
 import { Card } from '@/components/ui/Card'
 import { cn } from '@/lib/cn'
 import { formatClock } from '@/lib/labels'
+import { captureSupported, peaksFromBlob, startCapture, type ClipCapture } from '@/lib/clipAudio'
 import { useOnboardingStore } from '@/lib/onboarding-store'
 import { useRiffStore, type ProfileOverrides } from '@/lib/store'
 import { peaksFor } from '@/lib/waveform'
@@ -22,20 +23,22 @@ const RING_CIRC = 2 * Math.PI * RING_RADIUS
 type Phase = 'idle' | 'recording' | 'recorded'
 
 /**
- * Step 4 of 4 — the 24-second first clip. Capture is real where the browser grants a mic
- * (MediaRecorder keeps the stream honest), but real audio is out of scope for v1
- * (docs/SPEC.md §6): the recording we keep is only { durationSec, peaks }, and playback is
- * the same simulated WaveformPlayer the rest of the app uses. Both Save and Skip commit the
- * whole onboarding draft — the clip is the only thing Skip leaves out.
+ * Step 4 of 4 — the 24-second first clip. Capture is REAL: the take is kept as a Blob, its
+ * waveform is decoded from those bytes, and Save uploads them to /api/riff/clip so the clip
+ * on the new card plays exactly what was recorded. No mic access means Skip is the only path —
+ * nothing simulated ever lands on a profile. Both Save and Skip commit the whole onboarding
+ * draft — the clip is the only thing Skip leaves out.
  */
 export function OnboardingClipView() {
   const router = useRouter()
   const clip = useOnboardingStore((s) => s.clip)
   const setClip = useOnboardingStore((s) => s.setClip)
   const applyOnboarding = useRiffStore((s) => s.applyOnboarding)
+  const uploadClip = useRiffStore((s) => s.uploadClip)
 
   const [busy, setBusy] = useState(false)
   const [commitError, setCommitError] = useState<string | null>(null)
+  const [micError, setMicError] = useState<string | null>(null)
 
   // Returning to this step with a draft take intact resumes on the playback state.
   const [phase, setPhase] = useState<Phase>(() =>
@@ -43,8 +46,7 @@ export function OnboardingClipView() {
   )
   const [elapsed, setElapsed] = useState(0)
   const startedAtRef = useRef(0)
-  const recorderRef = useRef<MediaRecorder | null>(null)
-  const streamRef = useRef<MediaStream | null>(null)
+  const captureRef = useRef<ClipCapture | null>(null)
   /** getUserMedia in flight — the permission dialog must not arm two recorders. */
   const armingRef = useRef(false)
   /** Set the moment either footer action fires; everything after is a no-op. */
@@ -52,12 +54,8 @@ export function OnboardingClipView() {
   const mountedRef = useRef(true)
 
   function releaseCapture() {
-    if (recorderRef.current && recorderRef.current.state !== 'inactive') {
-      recorderRef.current.stop()
-    }
-    recorderRef.current = null
-    streamRef.current?.getTracks().forEach((t) => t.stop())
-    streamRef.current = null
+    captureRef.current?.cancel()
+    captureRef.current = null
   }
 
   useEffect(() => {
@@ -70,24 +68,25 @@ export function OnboardingClipView() {
 
   async function startRecording() {
     if (phase === 'recording' || armingRef.current || doneRef.current) return
+    setMicError(null)
+    // No mic, no clip — Skip is the honest path; a simulated take would fabricate a recording.
+    if (!captureSupported()) {
+      setMicError('Recording needs a microphone this browser can use — you can skip for now.')
+      return
+    }
     armingRef.current = true
     try {
-      // Real capture when granted; a denial or missing device just means the timer alone
-      // simulates the take. Either way nothing recorded here is ever decoded.
-      if (typeof MediaRecorder !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        if (!mountedRef.current) {
-          stream.getTracks().forEach((t) => t.stop())
-          armingRef.current = false
-          return
-        }
-        streamRef.current = stream
-        const recorder = new MediaRecorder(stream)
-        recorder.start()
-        recorderRef.current = recorder
+      const capture = await startCapture()
+      if (!mountedRef.current) {
+        capture.cancel()
+        armingRef.current = false
+        return
       }
+      captureRef.current = capture
     } catch {
-      // Fall through to the simulated timer.
+      armingRef.current = false
+      setMicError('Allow microphone access to record — or skip and add a clip later.')
+      return
     }
     armingRef.current = false
     setClip(null)
@@ -97,17 +96,23 @@ export function OnboardingClipView() {
   }
 
   function stopRecording(seconds: number) {
-    releaseCapture()
+    const capture = captureRef.current
+    captureRef.current = null
     const durationSec = Math.min(MAX_SEC, Math.round(seconds))
     // A tap-and-regret take under a second is discarded rather than kept as a 0s clip —
     // which also keeps durationSec strictly positive everywhere it divides.
-    if (durationSec < 1) {
+    if (!capture || durationSec < 1) {
+      capture?.cancel()
       setElapsed(0)
       setPhase('idle')
       return
     }
-    setClip({ durationSec, peaks: peaksFor(CLIP_SEED) })
-    setPhase('recorded')
+    void capture.stop().then(async (blob) => {
+      const peaks = await peaksFromBlob(blob).catch(() => peaksFor(CLIP_SEED))
+      if (!mountedRef.current) return
+      setClip({ durationSec, peaks, blob })
+      setPhase('recorded')
+    })
   }
 
   useEffect(() => {
@@ -161,18 +166,12 @@ export function OnboardingClipView() {
     if (draft.instruments.length > 0) overrides.instruments = draft.instruments
     if (draft.genres.length > 0) overrides.genres = draft.genres
     if (draft.intent) overrides.intent = draft.intent
-    if (saveClip && draft.clip) {
-      overrides.clip = {
-        id: 'clip-onboarding',
-        url: '/mock/clips/clip-onboarding.m4a',
-        durationSec: draft.clip.durationSec,
-        waveform: draft.clip.peaks,
-        // Client moment is fine here: the take was literally just recorded on this device.
-        recordedAt: new Date().toISOString(),
-      }
-    }
     try {
       await applyOnboarding(overrides)
+      // The clip is real recorded bytes and travels separately as an upload.
+      if (saveClip && draft.clip?.blob) {
+        await uploadClip(draft.clip.blob, draft.clip.durationSec, draft.clip.peaks)
+      }
     } catch (err) {
       // Re-arm both footer actions — the draft is intact, so the user can just retry.
       doneRef.current = false
@@ -191,10 +190,10 @@ export function OnboardingClipView() {
     <OnboardingShell
       step={4}
       title="Let them hear you"
-      subtitle="24 seconds is all it takes. Musicians with a clip get 3x more jam requests."
+      subtitle="24 seconds is all it takes. A short clip shows people how you actually sound."
       backHref="/onboarding/availability"
       continueLabel={busy ? 'Saving…' : 'Save clip and finish'}
-      continueDisabled={phase !== 'recorded' || !clip || busy}
+      continueDisabled={phase !== 'recorded' || !clip?.blob || busy}
       onContinue={() => void commit(true)}
       // While busy the doneRef guard makes skip a no-op — the shell has no disabled skip.
       skip={{ label: busy ? 'Saving…' : 'Skip for now', onSkip: () => void commit(false) }}
@@ -202,12 +201,7 @@ export function OnboardingClipView() {
       <Card className="mb-4 flex min-h-[280px] flex-col items-center justify-center p-6">
         {phase === 'recorded' && clip ? (
           <>
-            <WaveformPlayer
-              peaks={clip.peaks}
-              durationSec={clip.durationSec}
-              label="your first clip"
-              className="w-full"
-            />
+            <TakePreview clip={clip} />
             <div className="mt-6 flex items-start justify-center gap-8">
               <button type="button" onClick={reRecord} className="flex flex-col items-center gap-2">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full border border-border-subtle bg-card text-foreground transition-transform active:scale-90">
@@ -313,11 +307,38 @@ export function OnboardingClipView() {
         </div>
       </div>
 
-      {commitError && (
+      {(commitError ?? micError) && (
         <p role="alert" className="mt-3 text-center text-[13px] font-medium text-destructive">
-          {commitError}
+          {commitError ?? micError}
         </p>
       )}
     </OnboardingShell>
+  )
+}
+
+/** Plays the just-recorded take from its in-memory bytes; a blobless draft take shows a re-record hint. */
+function TakePreview({ clip }: { clip: { durationSec: number; peaks: number[]; blob?: Blob } }) {
+  const [url, setUrl] = useState<string | null>(null)
+  useEffect(() => {
+    if (!clip.blob) return
+    const u = URL.createObjectURL(clip.blob)
+    setUrl(u)
+    return () => URL.revokeObjectURL(u)
+  }, [clip.blob])
+  if (!clip.blob || !url) {
+    return (
+      <p className="text-center text-[13px] text-foreground-dim">
+        This draft take lost its audio — record it again to hear it.
+      </p>
+    )
+  }
+  return (
+    <WaveformPlayer
+      src={url}
+      peaks={clip.peaks}
+      durationSec={clip.durationSec}
+      label="your first clip"
+      className="w-full"
+    />
   )
 }

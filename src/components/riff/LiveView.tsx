@@ -2,16 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Eye, SendHorizontal, Share2, Star, X, Zap } from 'lucide-react'
+import { SendHorizontal, Share2, Star, X, Zap } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { TopBar } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
+import { DemoTagDark } from '@/components/ui/DemoTag'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/cn'
-import { formatDurationMinutes, liveElapsedMinutes } from '@/lib/datetime'
-import { compactCount } from '@/lib/labels'
 import { useRiffStore } from '@/lib/store'
 import { getBand, getLiveSession, getMusician, getMusicianByHandle, getVenue } from '@/mocks'
 
@@ -45,7 +44,6 @@ export function LiveView({ sessionId }: { sessionId: string }) {
   const [rateOpen, setRateOpen] = useState(false)
   const [stars, setStars] = useState(0)
   const [copied, setCopied] = useState(false)
-  const now = useRiffStore((s) => s.now)
   const chatBySession = useRiffStore((s) => s.liveChat)
   const sendLiveComment = useRiffStore((s) => s.sendLiveComment)
   const rateSession = useRiffStore((s) => s.rateSession)
@@ -115,9 +113,9 @@ export function LiveView({ sessionId }: { sessionId: string }) {
     )
   }
 
-  const elapsedMin = liveElapsedMinutes(now)
   const isFollowing = band ? followed.includes(band.id) : false
-  const myRating = ratings[session.id]
+  const rating = ratings[session.id]
+  const myRating = rating?.mine
 
   function handleSend(e: React.FormEvent) {
     e.preventDefault()
@@ -220,19 +218,12 @@ export function LiveView({ sessionId }: { sessionId: string }) {
               Live
             </span>
           </div>
-          <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
             <h1 className="truncate font-serif text-[17px] font-bold leading-tight text-white">
               {band?.name ?? 'Live session'}
             </h1>
-            <div
-              className="mt-0.5 flex items-center gap-1.5 text-white/70"
-              title="Preview — viewer activity is illustrative"
-            >
-              <Eye size={10} />
-              <span className="text-[12px] font-medium">
-                {compactCount(session.viewerCount)} watching
-              </span>
-            </div>
+            {/* The stream itself is seeded demo content — label it at the title. */}
+            <DemoTagDark />
           </div>
         </div>
         {band && (
@@ -249,30 +240,21 @@ export function LiveView({ sessionId }: { sessionId: string }) {
         )}
       </div>
 
-      {/* Honesty note: the watching count is a preview sample, not a live tally. */}
-      <p className="mt-1.5 px-4 text-[10px] text-white/40">
-        Preview — viewer activity is illustrative
-      </p>
-
       {/* GLASS PILLS */}
       <div className="mt-6 flex flex-col items-start gap-2 px-4">
-        <span className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur-md">
-          <Star size={12} className="text-[#facc15]" fill="currentColor" />
-          <span className="text-[13px] font-bold text-white">{session.rating}</span>
-          <span className="ml-1 text-[10px] uppercase tracking-wider text-white/50">
-            Session rating
+        {/* Rating shows only once at least one real rating is recorded — never the fixture value. */}
+        {rating && rating.count >= 1 && (
+          <span className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur-md">
+            <Star size={12} className="text-[#facc15]" fill="currentColor" />
+            <span className="text-[13px] font-bold text-white">{rating.avg.toFixed(1)}</span>
+            <span className="ml-1 text-[10px] uppercase tracking-wider text-white/50">
+              {rating.count === 1 ? '1 rating' : `${rating.count} ratings`}
+            </span>
           </span>
-        </span>
-        <span className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur-md">
-          <Zap size={12} className="text-primary" fill="currentColor" />
-          <span className="text-[13px] font-bold text-white">{session.reputationLabel}</span>
-          <span className="ml-1 text-[10px] uppercase tracking-wider text-white/50">
-            Reputation
-          </span>
-        </span>
+        )}
         {venue && (
           <span className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-[12px] text-white/80 backdrop-blur-md">
-            {venue.name} · started {formatDurationMinutes(elapsedMin)} ago
+            {venue.name}
           </span>
         )}
       </div>
@@ -299,7 +281,11 @@ export function LiveView({ sessionId }: { sessionId: string }) {
               className="mt-0.5 border border-white/20"
             />
             <div className="flex min-w-0 flex-col">
-              <span className="mb-0.5 text-[10px] font-medium text-white/50">{comment.handle}</span>
+              <span className="mb-0.5 flex items-center gap-1.5 text-[10px] font-medium text-white/50">
+                {comment.handle}
+                {/* Seeded atmosphere lines are labelled; real members' lines are not. */}
+                {comment.demo && <DemoTagDark />}
+              </span>
               <p className="text-[13px] leading-tight text-white">{comment.body}</p>
             </div>
           </div>

@@ -24,7 +24,7 @@ import {
   useUnreadNotificationCount,
 } from '@/lib/store'
 import { peaksFor } from '@/lib/waveform'
-import { getCurrentSeason, getLeaderboardEntry, listBandsFor } from '@/mocks'
+import { getCurrentSeason, listBandsFor } from '@/mocks'
 
 /** Destinations that exist as stubs until their own tickets land. */
 const SETTINGS_ROWS = [
@@ -76,8 +76,10 @@ function SignedInMe({ me }: { me: Musician }) {
   const unread = useUnreadNotificationCount()
   // A signed-in user always has a wallet; guarded null-safe in case a snapshot lands without one.
   const wallet = useRiffStore((s) => s.wallet)
-  // A real sign-up is unranked — the season card below only renders when an entry exists.
-  const entry = getLeaderboardEntry(me.id)
+  // Season rank comes from the server-computed leaderboard (recorded jams, recaps, vouches,
+  // battle votes) — never the fixture. No entry means genuinely not ranked yet.
+  const leaderboard = useRiffStore((s) => s.leaderboard)
+  const entry = leaderboard.find((e) => e.musicianId === me.id)
   const season = getCurrentSeason()
   const bands = listBandsFor(me.id)
   const setAvailableTonight = useRiffStore((s) => s.setAvailableTonight)
@@ -219,6 +221,7 @@ function SignedInMe({ me }: { me: Musician }) {
           </SectionHeader>
           <Card className="p-4">
             <WaveformPlayer
+              src={me.clip.url.startsWith('/api/') ? me.clip.url : undefined}
               peaks={me.clip.waveform ?? peaksFor(me.clip.id)}
               durationSec={me.clip.durationSec}
               label="your clip"
@@ -242,32 +245,39 @@ function SignedInMe({ me }: { me: Musician }) {
         <AvailabilityStrip availability={me.availability} />
       </section>
 
-      {/* THIS SEASON */}
-      {entry && (
-        <section className="mb-8 px-4">
-          <SectionHeader
-            action={
-              <Link href="/leaderboard" className="text-[12px] font-semibold text-primary">
-                View leaderboard
-              </Link>
-            }
-          >
-            This season
-          </SectionHeader>
+      {/* THIS SEASON — rank is computed server-side from recorded activity; an account with
+          none yet is honestly "not ranked", never given a fabricated number. */}
+      <section className="mb-8 px-4">
+        <SectionHeader
+          action={
+            <Link href="/leaderboard" className="text-[12px] font-semibold text-primary">
+              View leaderboard
+            </Link>
+          }
+        >
+          This season
+        </SectionHeader>
+        {entry ? (
           <Card className="bg-[color:var(--hero-from)] p-4">
             <div className="mb-1 font-serif text-[16px] font-bold text-foreground">
               #{entry.rank} in {season.city} {season.scene}
             </div>
             <div className="text-[13px] font-medium text-primary">
-              {entry.delta > 0
-                ? `+${entry.delta} spots this week`
-                : entry.delta < 0
-                  ? `${entry.delta} spots this week`
-                  : 'Holding steady this week'}
+              {entry.points.toLocaleString()} points earned from real sessions
             </div>
           </Card>
-        </section>
-      )}
+        ) : (
+          <Card className="p-4">
+            <div className="mb-1 font-serif text-[16px] font-bold text-foreground">
+              Not ranked yet
+            </div>
+            <div className="text-[13px] text-foreground-dim">
+              Play sessions, earn vouches, and vote in battles to appear on the {season.city}{' '}
+              leaderboard.
+            </div>
+          </Card>
+        )}
+      </section>
 
       {/* SETTINGS */}
       <section className="mb-8 px-4">

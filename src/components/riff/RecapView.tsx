@@ -362,11 +362,12 @@ export function RecapView({ jamId }: { jamId: string }) {
         </div>
       </section>
 
-      {recording && (
+      {recording && recording.url.startsWith('/api/') && (
         <section className="mb-8">
           <SectionHeader>Save the recording</SectionHeader>
           <Card className="p-5">
             <WaveformPlayer
+              src={recording.url}
               className="mb-4"
               peaks={peaksFor(recording.id)}
               durationSec={recording.durationSec}

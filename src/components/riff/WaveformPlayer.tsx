@@ -6,17 +6,21 @@ import { cn } from '@/lib/cn'
 import { formatClock } from '@/lib/labels'
 
 /**
- * Playback is simulated. docs/SPEC.md §6 puts real audio out of scope for v1, but a play button
- * that does nothing is a dead control — so this advances a real playhead against the clip's
- * duration and fills the waveform as it goes. Swap the timer for an <audio> element later.
+ * Plays the clip's actual audio. `src` is the recording uploaded via /api/riff/clip — the
+ * play button drives a real <audio> element and the playhead follows real currentTime, so the
+ * bars a listener watches fill are the sound they are hearing. Without a `src` there is no
+ * audio to play, so render nothing: a play button that plays nothing is a fabricated datum.
  */
 export function WaveformPlayer({
+  src,
   peaks,
   durationSec,
   label,
   className,
   compact = false,
 }: {
+  /** URL of the real recorded audio. No URL → no player. */
+  src?: string
   peaks: number[]
   durationSec: number
   label: string
@@ -26,32 +30,33 @@ export function WaveformPlayer({
 }) {
   const [playing, setPlaying] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const startedRef = useRef<{ at: number; from: number } | null>(null)
+  const [failed, setFailed] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
+  // Follow the element's real position while playing.
   useEffect(() => {
-    if (!playing) {
-      startedRef.current = null
-      return
-    }
-    startedRef.current = { at: Date.now(), from: elapsed }
+    if (!playing) return
     const id = window.setInterval(() => {
-      const started = startedRef.current
-      if (!started) return
-      const next = started.from + (Date.now() - started.at) / 1000
-      if (next >= durationSec) {
-        setElapsed(0)
-        setPlaying(false)
-      } else {
-        setElapsed(next)
-      }
+      const el = audioRef.current
+      if (el) setElapsed(el.currentTime)
     }, 100)
     return () => window.clearInterval(id)
-    // `elapsed` is intentionally not a dependency: it is the seek origin, captured once per
-    // play, and including it would restart the interval ten times a second.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, durationSec])
+  }, [playing])
 
-  const progress = durationSec > 0 ? elapsed / durationSec : 0
+  if (!src || failed) return null
+
+  const toggle = () => {
+    const el = audioRef.current
+    if (!el) return
+    if (el.paused) {
+      void el.play().catch(() => setFailed(true))
+    } else {
+      el.pause()
+    }
+  }
+
+  const total = durationSec > 0 ? durationSec : (audioRef.current?.duration ?? 0)
+  const progress = total > 0 ? elapsed / total : 0
 
   return (
     <div
@@ -61,9 +66,21 @@ export function WaveformPlayer({
         className,
       )}
     >
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="none"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => {
+          setPlaying(false)
+          setElapsed(0)
+        }}
+        onError={() => setFailed(true)}
+      />
       <button
         type="button"
-        onClick={() => setPlaying((p) => !p)}
+        onClick={toggle}
         aria-label={playing ? `Pause ${label}` : `Play ${label}`}
         className={cn(
           'flex shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90',
@@ -102,7 +119,7 @@ export function WaveformPlayer({
           compact ? 'text-[12px]' : 'text-[13px]',
         )}
       >
-        {formatClock(playing || elapsed > 0 ? Math.floor(elapsed) : durationSec)}
+        {formatClock(playing || elapsed > 0 ? Math.floor(elapsed) : Math.round(total))}
       </span>
     </div>
   )

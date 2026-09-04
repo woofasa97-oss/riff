@@ -6,13 +6,22 @@ import { SendHorizontal, Share2, Trophy, Users } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { TopBar } from '@/components/riff/TopBar'
 import { Button, buttonClass } from '@/components/ui/Button'
+import { DemoTagDark } from '@/components/ui/DemoTag'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { iconButtonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
 import { compactCount } from '@/lib/labels'
 import { useRiffStore } from '@/lib/store'
-import { ROUND_LABEL, getBand, getBattle, voteShare } from '@/mocks'
+import { ROUND_LABEL, getBand, getBattle } from '@/mocks'
 import type { Band, Battle } from '@/types'
+
+/** Percentages from a real tally {a, b}. An empty tally renders as an even split. */
+function tallyShare(tally: { a: number; b: number }): { a: number; b: number } {
+  const total = tally.a + tally.b
+  if (total === 0) return { a: 50, b: 50 }
+  const a = Math.round((tally.a / total) * 100)
+  return { a, b: 100 - a }
+}
 
 /** Handle colours cycle through the chart tokens, keyed by handle so they stay stable. */
 const HANDLE_TONES = ['text-accent', 'text-primary', 'text-[#facc15]', 'text-chart-3']
@@ -98,10 +107,11 @@ function RecapBandCard({ band, pct, won }: { band: Band; pct: number; won: boole
           {band.genre} · {band.city}
         </p>
       </div>
-      <span
-        className={cn('shrink-0 text-[13px] font-bold', won ? 'text-[#facc15]' : 'text-white/40')}
-      >
-        {pct}%
+      <span className="flex shrink-0 items-center gap-1.5">
+        <DemoTagDark />
+        <span className={cn('text-[13px] font-bold', won ? 'text-[#facc15]' : 'text-white/40')}>
+          {pct}%
+        </span>
       </span>
     </Link>
   )
@@ -173,7 +183,8 @@ function BattleRecap({
             {winner.name} beat {loser.name}{' '}
             <span className="font-bold text-white">
               {winPct}/{losePct}
-            </span>
+            </span>{' '}
+            <DemoTagDark className="align-middle" />
           </p>
         </div>
       ) : (
@@ -192,8 +203,11 @@ function BattleRecap({
       <div className="flex flex-col gap-2 rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3">
         <div className="flex items-center justify-between">
           <span className="text-[15px] font-bold text-primary">{share.a}%</span>
-          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/40">
-            Final result
+          <span className="flex items-center gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/40">
+              Final result
+            </span>
+            <DemoTagDark />
           </span>
           <span className="text-[15px] font-bold text-accent">{share.b}%</span>
         </div>
@@ -205,6 +219,9 @@ function BattleRecap({
           <div className="h-full bg-primary" style={{ width: `${share.a}%` }} />
           <div className="h-full bg-accent" style={{ width: `${share.b}%` }} />
         </div>
+        <p className="text-center text-[11px] text-white/45">
+          Baseline votes are demo — votes cast by members are real.
+        </p>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -228,11 +245,15 @@ export function BattleView({ battleId }: { battleId: string }) {
   const vote = useRiffStore((s) => s.voteInBattle)
   const battleChat = useRiffStore((s) => s.battleChat)
   const sendBattleComment = useRiffStore((s) => s.sendBattleComment)
+  const tallies = useRiffStore((s) => s.battleTallies)
 
   const battle: Battle | undefined = getBattle(battleId)
   const bandA = battle ? getBand(battle.bandAId) : undefined
   const bandB = battle ? getBand(battle.bandBId) : undefined
-  const share = useMemo(() => (battle ? voteShare(battle) : { a: 50, b: 50 }), [battle])
+  const share = useMemo(
+    () => tallyShare((battle && tallies[battle.id]) || { a: 0, b: 0 }),
+    [battle, tallies],
+  )
 
   if (!battle || !bandA || !bandB) {
     return (
@@ -286,19 +307,9 @@ export function BattleView({ battleId }: { battleId: string }) {
             ) : undefined
           }
           actions={
-            <>
-              {battle.viewerCount !== undefined && (
-                <span className="flex items-center gap-1.5 rounded-full border border-white/5 bg-white/[0.12] px-3 py-1.5 backdrop-blur-md">
-                  <Users size={10} className="text-white/80" />
-                  <span className="text-[12px] font-medium text-white/90">
-                    {compactCount(battle.viewerCount)} watching
-                  </span>
-                </span>
-              )}
-              <span className={cn(iconButtonClass('dark'), 'pointer-events-none opacity-60')}>
-                <Share2 size={14} />
-              </span>
-            </>
+            <span className={cn(iconButtonClass('dark'), 'pointer-events-none opacity-60')}>
+              <Share2 size={14} />
+            </span>
           }
         />
       }
@@ -311,10 +322,6 @@ export function BattleView({ battleId }: { battleId: string }) {
             : `Battle of the Bands: ${battle.round === 'final' ? 'Finals' : `${battle.round} finals`}`}
         </h1>
         <p className="text-[13px] font-medium text-white/50">{battle.stageLabel}</p>
-        {/* Honesty note: watching and vote counts here are a preview sample, not a live tally. */}
-        <p className="mt-0.5 text-[11px] text-white/40">
-          Preview — watching and vote counts are illustrative.
-        </p>
       </div>
 
       <ChallengerCard
@@ -329,7 +336,10 @@ export function BattleView({ battleId }: { battleId: string }) {
       <div className="flex flex-col gap-2 px-2 py-2">
         <div className="flex items-center justify-between px-1">
           <span className="text-[15px] font-bold text-primary">{share.a}%</span>
-          <span className="text-[12px] font-bold italic text-white/40">VS</span>
+          <span className="flex items-center gap-1.5">
+            <span className="text-[12px] font-bold italic text-white/40">VS</span>
+            <DemoTagDark />
+          </span>
           <span className="text-[15px] font-bold text-accent">{share.b}%</span>
         </div>
         <div
@@ -340,12 +350,11 @@ export function BattleView({ battleId }: { battleId: string }) {
           <div className="h-full bg-primary transition-all" style={{ width: `${share.a}%` }} />
           <div className="h-full bg-accent transition-all" style={{ width: `${share.b}%` }} />
         </div>
-        {myVote && (
-          <p className="text-center text-[12px] text-white/60">
-            Your vote for {myVote === 'A' ? bandA.name : bandB.name} is in — one vote each in this
-            preview tally.
-          </p>
-        )}
+        <p className="text-center text-[11px] text-white/45">
+          {myVote
+            ? `Your vote for ${myVote === 'A' ? bandA.name : bandB.name} is in and counted — the baseline is demo.`
+            : 'Baseline votes are demo — your vote is real and counted.'}
+        </p>
       </div>
 
       <ChallengerCard
@@ -369,6 +378,7 @@ export function BattleView({ battleId }: { battleId: string }) {
                 <span className={cn('mr-1 text-[11px] font-semibold', toneFor(line.handle))}>
                   {line.handle}
                 </span>
+                {line.demo && <DemoTagDark className="mr-1 align-middle" />}
                 <span className="text-[13px] text-white/90">{line.body}</span>
               </div>
             ))}

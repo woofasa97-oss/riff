@@ -17,7 +17,7 @@ export function isEntered(entries: CompetitionEntry[], competitorId: string): bo
 
 /** A seed act (fixture musician) vs. a real entrant, by avatar origin. */
 export function isSeedCompetitor(musician: Musician | undefined): boolean {
-  return Boolean(musician?.avatarUrl.startsWith('/mock/'))
+  return Boolean(musician?.isSeed)
 }
 
 export const SEASON_STATUS_LABEL: Record<Season['status'], string> = {

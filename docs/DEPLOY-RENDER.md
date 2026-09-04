@@ -1,20 +1,35 @@
 # Deploying to Render
 
-`render.yaml` at the repo root is a Blueprint. v1 is a **single Node web service** running the
-Next.js app — no database and no API, because all data comes from fixtures in `src/mocks/`.
+`render.yaml` at the repo root is a Blueprint: a **single Node web service** (`riff-web`) running
+the Next.js app, with **SQLite on a persistent disk**. There is no separate database service and
+no separate API — the app's own API routes talk to `better-sqlite3` in-process.
 
 > If you are looking for the Postgres + Express + Prisma blueprint, that belongs to a different,
 > older Riff scaffold. It does not match this repo's architecture — see `CLAUDE.md`.
+
+## The shape of the deploy
+
+| Setting | Value | Why |
+|---|---|---|
+| `plan` | `starter` | Paid tier is **required**: the free tier has no persistent disks (every deploy would wipe all accounts) and sleeps after ~15 minutes idle. Durability is a launch blocker, not a nice-to-have. |
+| `disk` | `riff-data`, mounted at `/var/data`, 1 GB | This is where the SQLite database lives. It is the only stateful thing in the deploy — everything users create (accounts, jams, messages, recaps, reputation) is in this one file. |
+| `RIFF_DB_PATH` | `/var/data/riff.db` | Points the app at the disk. Without it, SQLite would land on the ephemeral project filesystem and reset on every deploy. |
+| `autoDeploy` | `false` | Deploys are deliberate. Push freely; ship from the dashboard (**Manual Deploy → Deploy latest commit**) when you mean it. |
+| `RESEND_API_KEY` | secret (`sync: false`) | Set the value in the Render dashboard, never in the repo. See below. |
 
 ## First deploy
 
 1. Push this repo to GitHub.
 2. Render dashboard → **New → Blueprint** → select the repo → **Apply**.
-3. Render creates one service, `riff-web`, and gives you `https://riff-web.onrender.com`.
+3. Render creates `riff-web` with the `riff-data` disk attached and prompts for the one secret
+   env var (`RESEND_API_KEY` — you can leave it empty at first; see below).
+4. You get `https://riff-web.onrender.com`.
 
-There are no environment variables to fix up by hand and nothing to seed. That is the whole
-benefit of the mocks-only v1 — the first deploy either works or fails on the build, with no
-half-configured middle state.
+**On first boot** the app creates `/var/data/riff.db` and seeds it **once** from the fixtures in
+`src/mocks/` — the demo world, with every timestamp shifted so the scene starts "today". Real
+sign-ups join that world. Seed musicians are flagged (`isSeed`) and have no login. Because the
+database is on the disk, this seeding happens exactly once: later deploys find the existing file
+and leave it alone. **Data survives deploys.**
 
 ## What runs on each deploy
 
@@ -23,8 +38,58 @@ half-configured middle state.
 | Build | `npm ci --include=dev && npm run build` |
 | Start | `npm run start` → `next start -p ${PORT:-3000}` |
 
-Verified locally against a clean `node_modules`: build succeeds and the server answers `200` on
-`PORT=10000`, which is the port Render injects.
+## The boot guard: unwritable disk fails the deploy
+
+The server **refuses to boot** if `RIFF_DB_PATH` is set but the path is not writable — for
+example the disk is missing, detached, or mis-mounted (`src/server/db.ts`). It throws:
+
+```
+Riff refuses to start: RIFF_DB_PATH=/var/data/riff.db is not writable.
+Fix the disk mount rather than silently serving an ephemeral database.
+```
+
+This is deliberate. The failure mode it prevents is worse than downtime: silently booting a
+fresh, empty, ephemeral database — users could sign up, create jams, and lose everything on the
+next deploy.
+
+**How it shows up in Render:** the deploy's **Logs** show a
+`[riff] could not open database at /var/data/riff.db: …` error followed by the
+`Riff refuses to start` throw, the process exits, the health check never passes, and the deploy
+is marked **failed**. Render keeps the **last healthy release** serving traffic, so existing
+users see the old version, not an empty app. To fix it: check that the `riff-data` disk exists
+and is mounted at `/var/data` on the service (dashboard → riff-web → **Disks**), then redeploy.
+
+Locally, where `RIFF_DB_PATH` is unset, the app defaults to `./data/riff.db` (gitignored) and
+may fall back to the OS temp dir with a logged warning — ephemerality is the stated deal only
+when the variable is not configured.
+
+## RESEND_API_KEY (password-recovery email)
+
+Signup collects an optional recovery email; reset codes are delivered by email via Resend
+(`src/server/email.ts`). The key is declared in `render.yaml` with `sync: false`, which means
+**the value lives only in the Render dashboard**:
+
+1. Create an API key at [resend.com](https://resend.com).
+2. Render dashboard → riff-web → **Environment** → set `RESEND_API_KEY` → **Save** (this
+   triggers a restart; with `autoDeploy: false` nothing else redeploys).
+3. Once you have a verified sending domain, also add `RIFF_EMAIL_FROM` in the dashboard, e.g.
+   `Riff <no-reply@yourdomain.com>`.
+
+Until the key is set, reset codes are issued but not delivered anywhere — accounts without a
+working email path cannot self-recover. There is **no preview backdoor**: codes are never
+returned over HTTP, and the reset response is identical whether or not the account exists, so
+usernames cannot be enumerated. A reset always requires BOTH the username AND the account's
+matching recovery email — a username alone can never reset an account.
+
+## Verify after deploy
+
+Run this checklist against the live URL after every meaningful deploy:
+
+1. **Sign up** with a fresh username; you land in the app with a real account.
+2. **Post a jam** (an open call is fine); it appears in the feed.
+3. **Redeploy** from the dashboard (Manual Deploy → Deploy latest commit).
+4. **Sign back in** — your account still exists and the jam is **still there**. If it is not,
+   the database is not on the disk: check `RIFF_DB_PATH` and the disk mount before anything else.
 
 ## Gotchas that will actually bite
 
@@ -38,28 +103,46 @@ Verified locally against a clean `node_modules`: build succeeds and the server a
   keep it that way.
 - **Bind to `$PORT`.** Render sets it (10000 by default). The `start` script reads it. A
   hardcoded `next start` on port 3000 would pass the build and then fail the health check.
-- **Free services sleep** after ~15 minutes idle; the next request takes 30–60s to wake. Fine
-  for review, not for a user test.
+- **One instance only.** SQLite is per-process. Never scale `riff-web` horizontally; when that
+  day comes, the schema is written to translate 1:1 to Postgres (`docs/DATA-MODEL.md`).
 - **Node version is pinned** to 22 via `NODE_VERSION`, and `engines` in `package.json` says
   `>=20 <23`. Change both together.
+- **`autoDeploy` is off.** A push to `main` does NOT ship. If "why isn't my change live"
+  ever comes up, this is why — deploy from the dashboard.
 - **`reference/` ships in the deploy.** It is ~1.1MB of static HTML that Next never serves and
   never bundles, so it costs build time only. If that ever matters, add it to `.dockerignore` or
   move the pack to its own branch — do not delete it.
 
-## When the API arrives
+## Accounts and secrets
 
-Add the database and the API service to `render.yaml` alongside `riff-web`, and wire
-`NEXT_PUBLIC_API_URL` with `fromService`. Two things to know before you do:
+Riff has real username + password accounts. Sessions are random tokens stored hashed in the
+database, so there is no signing key to manage; passwords are scrypt-hashed with per-user salts.
+The only secret the deploy needs is `RESEND_API_KEY` (above).
 
-- Render's `property: host` yields a bare hostname (`riff-api.onrender.com`), not an origin.
-  Anything that needs a scheme must add `https://` itself, or you set the full value by hand.
-- `NEXT_PUBLIC_*` is inlined at **build** time. Changing it requires a rebuild of `riff-web`,
-  not a restart.
+## Guest mode
+
+The app is browsable without an account. A signed-out visitor gets a read-only "guest snapshot"
+(public musicians, open calls, completed history, the competition, the map — no private data,
+no addresses). `middleware.ts` lets guests roam; the store gates every ACTION behind sign-up
+(the `requireAccount` prompt), and the API refuses any mutation without a session. So guest
+mode is safe by construction: the client makes browsing pleasant, the server enforces the wall.
+
+## The competition and Riff Credits (mock currency)
+
+The season is a paid competition — pay an entry fee to enter, the prize pool is base + all fees,
+top places split it at season end into the winners' wallets. **Riff Credits are mock money.**
+There is no payment processor, no real cash, and nothing collects card details — new accounts
+are simply granted a starting balance (`SIGNUP_GRANT_CREDITS`). This is deliberate: it lets
+people try the pay-to-enter / win-a-prize loop end to end without any real-money surface. If
+Riff ever takes real entry fees, that is a separate, regulated build (payments, KYC, payouts)
+and must not reuse this mock ledger as-is. The wallet lives in the `wallets` / `wallet_txns`
+tables; entries and payouts in `competition_entries`; settlement is in `settleSeason`
+(src/server/world.ts), which currently ranks by entry order as a stand-in for real bracket
+results.
 
 ## Custom domain
 
-Add it on `riff-web` in the Render dashboard. Nothing else in this repo needs to change while
-v1 is mocks-only.
+Add it on `riff-web` in the Render dashboard. Nothing else in this repo needs to change.
 
 ## Map tiles
 
@@ -84,59 +167,3 @@ OSM's default styling back in line with the rest of the app.
 **What never changes:** the map renders neighbourhoods, never people. `MapZone.center` is the
 only geography in the data, and musicians carry no coordinates at all — see `src/lib/privacy.ts`
 and `docs/SPEC.md` §5.2.
-
-## Accounts and the database
-
-Riff now has real username + password accounts. State lives in **SQLite** via `better-sqlite3`
-at `RIFF_DB_PATH` (default `./data/riff.db`, gitignored; `/var/data/riff.db` on Render). On
-first boot the fixture world from `src/mocks/` is seeded in — with every timestamp shifted so
-the demo scene starts "today" — and real sign-ups join it. Seed musicians are flagged and have
-no login.
-
-Three operational facts:
-
-1. **One instance only.** SQLite is per-process. Never scale `riff-web` horizontally; when
-   that day comes, the schema is written to translate 1:1 to Postgres (docs/DATA-MODEL.md).
-2. **Durability needs a disk.** On the free plan the filesystem — and therefore every account —
-   resets on each deploy. Attach the commented-out `disk:` block in `render.yaml` (paid) to
-   keep accounts. Fine to skip while just trying the app with friends.
-3. **No secrets to configure.** Sessions are random tokens stored hashed in the database, so
-   there is no signing key to manage. Passwords are scrypt-hashed with per-user salts.
-
-## Guest mode
-
-The app is browsable without an account. A signed-out visitor gets a read-only "guest snapshot"
-(public musicians, open calls, completed history, the competition, the map — no private data,
-no addresses). `middleware.ts` lets guests roam; the store gates every ACTION behind sign-up
-(the `requireAccount` prompt), and the API refuses any mutation without a session. So guest
-mode is safe by construction: the client makes browsing pleasant, the server enforces the wall.
-
-## The competition and Riff Credits (mock currency)
-
-The season is a paid competition — pay an entry fee to enter, the prize pool is base + all fees,
-top places split it at season end into the winners' wallets. **Riff Credits are mock money.**
-There is no payment processor, no real cash, and nothing collects card details — new accounts
-are simply granted a starting balance (`SIGNUP_GRANT_CREDITS`). This is deliberate: it lets
-people try the pay-to-enter / win-a-prize loop end to end without any real-money surface. If
-Riff ever takes real entry fees, that is a separate, regulated build (payments, KYC, payouts)
-and must not reuse this mock ledger as-is. The wallet lives in the `wallets` / `wallet_txns`
-tables; entries and payouts in `competition_entries`; settlement is in `settleSeason`
-(src/server/world.ts), which currently ranks by entry order as a stand-in for real bracket
-results.
-
-## Password recovery (no email provider)
-
-Signup collects an optional recovery email. There is no mail provider wired up, so password
-reset works like this:
-
-- Reset requires BOTH the username AND the account's recovery email to match — a username alone
-  can never reset an account (that would be takeover-by-username). Accounts that signed up
-  without an email cannot self-recover until email is added.
-- The reset code is only returned in the HTTP response when `RIFF_PREVIEW_RESET=1`. That flag is
-  set in `render.yaml` for this throwaway preview so recovery is self-serve without email. For a
-  real deployment, remove the flag and wire an email/SMS provider to deliver the code; the code
-  is still issued, just never returned over the wire. With the flag off the response is identical
-  whether or not the account exists, so usernames can't be enumerated.
-
-This is a preview-grade posture, deliberately chosen so the recovery flow is demonstrable end to
-end without a mail integration. It is documented here rather than hidden.

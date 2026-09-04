@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Globe, Phone, Share2, Sparkles, Star } from 
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
 import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { DemoTag } from '@/components/ui/DemoTag'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { StatTile } from '@/components/ui/StatTile'
@@ -96,7 +97,7 @@ export function ShopView({ shopId }: { shopId: string }) {
           {shop.name}
         </h1>
         <p className="text-[13px] font-medium text-foreground-dim">
-          {KIND_LABEL[shop.kind]} · {shop.neighborhood} · {shop.distanceMi} mi
+          {KIND_LABEL[shop.kind]} · {shop.neighborhood}
         </p>
         {isOwner && (
           <Link
@@ -127,13 +128,19 @@ export function ShopView({ shopId }: { shopId: string }) {
           value={isNew ? 'New' : shop.rating}
           label="Rating"
           adornment={
-            isNew ? undefined : <Star size={10} className="text-[#facc15]" fill="currentColor" />
+            isNew ? undefined : (
+              <>
+                <Star size={10} className="text-[#facc15]" fill="currentColor" />
+                <DemoTag />
+              </>
+            )
           }
           className="[&_span:first-child]:text-[18px]"
         />
         <StatTile
           value={isNew ? 'New' : shop.reviewCount}
           label="Reviews"
+          adornment={isNew ? undefined : <DemoTag />}
           className="[&_span:first-child]:text-[18px]"
         />
       </div>

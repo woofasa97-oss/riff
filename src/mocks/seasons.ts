@@ -3,7 +3,7 @@ import type { LeaderboardEntry, Season } from '@/types'
 export const seasons: Season[] = [
   {
     id: 'season-4',
-    number: 4,
+    number: 1,
     scene: 'Jazz Scene',
     city: 'Brooklyn',
     startsAt: '2026-08-01T00:00:00-04:00',

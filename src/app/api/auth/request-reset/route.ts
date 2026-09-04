@@ -3,20 +3,17 @@ import { issueResetToken, throttleLogin } from '@/server/auth'
 import { emailConfigured, sendResetEmail } from '@/server/email'
 
 /**
- * Start a password reset. Three protections make this safe:
+ * Start a password reset. Protections:
  *  1. A token is issued ONLY when the submitted email matches the account's recovery email
  *     (issueResetToken) — so a username alone can never trigger a takeover, and accounts with
  *     no email on file simply can't self-recover.
- *  2. When an email provider is configured (RESEND_API_KEY), the code is DELIVERED BY EMAIL and
- *     never returned over HTTP — even in preview. Setting the key is what flips recovery from
- *     preview-grade to launch-grade.
- *  3. Only as a fallback — a throwaway PREVIEW deployment (RIFF_PREVIEW_RESET=1) with no email
- *     provider — is the raw token surfaced in the response, so the demo stays self-serve.
+ *  2. The code is DELIVERED BY EMAIL (RESEND_API_KEY) and never returned over HTTP. With no
+ *     provider configured the token is issued but undeliverable — recovery honestly requires
+ *     the email pipe, and nothing leaks a code into a response body.
  *
  * The response is byte-identical whether or not the account exists, so this cannot enumerate
  * usernames, and email delivery is out-of-band so its success never changes the response.
  */
-const PREVIEW = process.env.RIFF_PREVIEW_RESET === '1'
 
 export async function POST(req: Request) {
   if (!req.headers.get('content-type')?.includes('application/json')) {
@@ -42,13 +39,11 @@ export async function POST(req: Request) {
   if (token && emailConfigured()) {
     await sendResetEmail(email, token)
   }
+  // `token` is deliberately unused beyond delivery — it must never appear in a response body.
+  void token
   return NextResponse.json({
     ok: true,
-    message: emailConfigured()
-      ? 'If that username and recovery email match an account, a reset code is on its way by email.'
-      : 'If that username and recovery email match an account, a reset code has been issued.',
-    // Fallback ONLY: preview deploy with no email provider. Once RESEND_API_KEY is set the code
-    // is emailed and never returned here, even in preview.
-    ...(PREVIEW && !emailConfigured() ? { devToken: token ?? null } : {}),
+    message:
+      'If that username and recovery email match an account, a reset code is on its way by email.',
   })
 }

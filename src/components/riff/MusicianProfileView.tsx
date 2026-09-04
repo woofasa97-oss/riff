@@ -8,7 +8,6 @@ import {
   Flag,
   MapPin,
   Quote,
-  ShieldCheck,
   TrendingDown,
   TrendingUp,
   Trophy,
@@ -22,6 +21,7 @@ import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button, buttonClass, IconButton } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { DemoTag } from '@/components/ui/DemoTag'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { StatTile } from '@/components/ui/StatTile'
@@ -29,7 +29,7 @@ import { genreLane, playerLabel, shortNeighborhood, vouchTagLabel } from '@/lib/
 import { vouchesFor } from '@/lib/reputation'
 import { hasUnanimousConsent } from '@/lib/privacy'
 import { useMusicianStats, useReputationContext, useRiffStore } from '@/lib/store'
-import { getCurrentSeason, getLeaderboardEntry, getMusician } from '@/mocks'
+import { getCurrentSeason, getMusician } from '@/mocks'
 
 /**
  * How a musician looks to everyone else (42-profile-musician.html). Everything reputational —
@@ -43,6 +43,7 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
   const jams = useRiffStore((s) => s.jams)
   const openDirectThread = useRiffStore((s) => s.openDirectThread)
   const recordingConsents = useRiffStore((s) => s.recordingConsents)
+  const leaderboard = useRiffStore((s) => s.leaderboard)
   const ctx = useReputationContext()
   const stats = useMusicianStats(musicianId)
   const musician = getMusician(musicianId)
@@ -103,11 +104,13 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
     )
   }
 
-  const entry = getLeaderboardEntry(musicianId)
+  // Season rank comes from the server-computed leaderboard (recorded jams, recaps, vouches,
+  // battle votes) — never the fixture. Unranked musicians simply have no card.
+  const entry = leaderboard.find((e) => e.musicianId === musicianId)
   const season = getCurrentSeason()
   const firstName = musician.name.split(' ')[0]
   const preview = allVouches.slice(0, 2)
-  const isSeed = musician.avatarUrl.startsWith('/mock/')
+  const isSeed = Boolean(musician.isSeed)
 
   return (
     <AppShell
@@ -165,7 +168,7 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
     >
       {isSeed && (
         <p className="px-4 pt-3 text-center text-[11px] text-foreground-dim">
-          Riff crew · demo profile — they won&apos;t reply to requests
+          Demo musician — requests are auto-accepted and replies are scripted.
         </p>
       )}
 
@@ -187,7 +190,10 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
             </span>
           )}
         </div>
-        <h2 className="mb-1 font-serif text-[28px] font-bold text-foreground">{musician.name}</h2>
+        <h2 className="mb-1 flex items-center justify-center gap-2 font-serif text-[28px] font-bold text-foreground">
+          {musician.name}
+          {isSeed && <DemoTag />}
+        </h2>
         <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.1em] text-primary">
           {playerLabel(musician.instruments[0]).toUpperCase()} · {genreLane(musician.genres)}
         </p>
@@ -195,20 +201,12 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
           <MapPin size={12} />
           {shortNeighborhood(musician.neighborhood)} · {musician.distanceMi} mi away
         </p>
-        {(stats.topReliability || musician.verified) && (
+        {stats.topReliability && (
           <div className="flex items-center gap-2">
-            {stats.topReliability && (
-              <span className="flex items-center gap-1.5 rounded-full bg-[color:var(--hero-from)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-primary">
-                <Zap size={11} />
-                Top reliability
-              </span>
-            )}
-            {musician.verified && (
-              <span className="flex items-center gap-1.5 rounded-full border border-success-border bg-success-soft px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-success">
-                <ShieldCheck size={11} />
-                Verified
-              </span>
-            )}
+            <span className="flex items-center gap-1.5 rounded-full bg-[color:var(--hero-from)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-primary">
+              <Zap size={11} />
+              Top reliability
+            </span>
           </div>
         )}
       </section>
@@ -251,18 +249,7 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
             <div className="relative z-10 mb-4 h-px w-full bg-white/20" />
             <div className="relative z-10 flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-[13px] font-medium text-white">
-                {entry.delta > 0 ? (
-                  <>
-                    <TrendingUp size={14} />+{entry.delta} spots this week
-                  </>
-                ) : entry.delta < 0 ? (
-                  <>
-                    <TrendingDown size={14} />
-                    {entry.delta} spots this week
-                  </>
-                ) : (
-                  'Holding steady this week'
-                )}
+                {entry.points.toLocaleString()} points from real sessions
               </span>
               <Link
                 href="/leaderboard"

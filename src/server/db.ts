@@ -57,10 +57,19 @@ function tryOpen(preferred: string): Database.Database | undefined {
 
 export function db(): Database.Database {
   if (_db) return _db
-  // Prefer the configured path; if it is unwritable, fall back to the OS temp dir so the app
-  // still loads (ephemeral, but a running prototype beats a 500 on every page). The fallback is
-  // only reached on misconfiguration — a correctly mounted disk opens on the first try.
-  const conn = tryOpen(DB_PATH) ?? tryOpen(path.join(os.tmpdir(), 'riff.db'))
+  // Truth guard: when RIFF_DB_PATH is EXPLICITLY configured (a real deployment pointing at its
+  // disk), an unopenable path must FAIL the boot — never silently boot a fresh ephemeral DB in
+  // the temp dir and serve data that will vanish. The tmpdir fallback survives only for the
+  // unconfigured local/preview case, where ephemerality is the stated deal.
+  const explicit = Boolean(process.env.RIFF_DB_PATH)
+  let conn = tryOpen(DB_PATH)
+  if (!conn && explicit) {
+    throw new Error(
+      `Riff refuses to start: RIFF_DB_PATH=${DB_PATH} is not writable. ` +
+        'Fix the disk mount rather than silently serving an ephemeral database.',
+    )
+  }
+  conn = conn ?? tryOpen(path.join(os.tmpdir(), 'riff.db'))
   if (!conn) throw new Error('Riff could not open a database in any writable location')
   if (conn.name !== DB_PATH) {
     console.warn(
@@ -69,8 +78,37 @@ export function db(): Database.Database {
   }
   _db = conn
   migrate(_db)
+  upgrade(_db)
   seed(_db)
   return _db
+}
+
+/**
+ * Versioned, one-way schema upgrades for databases that already hold real data.
+ *
+ * migrate() only creates what is missing (CREATE TABLE IF NOT EXISTS), which covers brand-new
+ * tables — but never a column added to an existing table or a data rewrite. Those land here:
+ * append a function to MIGRATIONS and it runs exactly once per database, tracked by SQLite's
+ * PRAGMA user_version. Never reorder or edit an entry that has shipped.
+ */
+const MIGRATIONS: Array<(d: Database.Database) => void> = [
+  // v1 is the baseline schema created by migrate() — nothing to replay.
+]
+
+function upgrade(d: Database.Database) {
+  const version = d.pragma('user_version', { simple: true }) as number
+  for (let v = version; v < MIGRATIONS.length; v++) {
+    d.transaction(() => {
+      MIGRATIONS[v](d)
+      d.pragma(`user_version = ${v + 1}`)
+    })()
+  }
+  if (version > MIGRATIONS.length) {
+    // A newer deploy already upgraded this file — refuse rather than write with stale code.
+    throw new Error(
+      `Riff refuses to start: database schema v${version} is newer than this build (v${MIGRATIONS.length}).`,
+    )
+  }
 }
 
 function migrate(d: Database.Database) {
@@ -254,6 +292,38 @@ function migrate(d: Database.Database) {
     );
     CREATE INDEX IF NOT EXISTS idx_listings_owner ON listings(owner_id);
     CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
+
+    -- Truth engine: every number a user sees on the live/battle/social surfaces is counted from
+    -- these rows, never authored. One vote per account per battle; ratings upsert per pair.
+    CREATE TABLE IF NOT EXISTS battle_votes (
+      battle_id TEXT NOT NULL, user_id TEXT NOT NULL, side TEXT NOT NULL CHECK (side IN ('A','B')),
+      created_at TEXT NOT NULL, PRIMARY KEY (battle_id, user_id)
+    );
+    CREATE TABLE IF NOT EXISTS live_comments (
+      id TEXT PRIMARY KEY, stream_id TEXT NOT NULL, author_id TEXT NOT NULL,
+      body TEXT NOT NULL, sent_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_live_comments_stream ON live_comments(stream_id, sent_at);
+    CREATE TABLE IF NOT EXISTS session_ratings (
+      session_id TEXT NOT NULL, user_id TEXT NOT NULL,
+      stars INTEGER NOT NULL CHECK (stars BETWEEN 1 AND 5),
+      created_at TEXT NOT NULL, PRIMARY KEY (session_id, user_id)
+    );
+    CREATE TABLE IF NOT EXISTS band_follows (
+      user_id TEXT NOT NULL, band_id TEXT NOT NULL, created_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, band_id)
+    );
+    CREATE TABLE IF NOT EXISTS clips (
+      user_id TEXT PRIMARY KEY,
+      mime TEXT NOT NULL,
+      data BLOB NOT NULL,
+      duration_sec REAL NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS event_rsvps (
+      event_id TEXT NOT NULL, musician_id TEXT NOT NULL, created_at TEXT NOT NULL,
+      PRIMARY KEY (event_id, musician_id)
+    );
   `)
 }
 

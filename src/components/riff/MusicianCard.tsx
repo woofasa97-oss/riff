@@ -5,6 +5,7 @@ import { CalendarDays, Check, MapPin } from 'lucide-react'
 import { AudioClipPlayer } from '@/components/riff/AudioClipPlayer'
 import { Avatar } from '@/components/ui/Avatar'
 import { Card } from '@/components/ui/Card'
+import { DemoTag } from '@/components/ui/DemoTag'
 import { freeDaysLabel } from '@/lib/availability'
 import { cn } from '@/lib/cn'
 import { genreLane, intentLabel, playerLabel } from '@/lib/labels'
@@ -20,20 +21,18 @@ const INTENT_PILL: Record<Musician['intent'], string> = {
 /**
  * The Discover feed card (docs/BUILD-PLAN.md P2-01, from 20-discover.html): identity, an
  * earned badge, the clip, distance + availability, and the two actions. The badge line is
- * derived — TOP RELIABILITY and VERIFIED are computed states, never authored copy.
+ * derived — every state is computed from recorded sessions, never authored copy.
  */
 export function MusicianCard({ musician, className }: { musician: Musician; className?: string }) {
   const stats = useMusicianStats(musician.id)
 
   const badge = stats?.topReliability
     ? { lead: 'TOP RELIABILITY', detail: `${stats.repeatJams} repeat jams` }
-    : musician.verified
-      ? { lead: 'VERIFIED', detail: `${musician.jamsHosted} jams hosted` }
-      : stats?.isNew
-        ? { lead: 'NEW HERE', detail: 'first jams welcome' }
-        : stats
-          ? { lead: `${stats.reliabilityPct}% RELIABILITY`, detail: `${stats.vouchCount} vouches` }
-          : undefined
+    : stats?.isNew
+      ? { lead: 'NEW HERE', detail: 'first jams welcome' }
+      : stats
+        ? { lead: `${stats.reliabilityPct}% RELIABILITY`, detail: `${stats.vouchCount} vouches` }
+        : undefined
 
   return (
     <Card className={cn('relative flex flex-col p-4', className)}>
@@ -45,9 +44,12 @@ export function MusicianCard({ musician, className }: { musician: Musician; clas
           className="h-12 w-12 shadow-sm"
         />
         <div className="flex min-w-0 flex-1 flex-col">
-          <h3 className="truncate font-serif text-[18px] font-bold leading-tight text-foreground">
-            {musician.name}
-          </h3>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <h3 className="truncate font-serif text-[18px] font-bold leading-tight text-foreground">
+              {musician.name}
+            </h3>
+            {musician.isSeed && <DemoTag />}
+          </div>
           <span className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
             {playerLabel(musician.instruments[0]).toUpperCase()} · {genreLane(musician.genres)}
           </span>

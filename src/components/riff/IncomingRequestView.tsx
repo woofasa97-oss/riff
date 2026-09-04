@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Calendar, Check, CircleCheck, Inbox, MapPin, Zap } from 'lucide-react'
+import { Calendar, Check, Inbox, MapPin, Zap } from 'lucide-react'
 import { GuestGate } from '@/components/riff/GuestGate'
 import { AppShell } from '@/components/riff/AppShell'
 import { AudioClipPlayer } from '@/components/riff/AudioClipPlayer'
@@ -262,11 +262,6 @@ export function IncomingRequestView({ requestId }: { requestId: string }) {
               {stats && (stats.isNew ? ' · new here' : ` · ${stats.reliabilityPct}% reliability`)}
             </p>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
-              {from.verified && (
-                <span className="flex items-center gap-1 rounded bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
-                  <CircleCheck size={10} strokeWidth={3} /> Verified
-                </span>
-              )}
               {stats && (
                 <span className="text-[12px] text-foreground-dim">
                   {stats.vouchCount} vouches · {stats.repeatJams} repeats

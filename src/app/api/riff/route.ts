@@ -99,6 +99,21 @@ export async function POST(req: Request) {
       case 'deleteListing':
         world.deleteListing(viewerId, payload.id)
         break
+      case 'voteInBattle':
+        world.voteInBattle(viewerId, payload.battleId, payload.side)
+        break
+      case 'sendStreamComment':
+        result = world.sendStreamComment(viewerId, payload.streamId, payload.body)
+        break
+      case 'rateSession':
+        world.rateSession(viewerId, payload.sessionId, payload.stars)
+        break
+      case 'toggleFollowBand':
+        result = world.toggleBandFollow(viewerId, payload.bandId)
+        break
+      case 'toggleEventRsvp':
+        result = world.toggleEventRsvp(viewerId, payload.eventId)
+        break
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
     }

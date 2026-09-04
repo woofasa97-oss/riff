@@ -1,13 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronLeft, Share2, Star, UserPlus } from 'lucide-react'
+import { ChevronLeft, Share2, UserPlus } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { WaveformPlayer } from '@/components/riff/WaveformPlayer'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { DemoTag, DemoTagDark } from '@/components/ui/DemoTag'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { StatTile } from '@/components/ui/StatTile'
@@ -73,9 +74,12 @@ export function BandView({ bandId }: { bandId: string }) {
           size="xl"
           className="mb-4 h-[100px] w-[100px] border-2 border-white shadow-lg"
         />
-        <h1 className="mb-1 text-center font-serif text-[24px] font-bold leading-tight text-white">
-          {band.name}
-        </h1>
+        <div className="mb-1 flex items-center justify-center gap-2">
+          <h1 className="text-center font-serif text-[24px] font-bold leading-tight text-white">
+            {band.name}
+          </h1>
+          <DemoTagDark />
+        </div>
         <p className="mb-3 text-[13px] font-medium text-white/80">
           {band.genre} · {band.city}
         </p>
@@ -110,14 +114,9 @@ export function BandView({ bandId }: { bandId: string }) {
           className="[&_span:first-child]:text-[18px]"
         />
         <StatTile
-          value={band.rating}
-          label="Rating"
-          adornment={<Star size={10} className="text-[#facc15]" fill="currentColor" />}
-          className="[&_span:first-child]:text-[18px]"
-        />
-        <StatTile
           value={compactCount(band.followers + (isFollowing ? 1 : 0))}
           label="Followers"
+          adornment={<DemoTag />}
           className="[&_span:first-child]:text-[18px]"
         />
       </div>
@@ -186,13 +185,14 @@ export function BandView({ bandId }: { bandId: string }) {
       {/* LISTEN */}
       <section className="mb-6 px-4">
         <SectionHeader>Listen</SectionHeader>
-        {band.recordings.length === 0 ? (
+        {/* Only recordings with real audio behind them are listenable; fixture rows have none. */}
+        {band.recordings.filter((r) => r.url.startsWith('/api/')).length === 0 ? (
           <p className="px-1 text-[13px] text-foreground-dim">
             Nothing published yet. Recordings appear once every player agrees to share them.
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {band.recordings.map((rec) => (
+            {band.recordings.filter((r) => r.url.startsWith('/api/')).map((rec) => (
               <Card key={rec.id} className="p-4">
                 <div className="mb-3">
                   <div className="font-serif text-[15px] font-bold text-foreground">
@@ -204,6 +204,7 @@ export function BandView({ bandId }: { bandId: string }) {
                   </div>
                 </div>
                 <WaveformPlayer
+                  src={rec.url}
                   peaks={peaksFor(rec.id, 24)}
                   durationSec={rec.durationSec}
                   label={rec.title}

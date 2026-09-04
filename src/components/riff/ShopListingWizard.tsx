@@ -28,14 +28,19 @@ type Phase = 'form' | 'reviewing' | 'done'
  * mirror the server gate in createListing/buildShop, so the submit button only unlocks on data the
  * server will accept.
  */
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => h)
+const hourLabel = (h: number) =>
+  h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`
+
 export function ShopListingWizard() {
   const [name, setName] = useState('')
   const [kind, setKind] = useState<MusicShop['kind'] | null>(null)
   const [neighborhood, setNeighborhood] = useState('')
   const [address, setAddress] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [hoursLabel, setHoursLabel] = useState('')
-  const [openNow, setOpenNow] = useState(true)
+  // Real opening hours — "Open now" is always computed from these, never asserted.
+  const [opensAt, setOpensAt] = useState(10)
+  const [closesAt, setClosesAt] = useState(19)
   const [phone, setPhone] = useState('')
   const [website, setWebsite] = useState('')
 
@@ -63,8 +68,8 @@ export function ShopListingWizard() {
         neighborhood,
         address: address.trim(),
         tags,
-        hoursLabel: hoursLabel.trim(),
-        openNow,
+        opensAt,
+        closesAt,
         phone: phone.trim() || undefined,
         website: website.trim() || undefined,
       })
@@ -148,23 +153,39 @@ export function ShopListingWizard() {
 
       <section className="mb-7">
         <SectionHeader>Hours</SectionHeader>
-        <TextField value={hoursLabel} onChange={setHoursLabel} maxLength={40} placeholder="e.g. Mon–Sat 11–7" ariaLabel="Hours" />
-        <button
-          type="button"
-          aria-pressed={openNow}
-          onClick={() => setOpenNow((v) => !v)}
-          className="mt-3 flex w-full items-center gap-3 rounded-[12px] border border-border-subtle bg-card p-4 text-left"
-        >
-          <span
-            className={cn(
-              'flex h-6 w-6 shrink-0 items-center justify-center rounded-md border',
-              openNow ? 'border-primary bg-primary text-primary-foreground' : 'border-border-subtle',
-            )}
-          >
-            {openNow && <Check size={14} />}
-          </span>
-          <span className="text-[14px] font-medium text-foreground">Open right now</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <label className="flex flex-1 flex-col gap-1">
+            <span className="px-1 text-[12px] font-medium text-foreground-dim">Opens</span>
+            <select
+              value={opensAt}
+              onChange={(e) => setOpensAt(Number(e.target.value))}
+              className="rounded-[12px] border border-border-subtle bg-card p-3 text-[14px] text-foreground"
+            >
+              {HOUR_OPTIONS.map((h) => (
+                <option key={h} value={h}>
+                  {hourLabel(h)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-1 flex-col gap-1">
+            <span className="px-1 text-[12px] font-medium text-foreground-dim">Closes</span>
+            <select
+              value={closesAt}
+              onChange={(e) => setClosesAt(Number(e.target.value))}
+              className="rounded-[12px] border border-border-subtle bg-card p-3 text-[14px] text-foreground"
+            >
+              {HOUR_OPTIONS.map((h) => (
+                <option key={h} value={h}>
+                  {hourLabel(h)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="mt-2 px-1 text-[12px] text-foreground-dim">
+          &ldquo;Open now&rdquo; on the map is computed from these hours.
+        </p>
       </section>
 
       <section className="mb-7">

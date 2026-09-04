@@ -90,7 +90,6 @@ export const battles: Battle[] = [
     votesB: 7384,
     status: 'live',
     stageLabel: 'Stage 04 · Grand Ballroom vs. Warehouse 7',
-    viewerCount: 14200,
     kind: 'bracket',
   },
   // Casual head-to-heads running live right now — free and unlimited, outside the bracket. These
@@ -105,7 +104,6 @@ export const battles: Battle[] = [
     votesB: 1890,
     status: 'live',
     stageLabel: 'Casual battle · Bushwick',
-    viewerCount: 3120,
     kind: 'casual',
   },
   {
@@ -118,7 +116,6 @@ export const battles: Battle[] = [
     votesB: 1240,
     status: 'live',
     stageLabel: 'Casual battle · Greenpoint',
-    viewerCount: 1760,
     kind: 'casual',
   },
   {
@@ -131,7 +128,6 @@ export const battles: Battle[] = [
     votesB: 3310,
     status: 'live',
     stageLabel: 'Casual battle · Williamsburg',
-    viewerCount: 5240,
     kind: 'casual',
   },
 ]
@@ -150,14 +146,15 @@ export function seasonBadgeFor(bandId: string): string | undefined {
   if (played.length === 0) return undefined
   if (played.some((b) => b.round === 'final')) {
     const final = played.find((b) => b.round === 'final')!
-    if (final.status !== 'finished') return 'Season 4 · Finalist'
-    return final.winnerBandId === bandId ? 'Season 4 · Champion' : 'Season 4 · Runner-up'
+    if (final.status !== 'finished') return 'Season 1 · Finalist'
+    return final.winnerBandId === bandId ? 'Season 1 · Champion' : 'Season 1 · Runner-up'
   }
-  if (played.some((b) => b.round === 'semi')) return 'Season 4 · Semi finalist'
-  return 'Season 4 · Quarter finalist'
+  if (played.some((b) => b.round === 'semi')) return 'Season 1 · Semi finalist'
+  return 'Season 1 · Quarter finalist'
 }
 
 /** Vote share as whole percentages that always add to 100. */
+/** @deprecated superseded by the server-computed battleTallies in the snapshot. */
 export function voteShare(battle: Battle): { a: number; b: number } {
   const total = battle.votesA + battle.votesB
   if (total === 0) return { a: 50, b: 50 }

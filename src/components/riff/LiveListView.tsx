@@ -1,31 +1,31 @@
 'use client'
 
 import Link from 'next/link'
-import { Coins, Eye, RadioTower, Swords, Trophy } from 'lucide-react'
+import { Coins, RadioTower, Swords, Trophy } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { TopBar } from '@/components/riff/TopBar'
 import { buttonClass } from '@/components/ui/Button'
+import { DemoTagDark } from '@/components/ui/DemoTag'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { prizePool, SEASON_STATUS_LABEL } from '@/lib/competition'
-import { formatDurationMinutes, liveElapsedMinutes } from '@/lib/datetime'
-import { compactCount, formatCredits } from '@/lib/labels'
+import { formatCredits } from '@/lib/labels'
 import { useRiffStore } from '@/lib/store'
-import { getBand, getVenue, listLiveBattles, listLiveSessions, voteShare } from '@/mocks'
+import { getBand, getVenue, listLiveBattles, listLiveSessions } from '@/mocks'
 
-/** A LIVE badge + viewer count overlaid on a thumbnail — the Twitch card corner treatment. */
-function LiveCorners({ viewers }: { viewers?: number }) {
+/**
+ * The LIVE badge overlaid on a thumbnail — the Twitch card corner treatment. Every stream in
+ * the grid is seeded demo content, so the corner carries the demo tag too. No viewer chip:
+ * real concurrent viewer counts do not exist, and fixture ones must not pose as live.
+ */
+function LiveCorners() {
   return (
-    <>
-      <span className="absolute left-2 top-2 rounded-[3px] bg-live px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm">
+    <div className="absolute left-2 top-2 flex items-center gap-1.5">
+      <span className="rounded-[3px] bg-live px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm">
         Live
       </span>
-      {viewers !== undefined && (
-        <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-[4px] bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-          <Eye size={9} /> {compactCount(viewers)}
-        </span>
-      )}
-    </>
+      <DemoTagDark className="bg-black/50 backdrop-blur-sm" />
+    </div>
   )
 }
 
@@ -34,7 +34,7 @@ function LiveCorners({ viewers }: { viewers?: number }) {
  * band battles (several at once — the season final plus casual head-to-heads), then the season.
  */
 export function LiveListView() {
-  const now = useRiffStore((s) => s.now)
+  const tallies = useRiffStore((s) => s.battleTallies)
   const season = useRiffStore((s) => s.season)
   const entries = useRiffStore((s) => s.competitionEntries)
   const sessions = listLiveSessions()
@@ -61,14 +61,10 @@ export function LiveListView() {
           {sessions.length > 0 && (
             <section className="mb-8">
               <SectionHeader>Live jams</SectionHeader>
-              <p className="mb-3 text-[12px] text-foreground-dim">
-                Preview — live viewer counts are illustrative.
-              </p>
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-4">
                 {sessions.map((session) => {
                   const band = getBand(session.bandId ?? '')
                   const venue = getVenue(session.venueId)
-                  const elapsed = liveElapsedMinutes(now)
                   return (
                     <Link key={session.id} href={`/live/${session.id}`} className="group flex flex-col gap-2">
                       <div className="relative aspect-video overflow-hidden rounded-[12px] bg-surface-muted shadow-sm">
@@ -79,7 +75,7 @@ export function LiveListView() {
                           className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
-                        <LiveCorners viewers={session.viewerCount} />
+                        <LiveCorners />
                       </div>
                       <div className="flex items-start gap-2">
                         {band && (
@@ -97,9 +93,6 @@ export function LiveListView() {
                           <p className="truncate text-[11px] text-foreground-dim">
                             {band ? `${band.genre} · ` : ''}
                             {venue?.name}
-                          </p>
-                          <p className="truncate text-[10px] text-foreground-dim">
-                            {formatDurationMinutes(elapsed)} in
                           </p>
                         </div>
                       </div>
@@ -128,7 +121,12 @@ export function LiveListView() {
                 {battles.map((battle) => {
                   const bandA = getBand(battle.bandAId)
                   const bandB = getBand(battle.bandBId)
-                  const share = voteShare(battle)
+                  // Server-computed tallies (demo baseline + counted real votes) — never the
+                  // fixture voteShare().
+                  const tally = tallies[battle.id]
+                  const totalVotes = (tally?.a ?? 0) + (tally?.b ?? 0)
+                  const shareA = totalVotes > 0 ? Math.round(((tally?.a ?? 0) / totalVotes) * 100) : 50
+                  const shareB = 100 - shareA
                   const isFinal = battle.kind !== 'casual'
                   return (
                     <Link key={battle.id} href={`/battles/${battle.id}`} className="group flex flex-col gap-2">
@@ -143,7 +141,7 @@ export function LiveListView() {
                         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-bold italic text-white shadow">
                           VS
                         </span>
-                        <LiveCorners viewers={battle.viewerCount} />
+                        <LiveCorners />
                         {isFinal && (
                           <span className="absolute right-2 top-2 rounded-[4px] bg-primary/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
                             Final
@@ -158,13 +156,13 @@ export function LiveListView() {
                           </span>
                         </h3>
                         <div className="mt-1.5 flex h-2 w-full overflow-hidden rounded-full">
-                          <div className="h-full bg-primary" style={{ width: `${share.a}%` }} />
-                          <div className="h-full bg-accent" style={{ width: `${share.b}%` }} />
+                          <div className="h-full bg-primary" style={{ width: `${shareA}%` }} />
+                          <div className="h-full bg-accent" style={{ width: `${shareB}%` }} />
                         </div>
                         <div className="mt-0.5 flex items-center justify-between text-[10px]">
-                          <span className="font-bold text-primary">{share.a}%</span>
+                          <span className="font-bold text-primary">{shareA}%</span>
                           <span className="truncate px-1 text-foreground-dim">{battle.stageLabel}</span>
-                          <span className="font-bold text-accent">{share.b}%</span>
+                          <span className="font-bold text-accent">{shareB}%</span>
                         </div>
                       </div>
                     </Link>

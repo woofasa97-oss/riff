@@ -13,9 +13,9 @@ import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { formatClock } from '@/lib/labels'
+import { captureSupported, peaksFromBlob, startCapture, type ClipCapture } from '@/lib/clipAudio'
 import { useCurrentUser, useRiffStore } from '@/lib/store'
 import { peaksFor } from '@/lib/waveform'
-import type { AudioClip } from '@/types'
 
 const MAX_SEC = 24
 const CLIP_SEED = 'clip-edit'
@@ -25,18 +25,17 @@ const RING_RADIUS = 41
 const RING_CIRC = 2 * Math.PI * RING_RADIUS
 
 type Phase = 'idle' | 'recording' | 'recorded'
-type Take = { durationSec: number; peaks: number[] }
+type Take = { blob: Blob; previewUrl: string; durationSec: number; peaks: number[] }
 
 /**
- * Add or replace the 24-second clip on your own player card (study finding: every seeded player
- * has one and it is the most trust-building thing on a profile, yet there was no way to record
- * your own). Reuses the onboarding recorder exactly — capture is real where the browser grants a
- * mic, but real audio is out of scope for v1 (docs/SPEC.md §6), so all we keep is
- * { durationSec, waveform } and playback is the same simulated WaveformPlayer as everywhere else.
+ * Add or replace the 24-second clip on your own player card. Capture is REAL: the mic take is
+ * kept as a Blob, its waveform is decoded from those exact bytes, the preview plays them, and
+ * Save uploads them to /api/riff/clip — the clip on your card is the sound you recorded.
+ * No microphone means no clip; nothing here is simulated.
  */
 export function ClipEditView() {
   const me = useCurrentUser()
-  const applyOnboarding = useRiffStore((s) => s.applyOnboarding)
+  const uploadClip = useRiffStore((s) => s.uploadClip)
   const router = useRouter()
 
   // With a clip already on the card we open on playback; a fresh card opens straight into
@@ -49,19 +48,21 @@ export function ClipEditView() {
   const [error, setError] = useState<string | null>(null)
 
   const startedAtRef = useRef(0)
-  const recorderRef = useRef<MediaRecorder | null>(null)
-  const streamRef = useRef<MediaStream | null>(null)
+  const captureRef = useRef<ClipCapture | null>(null)
   /** getUserMedia in flight — the permission dialog must not arm two recorders. */
   const armingRef = useRef(false)
   const mountedRef = useRef(true)
+  const takeRef = useRef<Take | null>(null)
 
   function releaseCapture() {
-    if (recorderRef.current && recorderRef.current.state !== 'inactive') {
-      recorderRef.current.stop()
-    }
-    recorderRef.current = null
-    streamRef.current?.getTracks().forEach((t) => t.stop())
-    streamRef.current = null
+    captureRef.current?.cancel()
+    captureRef.current = null
+  }
+
+  function dropTake() {
+    if (takeRef.current) URL.revokeObjectURL(takeRef.current.previewUrl)
+    takeRef.current = null
+    setTake(null)
   }
 
   useEffect(() => {
@@ -69,49 +70,64 @@ export function ClipEditView() {
     return () => {
       mountedRef.current = false
       releaseCapture()
+      if (takeRef.current) URL.revokeObjectURL(takeRef.current.previewUrl)
     }
   }, [])
 
   async function startRecording() {
     if (phase === 'recording' || armingRef.current || busy) return
+    setError(null)
+    // No mic, no clip — a simulated take would put a fabricated recording on a real profile.
+    if (!captureSupported()) {
+      setError('Recording needs a microphone this browser can use.')
+      return
+    }
     armingRef.current = true
     try {
-      // Real capture when granted; a denial or missing device just means the timer alone
-      // simulates the take. Either way nothing recorded here is ever decoded.
-      if (typeof MediaRecorder !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        if (!mountedRef.current) {
-          stream.getTracks().forEach((t) => t.stop())
-          armingRef.current = false
-          return
-        }
-        streamRef.current = stream
-        const recorder = new MediaRecorder(stream)
-        recorder.start()
-        recorderRef.current = recorder
+      const capture = await startCapture()
+      if (!mountedRef.current) {
+        capture.cancel()
+        armingRef.current = false
+        return
       }
+      captureRef.current = capture
     } catch {
-      // Fall through to the simulated timer.
+      armingRef.current = false
+      setError('Allow microphone access to record your clip.')
+      return
     }
     armingRef.current = false
-    setTake(null)
+    dropTake()
     setElapsed(0)
     startedAtRef.current = Date.now()
     setPhase('recording')
   }
 
   function stopRecording(seconds: number) {
-    releaseCapture()
+    const capture = captureRef.current
+    captureRef.current = null
     const durationSec = Math.min(MAX_SEC, Math.round(seconds))
     // A tap-and-regret take under a second is discarded rather than kept as a 0s clip —
     // which also keeps durationSec strictly positive everywhere it divides.
-    if (durationSec < 1) {
+    if (!capture || durationSec < 1) {
+      capture?.cancel()
       setElapsed(0)
       setPhase('idle')
       return
     }
-    setTake({ durationSec, peaks: peaksFor(CLIP_SEED) })
-    setPhase('recorded')
+    void capture.stop().then(async (blob) => {
+      const peaks = await peaksFromBlob(blob).catch(() => peaksFor(CLIP_SEED))
+      if (!mountedRef.current) return
+      const next: Take = {
+        blob,
+        previewUrl: URL.createObjectURL(blob),
+        durationSec,
+        peaks,
+      }
+      takeRef.current = next
+      setTake(next)
+      setPhase('recorded')
+    })
   }
 
   useEffect(() => {
@@ -131,7 +147,7 @@ export function ClipEditView() {
 
   function reRecord() {
     if (busy) return
-    setTake(null)
+    dropTake()
     setElapsed(0)
     setPhase('idle')
   }
@@ -140,7 +156,7 @@ export function ClipEditView() {
   function keepCurrent() {
     if (busy) return
     releaseCapture()
-    setTake(null)
+    dropTake()
     setElapsed(0)
     setPhase('idle')
     setRecorderOpen(false)
@@ -151,17 +167,9 @@ export function ClipEditView() {
     setBusy(true)
     setError(null)
     releaseCapture()
-    // The server rebuilds id/url/recordedAt and keeps only durationSec + waveform (see
-    // applyOnboarding); this mirrors exactly what OnboardingClipView sends.
-    const clip: AudioClip = {
-      id: '',
-      url: '',
-      durationSec: take.durationSec,
-      waveform: take.peaks,
-      recordedAt: new Date().toISOString(),
-    }
     try {
-      await applyOnboarding({ clip })
+      // The real recorded bytes go up; the profile clip URL will serve exactly them.
+      await uploadClip(take.blob, take.durationSec, take.peaks)
     } catch (err) {
       setBusy(false)
       setError(err instanceof Error ? err.message : 'Something went wrong — try again')
@@ -214,8 +222,8 @@ export function ClipEditView() {
       {showExisting && me.clip ? (
         <>
           <p className="mb-4 text-[13px] leading-snug text-foreground-dim">
-            This is the clip people hear on your card. Musicians with a clip get 3x more jam
-            requests.
+            This is the clip people hear on your card. A short clip shows people how you
+            actually sound.
           </p>
           <Card className="mb-4 p-4">
             <AudioClipPlayer clip={me.clip} label="your clip" compact={false} className="w-full" />
@@ -243,6 +251,7 @@ export function ClipEditView() {
             {phase === 'recorded' && take ? (
               <>
                 <WaveformPlayer
+                  src={take.previewUrl}
                   peaks={take.peaks}
                   durationSec={take.durationSec}
                   label="your new clip"
@@ -339,7 +348,7 @@ export function ClipEditView() {
           </Card>
 
           <p className="mb-4 text-center text-[11px] text-foreground-dim">
-            Preview recorder — captures a short sample.
+            Records from your microphone. What you hear back is what goes on your card.
           </p>
 
           <div className="flex items-start gap-3 rounded-[16px] bg-surface-muted p-4">

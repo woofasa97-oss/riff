@@ -36,7 +36,7 @@ export function OpenCallCard({ jam, className }: { jam: Jam; className?: string 
     .filter((m): m is NonNullable<typeof m> => Boolean(m))
 
   // Seed hosts never review applications — say so before someone waits on one.
-  const seedHost = Boolean(getMusician(jam.hostId)?.avatarUrl.startsWith('/mock/'))
+  const seedHost = Boolean(getMusician(jam.hostId)?.isSeed)
 
   // Apply on the seat you actually play, falling back to whatever is open.
   const seat = jam.openSeats.find((s) => viewer?.instruments.includes(s)) ?? jam.openSeats[0]

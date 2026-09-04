@@ -15,7 +15,7 @@ const SECTIONS: Record<string, { title: string; body: string }> = {
   },
   clip: {
     title: 'Replacing your clip',
-    body: 'A 24-second recorder lives here. Musicians with a clip get three times more jam requests.',
+    body: 'A 24-second recorder lives here. A short clip shows people how you actually sound.',
   },
   availability: {
     title: 'Editing your availability',

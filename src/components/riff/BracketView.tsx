@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Check, ChevronRight, Play, Share2, Trophy } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
+import { DemoTagDark } from '@/components/ui/DemoTag'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { iconButtonClass } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
@@ -15,16 +16,22 @@ import {
   ROUND_LABEL,
   ROUND_ORDER,
   getBand,
-  getCurrentSeason,
   listBandsFor,
   listBattles,
   seasonBadgeFor,
-  voteShare,
   type BattleScope,
 } from '@/mocks'
 import type { Battle } from '@/types'
 
 const GLASS = 'border border-white/10 bg-white/[0.08] backdrop-blur-xl'
+
+/** Percentages from a real tally {a, b}. An empty tally renders as an even split. */
+function tallyShare(tally: { a: number; b: number }): { a: number; b: number } {
+  const total = tally.a + tally.b
+  if (total === 0) return { a: 50, b: 50 }
+  const a = Math.round((tally.a / total) * 100)
+  return { a, b: 100 - a }
+}
 
 function Side({
   bandId,
@@ -78,7 +85,8 @@ function Side({
 }
 
 function MatchCard({ battle, connectors }: { battle: Battle; connectors: boolean }) {
-  const share = voteShare(battle)
+  const tallies = useRiffStore((s) => s.battleTallies)
+  const share = tallyShare(tallies[battle.id] ?? { a: 0, b: 0 })
   const live = battle.status === 'live'
 
   const card = (
@@ -121,12 +129,21 @@ function MatchCard({ battle, connectors }: { battle: Battle; connectors: boolean
         tone="text-accent"
       />
 
-      {/* Finished cards navigate as a whole; a subtle hint says where to. */}
-      {!live && (
-        <div className="flex items-center justify-end gap-0.5 border-t border-white/5 px-2.5 py-1.5 text-[10px] font-semibold text-white/45">
-          Recap <ChevronRight size={11} />
-        </div>
-      )}
+      {/* The tally blends a demo baseline with real votes — the tag says so at the numbers.
+          Finished cards also navigate as a whole; a subtle hint says where to. */}
+      <div className="flex items-center justify-between border-t border-white/5 px-2.5 py-1.5">
+        <span className="flex items-center gap-1">
+          <DemoTagDark />
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-white/35">
+            baseline
+          </span>
+        </span>
+        {!live && (
+          <span className="flex items-center gap-0.5 text-[10px] font-semibold text-white/45">
+            Recap <ChevronRight size={11} />
+          </span>
+        )}
+      </div>
     </div>
   )
 
@@ -162,11 +179,11 @@ const SCOPES: { id: BattleScope; label: string }[] = [
 
 export function BracketView() {
   const [scope, setScope] = useState<BattleScope>('local')
-  const season = getCurrentSeason()
+  const season = useRiffStore((s) => s.season)
   const viewerId = useRiffStore((s) => s.viewerId)
   const entries = useRiffStore((s) => s.competitionEntries)
+  const tallies = useRiffStore((s) => s.battleTallies)
   const myBand = listBandsFor(viewerId)[0]
-  const voted = useRiffStore((s) => s.battleVotes)
 
   const pool = prizePool(season, entries)
   // viewerId is '' for a guest, so this is safely false — no entry has an empty id.
@@ -197,9 +214,9 @@ export function BracketView() {
       live: final.status === 'live',
       a: getBand(final.bandAId)?.name ?? 'TBD',
       b: getBand(final.bandBId)?.name ?? 'TBD',
-      share: voteShare(final),
+      share: tallyShare(tallies[final.id] ?? { a: 0, b: 0 }),
     }
-  }, [])
+  }, [tallies])
 
   // YOUR RUN reads from the bracket, so it can never contradict it.
   const myRun = useMemo(() => {
@@ -211,7 +228,7 @@ export function BracketView() {
     const last = finished[finished.length - 1]
     if (!last) return { badge: seasonBadgeFor(myBand.id), line: undefined }
     const isA = last.bandAId === myBand.id
-    const share = voteShare(last)
+    const share = tallyShare(tallies[last.id] ?? { a: 0, b: 0 })
     const opponent = getBand(isA ? last.bandBId : last.bandAId)
     return {
       badge: seasonBadgeFor(myBand.id),
@@ -222,7 +239,7 @@ export function BracketView() {
         scoreAgainst: isA ? share.b : share.a,
       },
     }
-  }, [myBand])
+  }, [myBand, tallies])
 
   return (
     <AppShell
@@ -311,8 +328,11 @@ export function BracketView() {
                 </div>
                 <div className="text-[12px] font-bold text-primary">{finalMatch.share.a}%</div>
               </div>
-              <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-white/40">
-                vs
+              <span className="flex shrink-0 flex-col items-center gap-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-white/40">
+                  vs
+                </span>
+                <DemoTagDark />
               </span>
               <div className="min-w-0 flex-1 text-right">
                 <div className="truncate font-serif text-[15px] font-bold text-white">
@@ -410,13 +430,8 @@ export function BracketView() {
               <p className="mt-1 text-[13px] text-white/70">
                 {myRun.line.verb}{' '}
                 <span className="font-serif text-white">{myRun.line.opponent}</span>{' '}
-                {myRun.line.scoreFor} / {myRun.line.scoreAgainst}
-              </p>
-            )}
-            {Object.keys(voted).length > 0 && (
-              <p className="mt-1 text-[12px] text-white/50">
-                You have voted in {Object.keys(voted).length} match
-                {Object.keys(voted).length === 1 ? '' : 'es'} this season.
+                {myRun.line.scoreFor} / {myRun.line.scoreAgainst}{' '}
+                <DemoTagDark className="align-middle" />
               </p>
             )}
           </Link>

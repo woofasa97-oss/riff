@@ -19,7 +19,7 @@ interface OnboardingState {
   note: string
   availableTonight: boolean
   /** Peaks + duration only. Real audio is out of scope for v1 (docs/SPEC.md §6). */
-  clip: { durationSec: number; peaks: number[] } | null
+  clip: { durationSec: number; peaks: number[]; blob?: Blob } | null
 
   setNeighborhood: (n: string) => void
   setTravelRadius: (mi: number) => void

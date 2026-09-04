@@ -8,6 +8,7 @@ import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { DemoTag } from '@/components/ui/DemoTag'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { StatTile } from '@/components/ui/StatTile'
@@ -131,7 +132,7 @@ export function StudioView({ studioId }: { studioId: string }) {
         </h1>
         {/* Neighbourhood, never the street address here — the location card handles reveal. */}
         <p className="text-[13px] font-medium text-foreground-dim">
-          {kindLabel} · {studio.neighborhood} · {studio.distanceMi} mi
+          {kindLabel} · {studio.neighborhood}
         </p>
         {isOwner && (
           <Link
@@ -148,13 +149,19 @@ export function StudioView({ studioId }: { studioId: string }) {
           value={isNew ? 'New' : studio.rating}
           label="Rating"
           adornment={
-            isNew ? undefined : <Star size={10} className="text-[#facc15]" fill="currentColor" />
+            isNew ? undefined : (
+              <>
+                <Star size={10} className="text-[#facc15]" fill="currentColor" />
+                <DemoTag />
+              </>
+            )
           }
           className="[&_span:first-child]:text-[18px]"
         />
         <StatTile
           value={isNew ? 'New' : studio.reviewCount}
           label="Reviews"
+          adornment={isNew ? undefined : <DemoTag />}
           className="[&_span:first-child]:text-[18px]"
         />
         <StatTile

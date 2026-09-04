@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowDown, ArrowUp, Check, ChevronDown, Crown, Info, MoreVertical } from 'lucide-react'
+import { Check, ChevronDown, Crown, Info, MoreVertical, Trophy } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
@@ -10,39 +10,11 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { IconButton } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { useRiffStore } from '@/lib/store'
-import {
-  getCurrentSeason,
-  getLeaderboard,
-  getLeaderboardEntry,
-  getMusician,
-  pointsFromTopTen,
-} from '@/mocks'
+import { getCurrentSeason, getMusician } from '@/mocks'
 import type { LeaderboardEntry } from '@/types'
-
-/** ▲ +3 / ▼ 2 / – */
-function DeltaChip({ delta }: { delta: number }) {
-  if (delta === 0) {
-    return (
-      <span className="rounded-sm bg-background px-2 py-0.5 text-[10px] font-bold text-foreground-dim">
-        –
-      </span>
-    )
-  }
-  const up = delta > 0
-  return (
-    <span
-      className={cn(
-        'flex items-center gap-0.5 rounded-sm px-1.5 py-0.5 text-[10px] font-bold',
-        up ? 'bg-success/15 text-success' : 'bg-live/10 text-live',
-      )}
-    >
-      {up ? <ArrowUp size={8} strokeWidth={3} /> : <ArrowDown size={8} strokeWidth={3} />}
-      {Math.abs(delta)}
-    </span>
-  )
-}
 
 function Row({
   entry,
@@ -94,9 +66,8 @@ function Row({
             </span>
           )}
         </div>
-        <div className="mt-0.5 flex items-center gap-2">
-          <span className="truncate text-[12px] text-foreground-dim">{entry.instrumentLabel}</span>
-          <DeltaChip delta={entry.delta} />
+        <div className="mt-0.5 truncate text-[12px] text-foreground-dim">
+          {entry.instrumentLabel}
         </div>
       </div>
       <span
@@ -202,9 +173,13 @@ export function LeaderboardView() {
   const [scope, setScope] = useState<'city' | 'scene' | null>(null)
   const season = getCurrentSeason()
   const viewerId = useRiffStore((s) => s.viewerId)
-  const rows = getLeaderboard()
-  const me = getLeaderboardEntry(viewerId)
-  const gap = pointsFromTopTen(viewerId)
+  // Standings computed server-side from recorded jams, recaps, vouches and battle votes.
+  const rows = useRiffStore((s) => s.leaderboard)
+  const me = rows.find((e) => e.musicianId === viewerId)
+  // Points separating the viewer from 10th place, from the same computed list. Undefined when
+  // the viewer is inside the top 10 (or the board is too short to have a 10th place yet).
+  const tenth = rows.find((e) => e.rank === 10)
+  const gap = me && tenth && me.rank > 10 ? tenth.points - me.points : undefined
   const podium = rows.slice(0, 3)
   const rest = rows.slice(3).filter((e) => e.musicianId !== viewerId)
   const topPoints = rows[0]?.points ?? 1
@@ -303,38 +278,50 @@ export function LeaderboardView() {
         </div>
       )}
 
-      {/* PODIUM */}
-      <div className="mb-4 px-4">
-        <div className="relative flex h-[220px] items-end justify-center gap-3 overflow-hidden rounded-[16px] border border-border-subtle bg-gradient-to-br from-primary to-accent px-4 pb-6 shadow-sm">
-          {[
-            { entry: second, place: 2, avatarClass: 'h-[52px] w-[52px]', padClass: 'pb-2' },
-            { entry: first, place: 1, avatarClass: 'h-[64px] w-[64px]', padClass: 'pb-6' },
-            { entry: third, place: 3, avatarClass: 'h-[48px] w-[48px]', padClass: 'pb-0' },
-          ].map(({ entry, place, avatarClass, padClass }) =>
-            entry ? (
-              <PodiumPlace
-                key={entry.musicianId}
-                entry={entry}
-                place={place}
-                avatarClass={avatarClass}
-                padClass={padClass}
-              />
-            ) : null,
-          )}
+      {rows.length === 0 ? (
+        <div className="px-4">
+          <EmptyState
+            icon={<Trophy size={20} />}
+            title="No points earned yet this season"
+            body="Points come from real sessions — show up to a confirmed jam to get on the board."
+          />
         </div>
-      </div>
-
-      {/* RANKED LIST */}
-      <div className="flex flex-col gap-2 px-4">
-        {rest.map((entry) => (
-          <Row key={entry.musicianId} entry={entry} topPoints={topPoints} />
-        ))}
-        {me && (
-          <div className="flex justify-center py-2 text-border">
-            <MoreVertical size={14} />
+      ) : (
+        <>
+          {/* PODIUM — renders whatever top places exist, even a field of one or two. */}
+          <div className="mb-4 px-4">
+            <div className="relative flex h-[220px] items-end justify-center gap-3 overflow-hidden rounded-[16px] border border-border-subtle bg-gradient-to-br from-primary to-accent px-4 pb-6 shadow-sm">
+              {[
+                { entry: second, place: 2, avatarClass: 'h-[52px] w-[52px]', padClass: 'pb-2' },
+                { entry: first, place: 1, avatarClass: 'h-[64px] w-[64px]', padClass: 'pb-6' },
+                { entry: third, place: 3, avatarClass: 'h-[48px] w-[48px]', padClass: 'pb-0' },
+              ].map(({ entry, place, avatarClass, padClass }) =>
+                entry ? (
+                  <PodiumPlace
+                    key={entry.musicianId}
+                    entry={entry}
+                    place={place}
+                    avatarClass={avatarClass}
+                    padClass={padClass}
+                  />
+                ) : null,
+              )}
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* RANKED LIST */}
+          <div className="flex flex-col gap-2 px-4">
+            {rest.map((entry) => (
+              <Row key={entry.musicianId} entry={entry} topPoints={topPoints} />
+            ))}
+            {me && (
+              <div className="flex justify-center py-2 text-border">
+                <MoreVertical size={14} />
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {/*
         Scope picker. The season carries one city and one scene, so the sheet shows that single
