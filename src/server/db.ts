@@ -66,7 +66,9 @@ export function db(): Database.Database {
   if (!conn && explicit) {
     throw new Error(
       `Riff refuses to start: RIFF_DB_PATH=${DB_PATH} is not writable. ` +
-        'Fix the disk mount rather than silently serving an ephemeral database.',
+        'The persistent disk is missing or detached — on Render: service → Disks → Add Disk ' +
+        '(name riff-data, mount path /var/data, 1 GB), which triggers a redeploy. ' +
+        'Refusing to boot rather than silently serving an ephemeral database.',
     )
   }
   conn = conn ?? tryOpen(path.join(os.tmpdir(), 'riff.db'))
