@@ -1,24 +1,25 @@
-# Render Blueprint — one Node web service running the Next.js app.
-# Deploy: Render dashboard → New → Blueprint → pick this repo → Apply.
+# Render Blueprint — one Node web service running the Next.js app, PROTOTYPE MODE.
 #
-# Riff has real accounts: SQLite at RIFF_DB_PATH, seeded from src/mocks/ on first boot.
+# This configuration has ZERO external requirements: no disk, no secrets, no paid plan.
+# It boots on any Render service. The trade-off is deliberate and loudly labelled:
+# SQLite lives on the instance's ephemeral filesystem, so ALL data (accounts, jams,
+# messages, votes) RESETS on every deploy or restart. That is the deal for a test
+# prototype — fine for trying the app, not for real users.
+#
+# ── Graduating to a durable deployment later ────────────────────────────────────────────
+#  1. Set `plan:` to a paid tier that supports disks (e.g. `starter`).
+#  2. Add a disk:            disk: { name: riff-data, mountPath: /var/data, sizeGB: 1 }
+#     (On an EXISTING service a Blueprint sync will NOT create the disk — add it in the
+#     dashboard: service → Disks → Add Disk. Only brand-new Blueprint services get it
+#     automatically.)
+#  3. Add under envVars:     - key: RIFF_DB_PATH   value: /var/data/riff.db
+#  4. Restore the boot refusal in src/server/db.ts and the process.exit(1) in
+#     src/instrumentation.ts (both carry a "PROTOTYPE MODE" comment pointing here), so a
+#     detached disk fails the deploy instead of silently serving an ephemeral database.
+#  5. Optionally set autoDeploy: false so deploys are deliberate.
+# ────────────────────────────────────────────────────────────────────────────────────────
+#
 # One instance only (SQLite is per-process) — do not scale this service horizontally.
-#
-# ┌─ LAUNCH BLOCKER (P0) ────────────────────────────────────────────────────────────────────┐
-# │ ACCOUNT DATA DURABILITY. On `plan: free` there is no disk, so the app writes SQLite under   │
-# │ the EPHEMERAL project directory — every deploy (and autoDeploy fires on every push) wipes   │
-# │ ALL accounts, sessions, jams, messages and earned reputation. This is fine for a throwaway  │
-# │ preview but is NOT shippable for real users.                                                │
-# │                                                                                             │
-# │ Before inviting anyone real, make this ONE change (a paid-plan/billing decision only you    │
-# │ can make — the code path is already correct once a disk exists):                            │
-# │   1. Set `plan:` to a paid tier that supports disks (e.g. `starter`).                        │
-# │   2. Uncomment the `disk:` block below (mountPath /var/data).                                │
-# │   3. Uncomment the RIFF_DB_PATH env var so the DB lives on the mount, not the ephemeral fs.  │
-# │ Do NOT point RIFF_DB_PATH at /var/data WITHOUT the disk — that dir is read-only and the app  │
-# │ would fall back to an ephemeral temp DB. Optionally set autoDeploy:false so pushes don't     │
-# │ redeploy (and reseed) unattended.                                                           │
-# └─────────────────────────────────────────────────────────────────────────────────────────────┘
 
 services:
   - type: web
@@ -37,6 +38,7 @@ services:
     startCommand: npm run start
 
     autoDeploy: true
+
     envVars:
       # Pin the runtime so a Render default bump cannot change the build under you.
       - key: NODE_VERSION
@@ -45,32 +47,16 @@ services:
       # `next start` always serves one, so the variable buys nothing and breaks `npm ci`.
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
-      # Password recovery. Email delivery is wired (src/server/email.ts, Resend over fetch) but
-      # OFF until RESEND_API_KEY is set below. Until then, RIFF_PREVIEW_RESET=1 returns the reset
-      # code in the response so a preview user can self-recover — but ONLY after proving the
-      # account's recovery email (a username alone never works). Once RESEND_API_KEY is set, the
-      # code is EMAILED and never returned over HTTP (even with this flag on); delete this flag
-      # for a real launch so there is no preview path at all.
-      - key: RIFF_PREVIEW_RESET
-        value: "1"
-      # Wire real password-recovery email: add RESEND_API_KEY (from resend.com) and, once you have
-      # a verified domain, RIFF_EMAIL_FROM. Set these as SECRET env vars in the Render dashboard
-      # rather than committing the key here. With RESEND_API_KEY present, reset codes are emailed.
+      # RIFF_DB_PATH is deliberately NOT set. Without it, db.ts writes SQLite under the
+      # project directory (ephemeral on Render) and falls back to the OS temp dir if even
+      # that is unwritable — the app always boots. If a stale RIFF_DB_PATH is still set on
+      # the service from an earlier attempt, DELETE it in the dashboard (service →
+      # Environment); with prototype-mode code it would only cause a harmless fallback
+      # warning, but removing it keeps the logs clean.
+      #
+      # Password-recovery email stays off until RESEND_API_KEY is set (dashboard secret).
+      # Reset codes are only ever delivered by email — never returned over HTTP.
       # - key: RESEND_API_KEY
-      #   sync: false            # set the value in the dashboard; never commit the key
+      #   sync: false
       # - key: RIFF_EMAIL_FROM
       #   value: "Riff <no-reply@yourdomain.com>"
-      # RIFF_DB_PATH is intentionally NOT set here. With no disk, db.ts defaults to
-      # <project>/data/riff.db — writable on Render's ephemeral filesystem — and, as a last
-      # resort, falls back to the OS temp dir. Both reset on deploy; that is the free-plan
-      # trade-off. To persist, uncomment the disk AND the override below together.
-
-    # Persist accounts across deploys (requires a paid plan). Uncomment BOTH the disk and the
-    # RIFF_DB_PATH override so the database lives on the mounted volume:
-    # disk:
-    #   name: riff-data
-    #   mountPath: /var/data
-    #   sizeGB: 1
-    #   # and add this under envVars above:
-    #   #   - key: RIFF_DB_PATH
-    #   #     value: /var/data/riff.db

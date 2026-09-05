@@ -32,6 +32,7 @@ import type {
   Intent,
   Jam,
   JamRequest,
+  LeaderboardEntry,
   LiveComment,
   ListingKind,
   MapListing,
@@ -71,7 +72,8 @@ export interface ProfileOverrides {
   intent?: Intent
   availability?: Availability
   availableTonight?: boolean
-  clip?: AudioClip
+  /** null removes the clip. Adding one goes through uploadClip with real recorded audio. */
+  clip?: null
   bio?: string
 }
 
@@ -98,12 +100,21 @@ interface RiffState {
   /** Member-created map listings: published community ones + the viewer's own (any status). */
   listings: MapListing[]
 
-  // --- session-local (never persisted; Phase-6 flavor) ---
+  // --- truth-engine slices (server-computed; mirrors of recorded rows) ---
   followedBandIds: string[]
+  /** The viewer's own recorded vote per battle — derived from battleTallies. */
   battleVotes: Record<string, 'A' | 'B'>
+  /** Real per-battle tallies (demo baseline + counted votes). */
+  battleTallies: Record<string, { a: number; b: number; mine?: 'A' | 'B' }>
+  /** Seed demo lines (marked `demo`) + real persisted chat, per stream id. */
   liveChat: Record<string, LiveComment[]>
   battleChat: Record<string, LiveComment[]>
-  sessionRatings: Record<string, number>
+  /** Real rating aggregates per session, plus the viewer's own. */
+  sessionRatings: Record<string, { avg: number; count: number; mine?: number }>
+  /** Real RSVP counts per map event, and whether the viewer is going. */
+  eventGoing: Record<string, { count: number; mine: boolean }>
+  /** Season standings computed server-side from recorded events. */
+  leaderboard: LeaderboardEntry[]
   localTick: number
   /** When a guest attempts an action, the feature they wanted — drives the sign-up prompt. */
   accountPrompt: string | null
@@ -179,12 +190,43 @@ interface RiffState {
   setListingStatus: (id: string, status: 'published' | 'paused') => Promise<void>
   deleteListing: (id: string) => Promise<void>
 
-  // --- session-local actions ---
+  // --- truth-engine actions (all persisted server-side; optimistic locally) ---
   toggleFollowBand: (bandId: string) => void
   voteInBattle: (battleId: string, side: 'A' | 'B') => void
   sendLiveComment: (sessionId: string, body: string, handle?: string) => void
   sendBattleComment: (battleId: string, body: string, handle?: string) => void
   rateSession: (sessionId: string, stars: number) => void
+  toggleEventRsvp: (eventId: string) => void
+  /** Uploads the real recorded audio; the profile clip then plays these exact bytes. */
+  uploadClip: (audio: Blob, durationSec: number, peaks: number[]) => Promise<AudioClip>
+}
+
+/**
+ * Seed chat lines ship in fixtures for atmosphere; they are marked `demo` so the UI can label
+ * them unmistakably, and real persisted rows from the server are appended after them.
+ */
+function mergeChat(
+  seeds: Record<string, LiveComment[]>,
+  real: Record<string, LiveComment[]> | undefined,
+): Record<string, LiveComment[]> {
+  const out: Record<string, LiveComment[]> = {}
+  for (const [id, lines] of Object.entries(seeds)) {
+    out[id] = lines.map((c) => ({ ...c, demo: true }))
+  }
+  for (const [id, lines] of Object.entries(real ?? {})) {
+    out[id] = [...(out[id] ?? []), ...lines]
+  }
+  return out
+}
+
+function myVotes(
+  tallies: Record<string, { a: number; b: number; mine?: 'A' | 'B' }> | undefined,
+): Record<string, 'A' | 'B'> {
+  const out: Record<string, 'A' | 'B'> = {}
+  for (const [id, t] of Object.entries(tallies ?? {})) {
+    if (t.mine) out[id] = t.mine
+  }
+  return out
 }
 
 function snapshotSlices(snapshot: WorldSnapshot) {
@@ -207,6 +249,17 @@ function snapshotSlices(snapshot: WorldSnapshot) {
     competitionEntries: snapshot.competitionEntries,
     wallet: snapshot.wallet,
     listings: snapshot.listings ?? [],
+    followedBandIds: snapshot.followedBandIds ?? [],
+    battleTallies: snapshot.battleTallies ?? {},
+    battleVotes: myVotes(snapshot.battleTallies),
+    liveChat: mergeChat(
+      Object.fromEntries(seedLive.map((s) => [s.id, s.chat])),
+      snapshot.streamChat,
+    ),
+    battleChat: mergeChat(battleChatSeed, snapshot.streamChat),
+    sessionRatings: snapshot.sessionRatings ?? {},
+    eventGoing: snapshot.eventGoing ?? {},
+    leaderboard: snapshot.leaderboard ?? [],
   }
 }
 
@@ -257,6 +310,11 @@ const FEATURE_LABELS: Record<string, string> = {
   updateListing: 'edit your listing',
   setListingStatus: 'update your listing',
   deleteListing: 'remove your listing',
+  voteInBattle: 'vote in a battle',
+  sendStreamComment: 'join the chat',
+  rateSession: 'rate a session',
+  toggleFollowBand: 'follow a band',
+  toggleEventRsvp: 'RSVP to an event',
 }
 
 function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
@@ -282,11 +340,6 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
     return {
       ...snapshotSlices(initial),
 
-      followedBandIds: [],
-      battleVotes: {},
-      liveChat: Object.fromEntries(seedLive.map((s) => [s.id, s.chat])),
-      battleChat: battleChatSeed,
-      sessionRatings: {},
       localTick: 0,
       accountPrompt: null,
 
@@ -313,17 +366,7 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
       },
 
       applyOnboarding: async (overrides) => {
-        const { clip, ...rest } = overrides
-        await dispatch('updateProfile', {
-          ...rest,
-          ...(clip !== undefined
-            ? {
-                clip: clip
-                  ? { durationSec: clip.durationSec, waveform: clip.waveform ?? [] }
-                  : null,
-              }
-            : {}),
-        })
+        await dispatch('updateProfile', overrides)
       },
 
       sendJamRequest: (input) => dispatch<JamRequest>('sendJamRequest', input),
@@ -372,21 +415,28 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
 
       toggleFollowBand: (bandId) => {
         if (!get().requireAccount('follow a band')) return
+        // Optimistic flip; the dispatch's snapshot is authoritative and corrects any race.
         set((state) => ({
           followedBandIds: state.followedBandIds.includes(bandId)
             ? state.followedBandIds.filter((id) => id !== bandId)
             : [...state.followedBandIds, bandId],
         }))
+        void dispatch('toggleFollowBand', { bandId }).catch(() => get().refresh())
       },
 
-      /** One vote per user per battle, and it is final — re-voting is ignored. */
+      /** One vote per account per battle, recorded server-side — final across devices. */
       voteInBattle: (battleId, side) => {
         if (!get().requireAccount('vote in a battle')) return
-        set((state) =>
-          state.battleVotes[battleId]
-            ? state
-            : { battleVotes: { ...state.battleVotes, [battleId]: side } },
-        )
+        if (get().battleTallies[battleId]?.mine) return
+        set((state) => {
+          const t = state.battleTallies[battleId] ?? { a: 0, b: 0 }
+          const bumped = { ...t, a: t.a + (side === 'A' ? 1 : 0), b: t.b + (side === 'B' ? 1 : 0), mine: side }
+          return {
+            battleTallies: { ...state.battleTallies, [battleId]: bumped },
+            battleVotes: { ...state.battleVotes, [battleId]: side },
+          }
+        })
+        void dispatch('voteInBattle', { battleId, side }).catch(() => get().refresh())
       },
 
       sendLiveComment: (sessionId, body, handle) => {
@@ -406,6 +456,9 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
             [sessionId]: [...(state.liveChat[sessionId] ?? []), comment],
           },
         }))
+        void dispatch('sendStreamComment', { streamId: sessionId, body }).catch(() =>
+          get().refresh(),
+        )
       },
 
       sendBattleComment: (battleId, body, handle) => {
@@ -425,11 +478,61 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
             [battleId]: [...(state.battleChat[battleId] ?? []), comment],
           },
         }))
+        void dispatch('sendStreamComment', { streamId: battleId, body }).catch(() =>
+          get().refresh(),
+        )
       },
 
       rateSession: (sessionId, stars) => {
         if (!get().requireAccount('rate a session')) return
-        set((state) => ({ sessionRatings: { ...state.sessionRatings, [sessionId]: stars } }))
+        set((state) => {
+          const prev = state.sessionRatings[sessionId]
+          // Optimistic: fold my stars into the aggregate; the next snapshot recomputes exactly.
+          const next = prev
+            ? {
+                avg:
+                  prev.mine === undefined
+                    ? Math.round(((prev.avg * prev.count + stars) / (prev.count + 1)) * 10) / 10
+                    : prev.avg,
+                count: prev.mine === undefined ? prev.count + 1 : prev.count,
+                mine: stars,
+              }
+            : { avg: stars, count: 1, mine: stars }
+          return { sessionRatings: { ...state.sessionRatings, [sessionId]: next } }
+        })
+        void dispatch('rateSession', { sessionId, stars }).catch(() => get().refresh())
+      },
+
+      uploadClip: async (audio, durationSec, peaks) => {
+        if (get().isGuest) {
+          set({ accountPrompt: 'add a clip' })
+          throw new AccountRequiredError()
+        }
+        const fd = new FormData()
+        fd.append('audio', audio)
+        fd.append('durationSec', String(durationSec))
+        fd.append('peaks', JSON.stringify(peaks))
+        const res = await fetch('/api/riff/clip', { method: 'POST', body: fd })
+        if (res.status === 401) {
+          window.location.href = '/login'
+          throw new Error('Signed out')
+        }
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data.error ?? 'Upload failed — try again')
+        get().applySnapshot(data.snapshot as WorldSnapshot)
+        return data.result as AudioClip
+      },
+
+      toggleEventRsvp: (eventId) => {
+        if (!get().requireAccount('RSVP to an event')) return
+        set((state) => {
+          const cur = state.eventGoing[eventId] ?? { count: 0, mine: false }
+          const next = cur.mine
+            ? { count: Math.max(0, cur.count - 1), mine: false }
+            : { count: cur.count + 1, mine: true }
+          return { eventGoing: { ...state.eventGoing, [eventId]: next } }
+        })
+        void dispatch('toggleEventRsvp', { eventId }).catch(() => get().refresh())
       },
     }
   })

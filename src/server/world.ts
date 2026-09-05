@@ -14,6 +14,10 @@ import crypto from 'node:crypto'
 import { db, etDateKey } from '@/server/db'
 import { canRevealAddress, canVouch } from '@/lib/privacy'
 import { getLeaderboardEntry, mapZones } from '@/mocks'
+import { battles as fixtureBattles } from '@/mocks/battles'
+import { liveSessions as fixtureSessions } from '@/mocks/live'
+import { mapEvents as fixtureEvents, withOpenState } from '@/mocks/places'
+import { bands as fixtureBands } from '@/mocks/bands'
 import { SLOTS, WEEKDAYS } from '@/lib/availability'
 import type {
   Availability,
@@ -44,6 +48,8 @@ import type {
   MusicShop,
   MapListing,
   ListingKind,
+  LeaderboardEntry,
+  LiveComment,
 } from '@/types'
 import type { WorldSnapshot } from '@/lib/snapshot'
 
@@ -83,6 +89,7 @@ function rowToMusician(r: any, nowKey: string): Musician {
     availableTonight:
       Boolean(r.available_tonight) && (Boolean(r.is_seed) || r.tonight_set_on === nowKey),
     verified: Boolean(r.verified),
+    isSeed: Boolean(r.is_seed),
     jamsHosted: r.jams_hosted,
     baseline: JSON.parse(r.baseline),
   }
@@ -198,31 +205,95 @@ function settleFinishedJams(now: string) {
   for (const r of done) upd.run(Math.round(r.duration_hours * 60), r.id)
 }
 
+/**
+ * A pending jam (open call or unanswered invites) whose whole time window has passed never
+ * happened — it expires to 'cancelled' instead of haunting lists as a jam "tonight" that was
+ * actually last week. Runs alongside settleFinishedJams on every snapshot build.
+ */
+function expireStalePendingJams(now: string) {
+  const d = db()
+  const rows = d
+    .prepare(`SELECT id, starts_at, duration_hours FROM jams WHERE status = 'pending'`)
+    .all() as { id: string; starts_at: string; duration_hours: number }[]
+  const stale = rows.filter(
+    (r) => Date.parse(r.starts_at) + r.duration_hours * 3_600_000 < Date.parse(now),
+  )
+  if (stale.length === 0) return
+  const upd = d.prepare(`UPDATE jams SET status = 'cancelled' WHERE id = ?`)
+  for (const r of stale) upd.run(r.id)
+}
+
+
+/** Real counts of completed jams per host and per venue — overrides any authored figure. */
+function hostedTruth(d: ReturnType<typeof db>) {
+  const byHost = new Map(
+    (
+      d
+        .prepare(`SELECT host_id AS id, COUNT(*) AS n FROM jams WHERE status = 'completed' GROUP BY host_id`)
+        .all() as { id: string; n: number }[]
+    ).map((r) => [r.id, r.n]),
+  )
+  const byVenue = new Map(
+    (
+      d
+        .prepare(`SELECT venue_id AS id, COUNT(*) AS n FROM jams WHERE status = 'completed' GROUP BY venue_id`)
+        .all() as { id: string; n: number }[]
+    ).map((r) => [r.id, r.n]),
+  )
+  return { byHost, byVenue }
+}
+
+/**
+ * A venue is "live" only when something is actually on there right now: a (demo-labelled)
+ * fixture live session, or a confirmed jam inside its time window. Never the stored flag.
+ */
+function liveVenueIds(d: ReturnType<typeof db>, now: string): Set<string> {
+  const ids = new Set(fixtureSessions.map((s) => s.venueId))
+  const t = Date.parse(now)
+  const rows = d
+    .prepare(`SELECT venue_id, starts_at, duration_hours FROM jams WHERE status IN ('confirmed','live')`)
+    .all() as { venue_id: string; starts_at: string; duration_hours: number }[]
+  for (const r of rows) {
+    const start = Date.parse(r.starts_at)
+    if (t >= start && t <= start + r.duration_hours * 3_600_000) ids.add(r.venue_id)
+  }
+  return ids
+}
+
 // --- snapshot ---------------------------------------------------------------
 export function buildSnapshot(viewerId: string): WorldSnapshot {
   const d = db()
   const now = nowIso()
   const nowKey = etDateKey(now)
   settleFinishedJams(now)
+  expireStalePendingJams(now)
 
   const viewerRow = d.prepare(`SELECT * FROM musicians WHERE id = ?`).get(viewerId) as
     Record<string, unknown> | undefined
   if (!viewerRow) throw new WorldError('Account not found', 404)
   const viewer = rowToMusician(viewerRow, nowKey)
 
+  const hosted = hostedTruth(d)
+  const liveAt = liveVenueIds(d, now)
   const musicians = (d.prepare(`SELECT * FROM musicians`).all() as Record<string, unknown>[])
     .map((r) => rowToMusician(r, nowKey))
     .map((m) => ({
       ...m,
+      jamsHosted: hosted.byHost.get(m.id) ?? 0,
       distanceMi:
         m.id === viewerId
           ? 0
           : zoneDistanceMi(viewer.neighborhood, m.neighborhood, [viewerId, m.id].sort().join('|')),
     }))
 
-  const venues = (d.prepare(`SELECT * FROM venues`).all() as Record<string, unknown>[]).map((r) =>
-    rowToVenue(r, false),
-  )
+  const venues = (d.prepare(`SELECT * FROM venues`).all() as Record<string, unknown>[])
+    .map((r) => rowToVenue(r, false))
+    .map((v) => ({
+      ...v,
+      jamsHosted: hosted.byVenue.get(v.id) ?? 0,
+      distanceMi: zoneDistanceMi(viewer.neighborhood, v.neighborhood, `${viewerId}|${v.id}`),
+      liveNow: liveAt.has(v.id),
+    }))
   const addressByVenue = new Map(
     (d.prepare(`SELECT id, address FROM venues`).all() as { id: string; address: string }[]).map(
       (r) => [r.id, r.address],
@@ -377,6 +448,12 @@ export function buildSnapshot(viewerId: string): WorldSnapshot {
     competitionEntries,
     wallet: walletFor(viewerId),
     listings: listingsForViewer(viewerId),
+    battleTallies: battleTalliesFor(viewerId),
+    streamChat: streamChatFor(),
+    sessionRatings: sessionRatingsFor(viewerId),
+    followedBandIds: followsFor(viewerId),
+    eventGoing: eventGoingFor(viewerId),
+    leaderboard: computeLeaderboard(),
   }
 }
 
@@ -392,19 +469,28 @@ export function buildGuestSnapshot(): WorldSnapshot {
   const now = nowIso()
   const nowKey = etDateKey(now)
   settleFinishedJams(now)
+  expireStalePendingJams(now)
 
   const anchor = mapZones.find((z) => z.name === 'Williamsburg') ?? mapZones[0]
+  const hosted = hostedTruth(d)
+  const liveAt = liveVenueIds(d, now)
   const musicians = (d.prepare(`SELECT * FROM musicians`).all() as Record<string, unknown>[])
     .map((r) => rowToMusician(r, nowKey))
     .filter((m) => m.instruments.length > 0)
     .map((m) => ({
       ...m,
+      jamsHosted: hosted.byHost.get(m.id) ?? 0,
       distanceMi: zoneDistanceMi(anchor.name, m.neighborhood, `guest|${m.id}`),
     }))
 
-  const venues = (d.prepare(`SELECT * FROM venues`).all() as Record<string, unknown>[]).map((r) =>
-    rowToVenue(r, false),
-  )
+  const venues = (d.prepare(`SELECT * FROM venues`).all() as Record<string, unknown>[])
+    .map((r) => rowToVenue(r, false))
+    .map((v) => ({
+      ...v,
+      jamsHosted: hosted.byVenue.get(v.id) ?? 0,
+      distanceMi: zoneDistanceMi(anchor.name, v.neighborhood, `guest|${v.id}`),
+      liveNow: liveAt.has(v.id),
+    }))
 
   // Only public jams: open calls and completed history. No private upcoming jams, ever.
   const jams = (d.prepare(`SELECT * FROM jams`).all() as Record<string, unknown>[])
@@ -472,6 +558,12 @@ export function buildGuestSnapshot(): WorldSnapshot {
     competitionEntries,
     wallet: null,
     listings: publishedListings(),
+    battleTallies: battleTalliesFor(null),
+    streamChat: streamChatFor(),
+    sessionRatings: sessionRatingsFor(null),
+    followedBandIds: [],
+    eventGoing: eventGoingFor(null),
+    leaderboard: computeLeaderboard(),
   }
 }
 
@@ -587,10 +679,11 @@ function settleSeason(season: Season) {
   // Rank by the SAME leaderboard players can see, so the settlement can't contradict it — highest
   // points win, ties broken by who entered first (entries is already ordered by entered_at). An
   // entrant with no leaderboard standing (a brand-new real account) scores 0 and places last.
+  const standings = new Map(computeLeaderboard().map((e) => [e.musicianId, e.points]))
   const ranked = entries
     .map((entry, i) => ({
       entry,
-      points: getLeaderboardEntry(entry.competitorId)?.points ?? 0,
+      points: standings.get(entry.competitorId) ?? 0,
       order: i,
     }))
     .sort((a, b) => b.points - a.points || a.order - b.order)
@@ -834,22 +927,13 @@ export function updateProfile(viewerId: string, input: ProfileInput) {
     push('tonight_set_on', input.availableTonight ? etDateKey(nowIso()) : null)
   }
   if (input.clip !== undefined) {
-    if (input.clip === null) push('clip', null)
-    else {
-      const durationSec = Math.min(24, Math.max(1, Number(input.clip.durationSec) || 0))
-      const waveform = Array.isArray(input.clip.waveform)
-        ? input.clip.waveform.slice(0, 64).map((n) => Math.min(1, Math.max(0, Number(n) || 0)))
-        : []
-      push(
-        'clip',
-        JSON.stringify({
-          id: `clip-${viewerId}`,
-          url: `/mock/clips/clip-${viewerId}.m4a`,
-          durationSec,
-          waveform,
-          recordedAt: nowIso(),
-        }),
-      )
+    // A clip can only be REMOVED here. Creating one goes through saveClip (POST /api/riff/clip)
+    // with real recorded audio — a profile never points at a sound file that does not exist.
+    if (input.clip === null) {
+      push('clip', null)
+      d.prepare(`DELETE FROM clips WHERE user_id = ?`).run(viewerId)
+    } else {
+      throw new WorldError('Record your clip to add it — audio uploads via /api/riff/clip')
     }
   }
   if (input.bio !== undefined) push('bio', String(input.bio).slice(0, 200))
@@ -1384,6 +1468,17 @@ export function postJam(
     for (const id of invited) {
       notify(id, 'request_received', 'invited you to a jam', viewerId, { jamId })
     }
+    // Demo-crew invitees accept right away (same tested path, on their behalf), so inviting the
+    // crew converts into a confirmed jam instead of hanging on invites no human will answer.
+    for (const id of invited) {
+      if (isSeedMusician(id)) {
+        try {
+          respondToInvite(id, jamId, 'accept')
+        } catch {
+          // leave the invite pending
+        }
+      }
+    }
   }
   return jam
 }
@@ -1870,8 +1965,13 @@ function rowToListing(r: Record<string, unknown>): MapListing {
     createdAt: r.created_at as string,
   }
   if (kind === 'studio') return { ...base, studio: obj as Studio }
-  if (kind === 'street') return { ...base, street: obj as StreetPerformer }
-  return { ...base, shop: obj as MusicShop }
+  if (kind === 'street') {
+    const street = obj as StreetPerformer
+    const t = Date.parse(nowIso())
+    street.live = t >= Date.parse(street.startedAt) && t <= Date.parse(street.until)
+    return { ...base, street }
+  }
+  return { ...base, shop: withOpenState(obj as MusicShop) }
 }
 
 /** Deterministic small offset from a zone centre so a listing pin doesn't sit exactly on it. */
@@ -1963,7 +2063,14 @@ function buildShop(id: string, _ownerId: string, input: Record<string, unknown>)
   if (address.length < 3) throw new WorldError('A shop needs a storefront address')
   const tags = nonEmptyStrings(input.tags)
   if (tags.length === 0) throw new WorldError('Add at least one tag (what you sell)')
-  const hoursLabel = String(input.hoursLabel ?? '').trim().slice(0, 40) || 'Hours vary'
+  const opensAt = Math.round(Number(input.opensAt))
+  const closesAt = Math.round(Number(input.closesAt))
+  const hours =
+    Number.isFinite(opensAt) && Number.isFinite(closesAt) &&
+    opensAt >= 0 && opensAt <= 23 && closesAt > opensAt && closesAt <= 24
+      ? { opensAt, closesAt }
+      : undefined
+  if (!hours) throw new WorldError('Set real opening hours (open before close)')
   return {
     id,
     name,
@@ -1977,8 +2084,10 @@ function buildShop(id: string, _ownerId: string, input: Record<string, unknown>)
     rating: 0,
     reviewCount: 0,
     tags,
-    openNow: Boolean(input.openNow ?? true),
-    hoursLabel,
+    hours,
+    // Derived at read time from `hours` — a stored "open now" would go stale into a lie.
+    openNow: false,
+    hoursLabel: '',
     phone: input.phone ? String(input.phone).trim().slice(0, 40) : undefined,
     website: input.website ? String(input.website).trim().slice(0, 80) : undefined,
   }
@@ -2123,4 +2232,325 @@ function publishedListings(): MapListing[] {
     unknown
   >[]
   return rows.map(rowToListing)
+}
+
+// ---------------------------------------------------------------------------
+// Truth engine — the live/battle/social numbers users see, counted from recorded rows.
+// Fixture "demo base" figures survive only as an explicitly-demo baseline; every real
+// interaction is persisted here and every displayed aggregate is computed, never authored.
+// ---------------------------------------------------------------------------
+
+/** One vote per account per battle, recorded forever — a refresh or second device cannot re-vote. */
+export function voteInBattle(viewerId: string, battleId: string, side: 'A' | 'B') {
+  if (side !== 'A' && side !== 'B') throw new WorldError('Pick a side')
+  const battle = fixtureBattles.find((b) => b.id === battleId)
+  if (!battle) throw new WorldError('Battle not found', 404)
+  if (battle.status !== 'live') throw new WorldError('Voting is closed for this battle', 409)
+  try {
+    db()
+      .prepare(`INSERT INTO battle_votes VALUES (?,?,?,?)`)
+      .run(battleId, viewerId, side, nowIso())
+  } catch {
+    throw new WorldError('Your vote is already in — one per player', 409)
+  }
+}
+
+/** A chat line on a live stream or battle: persisted, so every viewer sees it. */
+export function sendStreamComment(viewerId: string, streamId: string, body: string) {
+  const known =
+    fixtureSessions.some((s) => s.id === streamId) ||
+    fixtureBattles.some((b) => b.id === streamId)
+  if (!known) throw new WorldError('Stream not found', 404)
+  const text = String(body ?? '')
+    .trim()
+    .slice(0, 300)
+  if (!text) throw new WorldError('Empty message')
+  const d = db()
+  const author = d.prepare(`SELECT handle FROM musicians WHERE id = ?`).get(viewerId) as
+    | { handle: string }
+    | undefined
+  if (!author) throw new WorldError('Account not found', 404)
+  const comment = { id: uid('lc'), handle: author.handle, body: text, sentAt: nowIso() }
+  d.prepare(`INSERT INTO live_comments VALUES (?,?,?,?,?)`).run(
+    comment.id,
+    streamId,
+    viewerId,
+    text,
+    comment.sentAt,
+  )
+  return comment
+}
+
+/** Rate a session 1–5. Upserts, so the shown aggregate is a real average over real ratings. */
+export function rateSession(viewerId: string, sessionId: string, stars: number) {
+  if (!fixtureSessions.some((s) => s.id === sessionId))
+    throw new WorldError('Session not found', 404)
+  const n = Math.round(Number(stars))
+  if (!Number.isFinite(n) || n < 1 || n > 5) throw new WorldError('Rate 1 to 5 stars')
+  db()
+    .prepare(
+      `INSERT INTO session_ratings VALUES (?,?,?,?)
+       ON CONFLICT(session_id, user_id) DO UPDATE SET stars = excluded.stars`,
+    )
+    .run(sessionId, viewerId, n, nowIso())
+}
+
+/** Follow/unfollow a band — persisted, so the state survives refresh and devices. */
+export function toggleBandFollow(viewerId: string, bandId: string): { following: boolean } {
+  if (!fixtureBands.some((b) => b.id === bandId)) throw new WorldError('Band not found', 404)
+  const d = db()
+  const gone = d
+    .prepare(`DELETE FROM band_follows WHERE user_id = ? AND band_id = ?`)
+    .run(viewerId, bandId)
+  if (gone.changes > 0) return { following: false }
+  d.prepare(`INSERT INTO band_follows VALUES (?,?,?)`).run(viewerId, bandId, nowIso())
+  return { following: true }
+}
+
+/** RSVP to a map event — the "going" count becomes a real count of real people. */
+export function toggleEventRsvp(viewerId: string, eventId: string): { going: boolean } {
+  if (!fixtureEvents.some((e) => e.id === eventId)) throw new WorldError('Event not found', 404)
+  const d = db()
+  const gone = d
+    .prepare(`DELETE FROM event_rsvps WHERE event_id = ? AND musician_id = ?`)
+    .run(eventId, viewerId)
+  if (gone.changes > 0) return { going: false }
+  d.prepare(`INSERT INTO event_rsvps VALUES (?,?,?)`).run(eventId, viewerId, nowIso())
+  return { going: true }
+}
+
+// --- computed aggregates for the snapshot ----------------------------------
+
+function battleTalliesFor(viewerId: string | null): WorldSnapshot['battleTallies'] {
+  const d = db()
+  const rows = d
+    .prepare(`SELECT battle_id, side, COUNT(*) AS n FROM battle_votes GROUP BY battle_id, side`)
+    .all() as { battle_id: string; side: 'A' | 'B'; n: number }[]
+  const mineRows = viewerId
+    ? (d.prepare(`SELECT battle_id, side FROM battle_votes WHERE user_id = ?`).all(viewerId) as {
+        battle_id: string
+        side: 'A' | 'B'
+      }[])
+    : []
+  const out: WorldSnapshot['battleTallies'] = {}
+  for (const b of fixtureBattles) {
+    // Fixture figures are the demo baseline (labelled as such in the UI); real votes move it.
+    out[b.id] = { a: b.votesA, b: b.votesB }
+  }
+  for (const r of rows) {
+    const t = out[r.battle_id]
+    if (!t) continue
+    if (r.side === 'A') t.a += r.n
+    else t.b += r.n
+  }
+  for (const m of mineRows) {
+    const t = out[m.battle_id]
+    if (t) t.mine = m.side
+  }
+  return out
+}
+
+function streamChatFor(): WorldSnapshot['streamChat'] {
+  const rows = db()
+    .prepare(
+      `SELECT c.id, c.stream_id, c.body, c.sent_at, m.handle
+       FROM live_comments c JOIN musicians m ON m.id = c.author_id
+       ORDER BY c.sent_at ASC`,
+    )
+    .all() as { id: string; stream_id: string; body: string; sent_at: string; handle: string }[]
+  const out: WorldSnapshot['streamChat'] = {}
+  for (const r of rows) {
+    const list = (out[r.stream_id] = out[r.stream_id] ?? [])
+    list.push({ id: r.id, handle: r.handle, body: r.body, sentAt: r.sent_at })
+  }
+  for (const key of Object.keys(out)) out[key] = out[key].slice(-50)
+  return out
+}
+
+function sessionRatingsFor(viewerId: string | null): WorldSnapshot['sessionRatings'] {
+  const d = db()
+  const rows = d
+    .prepare(
+      `SELECT session_id, AVG(stars) AS avg, COUNT(*) AS n FROM session_ratings GROUP BY session_id`,
+    )
+    .all() as { session_id: string; avg: number; n: number }[]
+  const mine = viewerId
+    ? (d.prepare(`SELECT session_id, stars FROM session_ratings WHERE user_id = ?`).all(viewerId) as {
+        session_id: string
+        stars: number
+      }[])
+    : []
+  const out: WorldSnapshot['sessionRatings'] = {}
+  for (const r of rows) out[r.session_id] = { avg: Math.round(r.avg * 10) / 10, count: r.n }
+  for (const m of mine) {
+    out[m.session_id] = out[m.session_id] ?? { avg: m.stars, count: 1 }
+    out[m.session_id].mine = m.stars
+  }
+  return out
+}
+
+function followsFor(viewerId: string | null): string[] {
+  if (!viewerId) return []
+  return (
+    db().prepare(`SELECT band_id FROM band_follows WHERE user_id = ?`).all(viewerId) as {
+      band_id: string
+    }[]
+  ).map((r) => r.band_id)
+}
+
+function eventGoingFor(viewerId: string | null): WorldSnapshot['eventGoing'] {
+  const d = db()
+  const rows = d
+    .prepare(`SELECT event_id, COUNT(*) AS n FROM event_rsvps GROUP BY event_id`)
+    .all() as { event_id: string; n: number }[]
+  const mine = new Set(
+    viewerId
+      ? (
+          d.prepare(`SELECT event_id FROM event_rsvps WHERE musician_id = ?`).all(viewerId) as {
+            event_id: string
+          }[]
+        ).map((r) => r.event_id)
+      : [],
+  )
+  const out: WorldSnapshot['eventGoing'] = {}
+  for (const e of fixtureEvents) out[e.id] = { count: 0, mine: mine.has(e.id) }
+  for (const r of rows) {
+    if (out[r.event_id]) out[r.event_id].count = r.n
+  }
+  return out
+}
+
+const LB_INSTRUMENT: Record<string, string> = {
+  drums: 'Drummer',
+  bass: 'Bassist',
+  keys: 'Keys',
+  guitar: 'Guitarist',
+  vocals: 'Vocalist',
+  sax: 'Sax',
+  synth: 'Synth',
+  percussion: 'Percussion',
+}
+
+/**
+ * Season standings computed ONLY from recorded rows — never the authored fixture leaderboard.
+ * +40 per completed jam where co-attendees' recaps confirm you showed up (self-votes excluded),
+ * +25 per completed jam you hosted, +15 per vouch tied to a jam that actually exists as a row,
+ * +1 per real battle vote your band received. Seeds score by the same rules over their seeded
+ * events; real users appear the moment they earn a point, and settlement uses this same list.
+ */
+export function computeLeaderboard(): LeaderboardEntry[] {
+  const d = db()
+  const points = new Map<string, number>()
+  const add = (id: string, n: number) => points.set(id, (points.get(id) ?? 0) + n)
+
+  const completed = (d.prepare(`SELECT * FROM jams WHERE status = 'completed'`).all() as Record<
+    string,
+    unknown
+  >[]).map(rowToJam)
+  const recaps = d.prepare(`SELECT jam_id, author_id, attendance FROM recaps`).all() as {
+    jam_id: string
+    author_id: string
+    attendance: string
+  }[]
+  for (const jam of completed) {
+    add(jam.hostId, 25)
+    for (const a of jam.attendees) {
+      if (a.rsvp !== 'confirmed') continue
+      let yes = 0
+      let no = 0
+      for (const r of recaps) {
+        if (r.jam_id !== jam.id) continue
+        if (r.author_id === a.musicianId) continue // self-assertions never count
+        const verdict = (JSON.parse(r.attendance) as Record<string, boolean>)[a.musicianId]
+        if (verdict === true) yes++
+        else if (verdict === false) no++
+      }
+      if (yes > 0 && yes >= no) add(a.musicianId, 40)
+    }
+  }
+
+  const vouchRows = d
+    .prepare(`SELECT v.to_id, COUNT(*) AS n FROM vouches v JOIN jams j ON j.id = v.jam_id GROUP BY v.to_id`)
+    .all() as { to_id: string; n: number }[]
+  for (const r of vouchRows) add(r.to_id, 15 * r.n)
+
+  const voteRows = d
+    .prepare(`SELECT battle_id, side, COUNT(*) AS n FROM battle_votes GROUP BY battle_id, side`)
+    .all() as { battle_id: string; side: 'A' | 'B'; n: number }[]
+  for (const r of voteRows) {
+    const battle = fixtureBattles.find((b) => b.id === r.battle_id)
+    if (!battle) continue
+    const bandId = r.side === 'A' ? battle.bandAId : battle.bandBId
+    const band = fixtureBands.find((b) => b.id === bandId)
+    for (const member of band?.members ?? []) add(member.musicianId, r.n)
+  }
+
+  const nowKey = etDateKey(nowIso())
+  const rows = d.prepare(`SELECT * FROM musicians`).all() as Record<string, unknown>[]
+  const entries = rows
+    .map((r) => ({ musician: rowToMusician(r, nowKey), pts: points.get(r.id as string) ?? 0 }))
+    .filter((x) => x.pts > 0)
+    .sort((a, b) => b.pts - a.pts || a.musician.name.localeCompare(b.musician.name))
+  return entries.map((x, i) => ({
+    rank: i + 1,
+    musicianId: x.musician.id,
+    points: x.pts,
+    delta: 0, // no fabricated weekly movement — becomes real once history snapshots exist
+    instrumentLabel: `${LB_INSTRUMENT[x.musician.instruments[0]] ?? 'Musician'}${
+      x.musician.genres[0] ? `, ${x.musician.genres[0]}` : ''
+    }`,
+  }))
+}
+
+// --- clips: real recorded audio, stored as rows -----------------------------
+
+const CLIP_MAX_BYTES = 3 * 1024 * 1024
+const CLIP_MIMES = ['audio/webm', 'audio/mp4', 'audio/mpeg', 'audio/ogg', 'audio/wav']
+
+/**
+ * Store the viewer's actual recorded audio and point their profile clip at it. The waveform
+ * peaks are computed client-side from the SAME recording (decodeAudioData), so the bars a
+ * listener sees are the sound they will hear — nothing is drawn from a random seed.
+ */
+export function saveClip(
+  viewerId: string,
+  input: { mime: string; bytes: Buffer; durationSec: number; peaks: number[] },
+) {
+  const d = db()
+  const row = d.prepare(`SELECT is_seed FROM musicians WHERE id = ?`).get(viewerId) as
+    | { is_seed: number }
+    | undefined
+  if (!row) throw new WorldError('Account not found', 404)
+  if (row.is_seed) throw new WorldError('Demo musicians cannot upload', 403)
+  const mime = CLIP_MIMES.find((m) => input.mime?.startsWith(m))
+  if (!mime) throw new WorldError('Record audio in the app to upload it')
+  if (!input.bytes?.length) throw new WorldError('The recording is empty')
+  if (input.bytes.length > CLIP_MAX_BYTES) throw new WorldError('Keep the clip under 3 MB')
+  const durationSec = Math.min(60, Math.max(1, Number(input.durationSec) || 0))
+  const peaks = (Array.isArray(input.peaks) ? input.peaks : [])
+    .slice(0, 64)
+    .map((n) => Math.min(1, Math.max(0, Number(n) || 0)))
+  const at = nowIso()
+  d.prepare(
+    `INSERT INTO clips VALUES (?,?,?,?,?)
+     ON CONFLICT(user_id) DO UPDATE SET mime = excluded.mime, data = excluded.data,
+       duration_sec = excluded.duration_sec, created_at = excluded.created_at`,
+  ).run(viewerId, mime, input.bytes, durationSec, at)
+  const clip = {
+    id: `clip-${viewerId}`,
+    url: `/api/riff/clip/${viewerId}`,
+    durationSec,
+    waveform: peaks,
+    recordedAt: at,
+  }
+  d.prepare(`UPDATE musicians SET clip = ? WHERE id = ?`).run(JSON.stringify(clip), viewerId)
+  return clip
+}
+
+/** The stored audio for a musician's public profile clip — bytes plus the mime to serve. */
+export function readClip(userId: string): { mime: string; bytes: Buffer } | null {
+  const row = db()
+    .prepare(`SELECT mime, data FROM clips WHERE user_id = ?`)
+    .get(userId) as { mime: string; data: Buffer } | undefined
+  return row ? { mime: row.mime, bytes: row.data } : null
 }

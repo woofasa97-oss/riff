@@ -16,9 +16,12 @@ export async function register() {
       const { db } = await import('@/server/db')
       db()
     } catch (err) {
-      // A warm-up failure must not crash boot: the request path still opens the DB lazily and
-      // surfaces its own error. Log and carry on.
-      console.error('[riff] database warm-up failed:', (err as Error).message)
+      // PROTOTYPE MODE: warm-up failures never kill the boot — db.ts falls back to an
+      // ephemeral database on its own, and the request path opens it lazily if even the
+      // warm-up path raced. When this graduates to a durable deployment, restore the
+      // process.exit(1) on a "Riff refuses to start" message so a detached disk fails the
+      // deploy and the platform keeps the last healthy release serving.
+      console.error('[riff] database warm-up failed:', (err as Error).message ?? err)
     }
   }
 }

@@ -336,7 +336,8 @@ export function DiscoverView() {
             }
           />
         ) : (
-          feed
+          // Single column on mobile; a two-up grid on desktop so the feed uses the wider pane.
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{feed}</div>
         )}
       </div>
     </AppShell>

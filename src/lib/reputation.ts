@@ -29,6 +29,9 @@ export function attendanceVerdict(
   let no = 0
   for (const recap of recaps) {
     if (recap.jamId !== jamId) continue
+    // A musician's own recap never counts toward their own attendance — reputation is earned
+    // from what CO-attendees recorded, not self-asserted (product rule 3).
+    if (recap.authorId === musicianId) continue
     const answer = recap.attendance[musicianId]
     if (answer === true) yes++
     else if (answer === false) no++

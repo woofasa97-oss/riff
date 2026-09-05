@@ -101,6 +101,8 @@ export interface Musician {
   verified: boolean
   jamsHosted: number
   baseline: ReputationBaseline
+  /** True for the demo "Riff crew" (no login, scripted behaviour) — drives unmistakable demo labels. */
+  isSeed?: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -410,7 +412,12 @@ export interface Battle {
   winnerBandId?: string
   /** "Stage 04 · Grand Ballroom vs. Warehouse 7" */
   stageLabel: string
-  viewerCount?: number
+  /**
+   * 'bracket' = part of the season's single-elimination draw (default when absent). 'casual' = a
+   * free, unlimited head-to-head that isn't in the bracket — several can run live at once and are
+   * browsed from the Live grid, never shown as a bracket round.
+   */
+  kind?: 'bracket' | 'casual'
 }
 
 export interface LiveComment {
@@ -418,6 +425,8 @@ export interface LiveComment {
   handle: string
   body: string
   sentAt: string
+  /** True for seeded atmosphere lines — the UI labels these unmistakably as demo. */
+  demo?: boolean
 }
 
 export interface LiveSession {
@@ -426,10 +435,6 @@ export interface LiveSession {
   jamId?: string
   venueId: string
   startedAt: string
-  viewerCount: number
-  rating: number
-  /** "Legendary" */
-  reputationLabel: string
   /** Stubbed in v1 — docs/SPEC.md §6 puts real video out of scope. */
   streamUrl: string
   posterUrl: string
@@ -546,6 +551,9 @@ export interface MusicShop {
   reviewCount: number
   /** "Guitars", "Vintage synths", "Repairs"… */
   tags: string[]
+  /** Local opening hours (0–23). openNow/hoursLabel are DERIVED from these at read time. */
+  hours?: { opensAt: number; closesAt: number }
+  /** Computed from `hours` against the clock — never authored. */
   openNow: boolean
   hoursLabel: string
   phone?: string
