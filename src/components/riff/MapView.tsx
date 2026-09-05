@@ -9,7 +9,6 @@ import { ZoneMap, type MapLayers } from '@/components/riff/ZoneMap'
 import { Avatar, AvatarStack } from '@/components/ui/Avatar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { buttonClass, iconButtonClass } from '@/components/ui/Button'
-import { DemoTag } from '@/components/ui/DemoTag'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/cn'
 import { formatDurationMinutes, formatTime, liveElapsedMinutes, relativeDayLabel } from '@/lib/datetime'
@@ -127,11 +126,6 @@ export function MapView() {
   const performer = selectedPlace?.kind === 'street' ? getStreetPerformer(selectedPlace.id) : undefined
   const shop = selectedPlace?.kind === 'shop' ? getMusicShop(selectedPlace.id) : undefined
   const mapEvent = selectedPlace?.kind === 'event' ? getMapEvent(selectedPlace.id) : undefined
-
-  // Real RSVP state for the selected event — counted from recorded RSVPs, never the fixture.
-  const eventGoing = useRiffStore((s) => s.eventGoing)
-  const toggleEventRsvp = useRiffStore((s) => s.toggleEventRsvp)
-  const going = (mapEvent && eventGoing[mapEvent.id]) || { count: 0, mine: false }
 
   // Only one sheet is ever open. Selecting anything clears the others.
   const openZone = (id: string) => {
@@ -355,11 +349,8 @@ export function MapView() {
                       <Link href={`/musicians/${m.id}`} className="flex items-center gap-3">
                         <Avatar src={m.avatarUrl} name={m.name} size="md" />
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="truncate font-serif text-[14px] font-bold text-foreground">
-                              {m.name}
-                            </span>
-                            {m.isSeed && <DemoTag />}
+                          <div className="truncate font-serif text-[14px] font-bold text-foreground">
+                            {m.name}
                           </div>
                           <div className="truncate text-[12px] text-foreground-dim">
                             {m.instruments.map(instrumentLabel).join(' · ')}
@@ -425,7 +416,9 @@ export function MapView() {
               <span className="rounded-[3px] bg-live px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none tracking-wider text-white">
                 Live jam
               </span>
-              <DemoTag />
+              <span className="flex items-center gap-1 text-[12px] text-foreground-dim">
+                <Eye size={11} /> Listening in · {compactCount(session.viewerCount)}
+              </span>
             </div>
 
             <h2 className="mt-2 pr-8 font-serif text-[20px] font-bold text-foreground">
@@ -499,11 +492,9 @@ export function MapView() {
               <span aria-hidden>·</span>
               <span className="font-semibold text-foreground">${studio.hourlyRateUsd}/hr</span>
               <span aria-hidden>·</span>
-              {/* Authored fixture rating — only seeded studios resolve in this sheet. */}
               <span className="inline-flex items-center gap-1">
                 <Star size={11} className="text-[#facc15]" fill="currentColor" />
                 {studio.rating}
-                <DemoTag />
               </span>
             </p>
             {/* Product rule 2 — a home rig never shows its address. */}
@@ -618,32 +609,16 @@ export function MapView() {
               <MapPin size={12} className="shrink-0" />
               {mapEvent.venueName} · {shortNeighborhood(mapEvent.neighborhood)}
             </p>
-            {/* Real RSVP count — recorded RSVPs only, never the fixture's goingCount. */}
             <p className="mt-1 text-[13px] text-foreground-dim">
               <span className="font-semibold text-foreground">{mapEvent.priceLabel}</span> ·{' '}
-              {going.count > 0
-                ? `${going.count} going`
-                : 'Be the first to say you’re going'}
+              {mapEvent.goingCount} going
             </p>
-            <div className="mt-4 flex gap-3">
-              <button
-                type="button"
-                aria-pressed={going.mine}
-                onClick={() => toggleEventRsvp(mapEvent.id)}
-                className={cn(buttonClass({ size: 'sm', fullWidth: true }), 'flex-1')}
-              >
-                {going.mine ? 'Going ✓' : "I'm going"}
-              </button>
-              <Link
-                href={`/events/${mapEvent.id}`}
-                className={cn(
-                  buttonClass({ variant: 'secondary', size: 'sm', fullWidth: true }),
-                  'flex-1',
-                )}
-              >
-                View event
-              </Link>
-            </div>
+            <Link
+              href={`/events/${mapEvent.id}`}
+              className={cn(buttonClass({ size: 'sm', fullWidth: true }), 'mt-4 block')}
+            >
+              View event
+            </Link>
           </>
         )}
       </BottomSheet>

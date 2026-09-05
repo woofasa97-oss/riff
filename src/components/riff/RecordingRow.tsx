@@ -15,9 +15,6 @@ import type { Jam, Musician } from '@/types'
 export function RecordingRow({ jam, className }: { jam: Jam; className?: string }) {
   const recording = jam.recordingId ? getRecording(jam.recordingId) : undefined
   if (!recording) return null
-  // Fixture recordings point at audio that does not exist. No real bytes behind the URL means
-  // the recording does not exist as far as a listener is concerned — render nothing.
-  if (!recording.url.startsWith('/api/')) return null
 
   // The venue's name only — a recording never carries an address (product rule 2).
   const venueName = recording.venueName ?? getVenue(jam.venueId)?.name

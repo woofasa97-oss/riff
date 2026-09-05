@@ -16,14 +16,9 @@ export async function register() {
       const { db } = await import('@/server/db')
       db()
     } catch (err) {
-      const message = (err as Error).message ?? ''
-      console.error('[riff] database warm-up failed:', message)
-      // A configured-but-unwritable RIFF_DB_PATH is a refusal, not a hiccup: fail the boot so the
-      // platform keeps the last healthy deploy serving instead of shipping an ephemeral database.
-      if (message.startsWith('Riff refuses to start')) {
-        process.exit(1)
-      }
-      // Anything else is transient — the request path opens the DB lazily and surfaces its own error.
+      // A warm-up failure must not crash boot: the request path still opens the DB lazily and
+      // surfaces its own error. Log and carry on.
+      console.error('[riff] database warm-up failed:', (err as Error).message)
     }
   }
 }

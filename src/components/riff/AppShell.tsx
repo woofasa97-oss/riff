@@ -1,15 +1,5 @@
 import { BottomTabBar, SideNav, type TabId } from '@/components/riff/BottomTabBar'
-import { listLiveBattles, liveSessions } from '@/mocks'
 import { cn } from '@/lib/cn'
-
-/**
- * The pink LIVE dot tells one truth for the whole app: the LIVE tab currently has something
- * broadcasting. It is computed here from the same lists the tab renders — callers no longer
- * assert it screen by screen (a hardcoded `liveIndicator` was a fabricated signal).
- */
-function hasLiveNow(): boolean {
-  return liveSessions.length > 0 || listLiveBattles().length > 0
-}
 
 export type Surface = 'light' | 'dark'
 
@@ -28,6 +18,7 @@ export function AppShell({
   header,
   footer,
   activeTab,
+  liveIndicator,
   children,
   mainClassName,
   surface = 'light',
@@ -37,19 +28,17 @@ export function AppShell({
   footer?: React.ReactNode
   /** Omit to hide the tab bar — sub-screens like the session recap have none. */
   activeTab?: TabId | null
-  /** Deprecated: the dot is computed from what is actually live; the prop is ignored. */
   liveIndicator?: boolean
   children: React.ReactNode
   mainClassName?: string
   surface?: Surface
   background?: React.ReactNode
 }) {
-  const live = hasLiveNow()
   return (
     // Mobile: a column with the bottom tab bar. Desktop (lg+): a row with a left nav rail and the
     // content pane filling the rest of the centred app frame.
     <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-      {activeTab !== null && <SideNav activeTab={activeTab ?? undefined} liveIndicator={live} />}
+      {activeTab !== null && <SideNav activeTab={activeTab ?? undefined} liveIndicator={liveIndicator} />}
 
       {/* Content pane — the positioning context for the dark surface and any bottom sheet, so
           neither spills over the nav rail on desktop. */}
@@ -74,7 +63,7 @@ export function AppShell({
       {activeTab !== null && (
         <BottomTabBar
           activeTab={activeTab ?? undefined}
-          liveIndicator={live}
+          liveIndicator={liveIndicator}
           surface={surface}
           className="lg:hidden"
         />

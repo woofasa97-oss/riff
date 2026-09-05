@@ -247,9 +247,8 @@ export const musicShops: MusicShop[] = [
     rating: 4.7,
     reviewCount: 212,
     tags: ['Guitars', 'Amps', 'Pedals', 'Repairs'],
-    hours: { opensAt: 11, closesAt: 20 },
-    openNow: false, // derived in the selector
-    hoursLabel: '', // derived in the selector
+    openNow: true,
+    hoursLabel: 'Open till 8 PM',
     phone: '+1 718-555-0132',
     website: 'brooklynguitarworks.example',
   },
@@ -266,9 +265,8 @@ export const musicShops: MusicShop[] = [
     rating: 4.8,
     reviewCount: 168,
     tags: ['Vinyl', 'Jazz', 'Soul', 'Turntables'],
-    hours: { opensAt: 11, closesAt: 21 },
-    openNow: false, // derived in the selector
-    hoursLabel: '', // derived in the selector
+    openNow: true,
+    hoursLabel: 'Open till 9 PM',
     website: 'greenpointvinyl.example',
   },
   {
@@ -284,9 +282,8 @@ export const musicShops: MusicShop[] = [
     rating: 4.6,
     reviewCount: 97,
     tags: ['Synths', 'Eurorack', 'Drum machines', 'Trade-ins'],
-    hours: { opensAt: 10, closesAt: 19 },
-    openNow: false, // derived in the selector
-    hoursLabel: '', // derived in the selector
+    openNow: true,
+    hoursLabel: 'Open till 7 PM',
     phone: '+1 718-555-0177',
   },
   {
@@ -302,9 +299,8 @@ export const musicShops: MusicShop[] = [
     rating: 4.5,
     reviewCount: 61,
     tags: ['Drums', 'Cymbals', 'Percussion', 'Skins'],
-    hours: { opensAt: 10, closesAt: 19 },
-    openNow: false, // derived in the selector
-    hoursLabel: '', // derived in the selector
+    openNow: false,
+    hoursLabel: 'Opens 11 AM tomorrow',
   },
   {
     id: 'shop-astoria-music-repair',
@@ -319,9 +315,8 @@ export const musicShops: MusicShop[] = [
     rating: 4.9,
     reviewCount: 134,
     tags: ['Repairs', 'Setups', 'Restringing', 'Electronics'],
-    hours: { opensAt: 10, closesAt: 18 },
-    openNow: false, // derived in the selector
-    hoursLabel: '', // derived in the selector
+    openNow: true,
+    hoursLabel: 'Open till 6 PM',
     phone: '+1 718-555-0043',
   },
 ]
@@ -499,38 +494,9 @@ export const getStreetPerformer = (
   return p ? freshPerformer(p, sceneShiftMs(now), now) : undefined
 }
 
-/**
- * openNow and hoursLabel are computed from the shop's structured hours against the local
- * clock, never authored — "Open now" is only ever a statement about right now.
- */
-export function withOpenState<T extends Pick<MusicShop, 'hours' | 'openNow' | 'hoursLabel'>>(
-  shop: T,
-  now = new Date(),
-): T {
-  if (!shop.hours) return { ...shop, openNow: false, hoursLabel: 'Hours vary' }
-  const hour = Number(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/New_York',
-      hour: 'numeric',
-      hour12: false,
-    }).format(now),
-  )
-  const { opensAt, closesAt } = shop.hours
-  const open = hour >= opensAt && hour < closesAt
-  const fmt = (h: number) =>
-    h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`
-  return {
-    ...shop,
-    openNow: open,
-    hoursLabel: open ? `Open till ${fmt(closesAt)}` : `Opens at ${fmt(opensAt)}`,
-  }
-}
-
-export const listMusicShops = (): MusicShop[] => musicShops.map((s) => withOpenState(s))
-export const getMusicShop = (id: string): MusicShop | undefined => {
-  const s = musicShops.find((x) => x.id === id)
-  return s && withOpenState(s)
-}
+export const listMusicShops = (): MusicShop[] => musicShops
+export const getMusicShop = (id: string): MusicShop | undefined =>
+  musicShops.find((s) => s.id === id)
 
 export const listMapEvents = (now = new Date().toISOString()): MapEvent[] => {
   const ms = sceneShiftMs(now)

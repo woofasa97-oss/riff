@@ -4,23 +4,27 @@
 # Riff has real accounts: SQLite at RIFF_DB_PATH, seeded from src/mocks/ on first boot.
 # One instance only (SQLite is per-process) — do not scale this service horizontally.
 #
-# Durability model:
-#   plan: starter  → paid tier; required because the free tier has no persistent disks
-#                    (and sleeps after idle). The disk below is what keeps accounts alive.
-#   disk riff-data → mounted at /var/data; RIFF_DB_PATH points the SQLite file at it, so
-#                    accounts, jams, messages and reputation survive every deploy.
-#   Boot guard     → if RIFF_DB_PATH is set but unwritable (disk missing/detached), the app
-#                    REFUSES to start (src/server/db.ts). The deploy fails and Render keeps
-#                    the last healthy release serving — it never silently boots an ephemeral
-#                    DB that would vanish on the next deploy.
-#   autoDeploy: false → deploys are deliberate. Trigger them from the Render dashboard
-#                    (Manual Deploy) rather than on every push.
+# ┌─ LAUNCH BLOCKER (P0) ────────────────────────────────────────────────────────────────────┐
+# │ ACCOUNT DATA DURABILITY. On `plan: free` there is no disk, so the app writes SQLite under   │
+# │ the EPHEMERAL project directory — every deploy (and autoDeploy fires on every push) wipes   │
+# │ ALL accounts, sessions, jams, messages and earned reputation. This is fine for a throwaway  │
+# │ preview but is NOT shippable for real users.                                                │
+# │                                                                                             │
+# │ Before inviting anyone real, make this ONE change (a paid-plan/billing decision only you    │
+# │ can make — the code path is already correct once a disk exists):                            │
+# │   1. Set `plan:` to a paid tier that supports disks (e.g. `starter`).                        │
+# │   2. Uncomment the `disk:` block below (mountPath /var/data).                                │
+# │   3. Uncomment the RIFF_DB_PATH env var so the DB lives on the mount, not the ephemeral fs.  │
+# │ Do NOT point RIFF_DB_PATH at /var/data WITHOUT the disk — that dir is read-only and the app  │
+# │ would fall back to an ephemeral temp DB. Optionally set autoDeploy:false so pushes don't     │
+# │ redeploy (and reseed) unattended.                                                           │
+# └─────────────────────────────────────────────────────────────────────────────────────────────┘
 
 services:
   - type: web
     name: riff-web
     runtime: node
-    plan: starter
+    plan: free
     region: oregon
 
     # --include=dev is load-bearing. tailwindcss, postcss, autoprefixer and typescript are
@@ -32,13 +36,7 @@ services:
     # `next start -p ${PORT:-3000}` — Render injects PORT and the service must bind to it.
     startCommand: npm run start
 
-    autoDeploy: false
-
-    disk:
-      name: riff-data
-      mountPath: /var/data
-      sizeGB: 1
-
+    autoDeploy: true
     envVars:
       # Pin the runtime so a Render default bump cannot change the build under you.
       - key: NODE_VERSION
@@ -47,15 +45,32 @@ services:
       # `next start` always serves one, so the variable buys nothing and breaks `npm ci`.
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
-      # SQLite lives on the mounted disk so data survives deploys. If this path is ever
-      # unwritable at boot (disk detached), the app throws instead of starting — see the
-      # boot-guard note at the top of this file.
-      - key: RIFF_DB_PATH
-        value: /var/data/riff.db
-      # Password-recovery email (Resend, src/server/email.ts). sync: false means the value is
-      # a SECRET set in the Render dashboard — never committed here. Until it is set, reset
-      # codes are issued but not delivered anywhere; with it set, they are emailed and never
-      # returned over HTTP. Once you have a verified sending domain, also set RIFF_EMAIL_FROM
-      # in the dashboard (e.g. "Riff <no-reply@yourdomain.com>").
-      - key: RESEND_API_KEY
-        sync: false
+      # Password recovery. Email delivery is wired (src/server/email.ts, Resend over fetch) but
+      # OFF until RESEND_API_KEY is set below. Until then, RIFF_PREVIEW_RESET=1 returns the reset
+      # code in the response so a preview user can self-recover — but ONLY after proving the
+      # account's recovery email (a username alone never works). Once RESEND_API_KEY is set, the
+      # code is EMAILED and never returned over HTTP (even with this flag on); delete this flag
+      # for a real launch so there is no preview path at all.
+      - key: RIFF_PREVIEW_RESET
+        value: "1"
+      # Wire real password-recovery email: add RESEND_API_KEY (from resend.com) and, once you have
+      # a verified domain, RIFF_EMAIL_FROM. Set these as SECRET env vars in the Render dashboard
+      # rather than committing the key here. With RESEND_API_KEY present, reset codes are emailed.
+      # - key: RESEND_API_KEY
+      #   sync: false            # set the value in the dashboard; never commit the key
+      # - key: RIFF_EMAIL_FROM
+      #   value: "Riff <no-reply@yourdomain.com>"
+      # RIFF_DB_PATH is intentionally NOT set here. With no disk, db.ts defaults to
+      # <project>/data/riff.db — writable on Render's ephemeral filesystem — and, as a last
+      # resort, falls back to the OS temp dir. Both reset on deploy; that is the free-plan
+      # trade-off. To persist, uncomment the disk AND the override below together.
+
+    # Persist accounts across deploys (requires a paid plan). Uncomment BOTH the disk and the
+    # RIFF_DB_PATH override so the database lives on the mounted volume:
+    # disk:
+    #   name: riff-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    #   # and add this under envVars above:
+    #   #   - key: RIFF_DB_PATH
+    #   #     value: /var/data/riff.db

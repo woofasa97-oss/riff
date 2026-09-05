@@ -30,7 +30,7 @@ export function WelcomeView() {
         <p className="text-[17px] font-medium text-white/90">Find your people. Play tonight.</p>
       </div>
 
-      <div className="mt-auto flex w-full flex-col items-center gap-4 pt-12 lg:mx-auto lg:max-w-sm">
+      <div className="mt-auto flex w-full flex-col items-center gap-4 pt-12">
         <Link
           href="/signup"
           className={cn(buttonClass({ fullWidth: true }), 'font-semibold shadow-sm')}

@@ -22,11 +22,10 @@ export function TopBar({
       )}
     >
       <div className="flex items-center gap-2">
-        {/* The desktop sidebar already carries the wordmark — hide this one there to avoid two Riffs. */}
         <Link
           href="/jams"
           className={cn(
-            'font-serif text-[22px] font-bold tracking-wide lg:hidden',
+            'font-serif text-[22px] font-bold tracking-wide',
             dark ? 'text-white' : 'text-primary',
           )}
         >

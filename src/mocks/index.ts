@@ -224,22 +224,17 @@ export type BattleScope = 'local' | 'global' | 'mine'
 
 /** Scope filter behind the bracket's Brooklyn / Global / My matches tabs. */
 export function listBattles(scope: BattleScope, viewerId = CURRENT_USER_ID): Battle[] {
-  // The bracket is the season draw only — casual live head-to-heads never belong in it.
-  const bracket = battles.filter((b) => b.kind !== 'casual')
-  if (scope === 'global') return bracket
+  if (scope === 'global') return battles
   if (scope === 'mine') {
     const myBandIds = listBandsFor(viewerId).map((b) => b.id)
-    return bracket.filter((b) => myBandIds.includes(b.bandAId) || myBandIds.includes(b.bandBId))
+    return battles.filter((b) => myBandIds.includes(b.bandAId) || myBandIds.includes(b.bandBId))
   }
   const localIds = bands.filter((b) => b.city.startsWith('Brooklyn')).map((b) => b.id)
-  return bracket.filter((b) => localIds.includes(b.bandAId) || localIds.includes(b.bandBId))
+  return battles.filter((b) => localIds.includes(b.bandAId) || localIds.includes(b.bandBId))
 }
 
 /** The battle currently broadcasting, if any. */
 export const getLiveBattle = (): Battle | undefined => battles.find((b) => b.status === 'live')
-
-/** Every battle broadcasting right now — bracket final AND casual head-to-heads — for the Live grid. */
-export const listLiveBattles = (): Battle[] => battles.filter((b) => b.status === 'live')
 
 export const getLiveSession = (id: string): LiveSession | undefined =>
   liveSessions.find((s) => s.id === id)
