@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { SendHorizontal, Share2, Star, X, Zap } from 'lucide-react'
+import { HandCoins, SendHorizontal, Share2, Star, X, Zap } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
+import { TipSheet } from '@/components/riff/TipSheet'
 import { TopBar } from '@/components/riff/TopBar'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
@@ -42,8 +43,10 @@ function StarInput({ value, onChange }: { value: number; onChange: (n: number) =
 export function LiveView({ sessionId }: { sessionId: string }) {
   const [draft, setDraft] = useState('')
   const [rateOpen, setRateOpen] = useState(false)
+  const [tipOpen, setTipOpen] = useState(false)
   const [stars, setStars] = useState(0)
   const [copied, setCopied] = useState(false)
+  const requireAccount = useRiffStore((s) => s.requireAccount)
   const chatBySession = useRiffStore((s) => s.liveChat)
   const sendLiveComment = useRiffStore((s) => s.sendLiveComment)
   const rateSession = useRiffStore((s) => s.rateSession)
@@ -176,6 +179,17 @@ export function LiveView({ sessionId }: { sessionId: string }) {
           />
           <button
             type="button"
+            onClick={() => {
+              if (!requireAccount('tip the act')) return
+              setTipOpen(true)
+            }}
+            aria-label="Tip the act Riff Credits"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/50 backdrop-blur-md transition-transform active:scale-90"
+          >
+            <HandCoins size={15} className="text-[#facc15]" />
+          </button>
+          <button
+            type="button"
             onClick={() => setRateOpen(true)}
             aria-label="Rate this jam"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/50 backdrop-blur-md transition-transform active:scale-90"
@@ -291,6 +305,15 @@ export function LiveView({ sessionId }: { sessionId: string }) {
           </div>
         ))}
       </div>
+
+      {/* TIP THE ACT — real CR from the viewer's wallet to the band's leader. */}
+      <TipSheet
+        open={tipOpen}
+        onClose={() => setTipOpen(false)}
+        context="live"
+        targetId={session.id}
+        recipientName={band?.name ?? 'the act'}
+      />
 
       {/* RATE THIS JAM — docs/BUILD-PLAN.md P6-02. */}
       <Modal open={rateOpen} onClose={() => setRateOpen(false)} title="Rate this jam">

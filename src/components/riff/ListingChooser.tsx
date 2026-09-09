@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Building2, ChevronRight, Guitar, Info, Store } from 'lucide-react'
+import { Building2, ChevronRight, GraduationCap, Guitar, Info, Store } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -31,6 +31,12 @@ const CHOICES = [
     icon: Store,
     title: 'Open a music shop',
     body: 'List your storefront — instruments, vinyl, repairs, gear.',
+  },
+  {
+    href: '/me/business/teacher',
+    icon: GraduationCap,
+    title: 'Teach on Riff',
+    body: 'Take students — your instrument, your rate, your rules.',
   },
 ] as const
 

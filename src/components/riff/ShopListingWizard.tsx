@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Check, Loader2, Plus, Store, X } from 'lucide-react'
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
@@ -8,7 +8,7 @@ import { SubScreenHeader } from '@/components/riff/TopBar'
 import { Button, buttonClass } from '@/components/ui/Button'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { cn } from '@/lib/cn'
-import { AccountRequiredError, useRiffStore } from '@/lib/store'
+import { AccountRequiredError, useListingById, useRiffStore } from '@/lib/store'
 import { mapZones } from '@/mocks'
 import type { MapListing, MusicShop } from '@/types'
 
@@ -33,6 +33,15 @@ const hourLabel = (h: number) =>
   h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`
 
 export function ShopListingWizard() {
+  // Optional edit mode: ?id=… prefilled after mount (kept out of the first render to avoid a
+  // hydration mismatch) — same pattern as the studio wizard.
+  const [editId, setEditId] = useState<string | null>(null)
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('id')
+    if (id) setEditId(id)
+  }, [])
+  const editing = useListingById(editId ?? '')
+
   const [name, setName] = useState('')
   const [kind, setKind] = useState<MusicShop['kind'] | null>(null)
   const [neighborhood, setNeighborhood] = useState('')
@@ -49,6 +58,25 @@ export function ShopListingWizard() {
   const [created, setCreated] = useState<MapListing | null>(null)
 
   const create = useRiffStore((s) => s.createListing)
+  const update = useRiffStore((s) => s.updateListing)
+
+  const hydrated = useRef(false)
+  useEffect(() => {
+    if (hydrated.current || !editing?.shop) return
+    hydrated.current = true
+    const s = editing.shop
+    setName(s.name)
+    setKind(s.kind)
+    setNeighborhood(s.neighborhood)
+    setAddress(s.address)
+    setTags(s.tags)
+    if (s.hours) {
+      setOpensAt(s.hours.opensAt)
+      setClosesAt(s.hours.closesAt)
+    }
+    setPhone(s.phone ?? '')
+    setWebsite(s.website ?? '')
+  }, [editing])
 
   const canSubmit =
     name.trim().length >= 2 &&
@@ -61,18 +89,19 @@ export function ShopListingWizard() {
     if (!canSubmit || kind === null) return
     setError(null)
     setPhase('reviewing')
+    const data = {
+      name: name.trim(),
+      kind,
+      neighborhood,
+      address: address.trim(),
+      tags,
+      opensAt,
+      closesAt,
+      phone: phone.trim() || undefined,
+      website: website.trim() || undefined,
+    }
     try {
-      const listing = await create('shop', {
-        name: name.trim(),
-        kind,
-        neighborhood,
-        address: address.trim(),
-        tags,
-        opensAt,
-        closesAt,
-        phone: phone.trim() || undefined,
-        website: website.trim() || undefined,
-      })
+      const listing = editId ? await update(editId, data) : await create('shop', data)
       setCreated(listing)
       setPhase('done')
     } catch (err) {
@@ -86,7 +115,8 @@ export function ShopListingWizard() {
   }
 
   if (phase === 'reviewing') return <ReviewingScreen />
-  if (phase === 'done' && created) return <SuccessScreen viewHref={`/shops/${created.id}`} />
+  if (phase === 'done' && created)
+    return <SuccessScreen viewHref={`/shops/${created.id}`} edited={Boolean(editId)} />
 
   return (
     <AppShell
@@ -96,7 +126,7 @@ export function ShopListingWizard() {
       footer={
         <StickyActionBar note="New listings show as a community listing until they earn their first reviews.">
           <Button className="flex-1" disabled={!canSubmit} onClick={submit}>
-            Put it on the map
+            {editId ? 'Save changes' : 'Put it on the map'}
           </Button>
         </StickyActionBar>
       }
@@ -360,7 +390,7 @@ function ReviewingScreen() {
   )
 }
 
-function SuccessScreen({ viewHref }: { viewHref: string }) {
+function SuccessScreen({ viewHref, edited }: { viewHref: string; edited?: boolean }) {
   return (
     <AppShell
       activeTab="me"
@@ -370,10 +400,13 @@ function SuccessScreen({ viewHref }: { viewHref: string }) {
       <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--hero-from)] text-primary">
         <Store size={30} />
       </div>
-      <h1 className="font-serif text-[24px] font-bold text-foreground">You&apos;re on the map!</h1>
+      <h1 className="font-serif text-[24px] font-bold text-foreground">
+        {edited ? 'Changes saved' : "You're on the map!"}
+      </h1>
       <p className="mt-3 max-w-[300px] text-[14px] text-foreground-dim">
-        Your shop is live now. It shows as a new community listing — with a “New” rating until it
-        earns its first reviews — and your Riff reputation is what people will trust.
+        {edited
+          ? 'Your shop page and map pin are already showing the new details.'
+          : 'Your shop is live now. It shows as a new community listing — with a “New” rating until it earns its first reviews — and your Riff reputation is what people will trust.'}
       </p>
       <div className="mt-8 flex w-full max-w-[320px] flex-col gap-2">
         <Link href={viewHref} className={buttonClass({ fullWidth: true })}>

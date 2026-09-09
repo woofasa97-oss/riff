@@ -16,7 +16,11 @@ import { canRevealAddress, canVouch } from '@/lib/privacy'
 import { getLeaderboardEntry, mapZones } from '@/mocks'
 import { battles as fixtureBattles } from '@/mocks/battles'
 import { liveSessions as fixtureSessions } from '@/mocks/live'
-import { mapEvents as fixtureEvents, withOpenState } from '@/mocks/places'
+import {
+  mapEvents as fixtureEvents,
+  streetPerformers as fixtureStreet,
+  withOpenState,
+} from '@/mocks/places'
 import { bands as fixtureBands } from '@/mocks/bands'
 import { SLOTS, WEEKDAYS } from '@/lib/availability'
 import type {
@@ -50,6 +54,11 @@ import type {
   ListingKind,
   LeaderboardEntry,
   LiveComment,
+  ShopItem,
+  ShopItemCategory,
+  TeacherProfile,
+  LessonRequest,
+  GigOffer,
 } from '@/types'
 import type { WorldSnapshot } from '@/lib/snapshot'
 
@@ -267,6 +276,8 @@ export function buildSnapshot(viewerId: string): WorldSnapshot {
   const nowKey = etDateKey(now)
   settleFinishedJams(now)
   expireStalePendingJams(now)
+  settlePendingLessons(now)
+  settlePendingGigs(now)
 
   const viewerRow = d.prepare(`SELECT * FROM musicians WHERE id = ?`).get(viewerId) as
     Record<string, unknown> | undefined
@@ -448,6 +459,11 @@ export function buildSnapshot(viewerId: string): WorldSnapshot {
     competitionEntries,
     wallet: walletFor(viewerId),
     listings: listingsForViewer(viewerId),
+    shopItems: allShopItems(),
+    teachers: teachersFor(viewerId),
+    lessonRequests: lessonRequestsFor(viewerId),
+    gigOffers: gigOffersFor(viewerId),
+    shopShows: publicShopShows(now),
     battleTallies: battleTalliesFor(viewerId),
     streamChat: streamChatFor(),
     sessionRatings: sessionRatingsFor(viewerId),
@@ -470,6 +486,8 @@ export function buildGuestSnapshot(): WorldSnapshot {
   const nowKey = etDateKey(now)
   settleFinishedJams(now)
   expireStalePendingJams(now)
+  settlePendingLessons(now)
+  settlePendingGigs(now)
 
   const anchor = mapZones.find((z) => z.name === 'Williamsburg') ?? mapZones[0]
   const hosted = hostedTruth(d)
@@ -558,6 +576,11 @@ export function buildGuestSnapshot(): WorldSnapshot {
     competitionEntries,
     wallet: null,
     listings: publishedListings(),
+    shopItems: allShopItems(),
+    teachers: teachersFor(null),
+    lessonRequests: [],
+    gigOffers: [],
+    shopShows: publicShopShows(now),
     battleTallies: battleTalliesFor(null),
     streamChat: streamChatFor(),
     sessionRatings: sessionRatingsFor(null),
@@ -2232,6 +2255,685 @@ function publishedListings(): MapListing[] {
     unknown
   >[]
   return rows.map(rowToListing)
+}
+
+// ---------------------------------------------------------------------------
+// Owner mode — the marketplace layer: CR tips, shop catalogs, teachers and lessons, and
+// booking bands for in-store shows. Same rules as everything else: the actor is
+// authenticated, the object is authorized, and nothing is confirmed until the other side
+// accepts. Seed counterparties (fixture bands, seed teachers) answer after a short beat so
+// every status is actually visible in the UI, not skipped over.
+// ---------------------------------------------------------------------------
+
+/** How long a seed counterparty "thinks" before answering — long enough to see pending. */
+const SEED_RESPONSE_MS = 45_000
+
+function ensureWallet(userId: string) {
+  db().prepare(`INSERT OR IGNORE INTO wallets VALUES (?, 0)`).run(userId)
+}
+
+function balanceOf(userId: string): number {
+  const r = db().prepare(`SELECT balance_credits FROM wallets WHERE user_id = ?`).get(userId) as
+    | { balance_credits: number }
+    | undefined
+  return r?.balance_credits ?? 0
+}
+
+function requireCredits(viewerId: string, amount: number) {
+  const balance = balanceOf(viewerId)
+  if (balance < amount)
+    throw new WorldError(`Not enough credits — you have ${balance} CR`, 402)
+}
+
+/**
+ * Tip Riff Credits to a street act or a live stream. The credits genuinely move: they leave
+ * the tipper's wallet and land in the recipient's ledger (a wallet row is created lazily for
+ * seed acts, so the books always balance even when the recipient never logs in).
+ */
+export function sendTip(
+  viewerId: string,
+  input: { context: 'street' | 'live'; targetId: string; amount: number },
+): { amount: number; to: string } {
+  const d = db()
+  const amount = Math.round(Number(input.amount))
+  if (!Number.isFinite(amount) || amount < 1 || amount > 500)
+    throw new WorldError('Tip between 1 and 500 CR')
+
+  let recipientId: string
+  let recipientName: string
+  let contextLabel: string
+
+  if (input.context === 'street') {
+    const row = d
+      .prepare(`SELECT owner_id, data FROM listings WHERE id = ? AND kind = 'street'`)
+      .get(input.targetId) as { owner_id: string; data: string } | undefined
+    if (row) {
+      recipientId = row.owner_id
+      recipientName = (JSON.parse(row.data) as StreetPerformer).name
+    } else {
+      const perf = fixtureStreet.find((p) => p.id === input.targetId)
+      if (!perf) throw new WorldError('That performer has moved on', 404)
+      // A seed act without a Riff profile still gets a real ledger row under its act id.
+      recipientId = perf.musicianId ?? `act:${perf.id}`
+      recipientName = perf.name
+    }
+    contextLabel = 'street set'
+  } else if (input.context === 'live') {
+    const session = fixtureSessions.find((s) => s.id === input.targetId)
+    if (!session) throw new WorldError('That stream has ended', 404)
+    const band = session.bandId ? fixtureBands.find((b) => b.id === session.bandId) : undefined
+    if (band) {
+      recipientId = band.members[0].musicianId
+      recipientName = band.name
+    } else if (session.jamId) {
+      const jam = getJamRow(session.jamId)
+      if (!jam) throw new WorldError('That stream has ended', 404)
+      recipientId = jam.hostId
+      recipientName = firstName(jam.hostId)
+    } else {
+      throw new WorldError('That stream has ended', 404)
+    }
+    contextLabel = 'live stream'
+  } else {
+    throw new WorldError('Unknown tip context')
+  }
+
+  if (recipientId === viewerId) throw new WorldError("You can't tip yourself")
+  requireCredits(viewerId, amount)
+
+  const tx = d.transaction(() => {
+    adjustWallet(viewerId, -amount, 'tip_sent', `Tip — ${recipientName}`)
+    ensureWallet(recipientId)
+    adjustWallet(
+      recipientId,
+      amount,
+      'tip_received',
+      `Tip from ${firstName(viewerId)} — ${contextLabel}`,
+    )
+  })
+  tx()
+  notify(
+    recipientId,
+    'tip_received',
+    `${firstName(viewerId)} tipped you ${amount} CR during your ${contextLabel}`,
+    viewerId,
+  )
+  return { amount, to: recipientName }
+}
+
+// --- shop catalogs ----------------------------------------------------------
+
+const ITEM_CATEGORIES: ShopItemCategory[] = [
+  'guitars',
+  'keys-synths',
+  'drums-percussion',
+  'records',
+  'accessories',
+  'services',
+]
+const ITEM_CONDITIONS = ['new', 'used', 'vintage'] as const
+
+function rowToShopItem(r: Record<string, unknown>): ShopItem {
+  return {
+    id: r.id as string,
+    shopId: r.shop_id as string,
+    name: r.name as string,
+    category: r.category as ShopItemCategory,
+    priceUsd: r.price_usd as number,
+    condition: r.condition as ShopItem['condition'],
+    blurb: (r.blurb as string | null) ?? undefined,
+    inStock: Boolean(r.in_stock),
+    createdAt: r.created_at as string,
+  }
+}
+
+/** The viewer's own shop listing, or a refusal — the catalog is owner-admin territory. */
+function ownedShopListing(viewerId: string, shopId: string): { name: string } {
+  const row = db()
+    .prepare(`SELECT owner_id, data FROM listings WHERE id = ? AND kind = 'shop'`)
+    .get(shopId) as { owner_id: string; data: string } | undefined
+  if (!row) throw new WorldError('Shop not found — only member shops have a managed catalog', 404)
+  if (row.owner_id !== viewerId)
+    throw new WorldError("Only the shop's owner can manage its catalog", 403)
+  return { name: (JSON.parse(row.data) as MusicShop).name }
+}
+
+function buildShopItemFields(input: Record<string, unknown>) {
+  const name = String(input.name ?? '').trim().slice(0, 60)
+  if (name.length < 2) throw new WorldError('Name the item')
+  const category = assertEnum(input.category, ITEM_CATEGORIES, 'category')
+  const condition = assertEnum(input.condition, ITEM_CONDITIONS, 'condition')
+  const price = Math.round(Number(input.priceUsd))
+  if (!Number.isFinite(price) || price < 0 || price > 50_000)
+    throw new WorldError('Set a price between $0 and $50,000')
+  const blurb = String(input.blurb ?? '').trim().slice(0, 160)
+  return { name, category, condition, price, blurb, inStock: input.inStock !== false }
+}
+
+export function addShopItem(
+  viewerId: string,
+  shopId: string,
+  input: Record<string, unknown>,
+): ShopItem {
+  const d = db()
+  ownedShopListing(viewerId, shopId)
+  const count = (
+    d.prepare(`SELECT COUNT(*) AS n FROM shop_items WHERE shop_id = ?`).get(shopId) as {
+      n: number
+    }
+  ).n
+  if (count >= 40) throw new WorldError('Catalog is full (40 items) — remove something first', 409)
+  const f = buildShopItemFields(input)
+  const id = uid('item')
+  const at = nowIso()
+  d.prepare(`INSERT INTO shop_items VALUES (?,?,?,?,?,?,?,?,0,?)`).run(
+    id,
+    shopId,
+    f.name,
+    f.category,
+    f.price,
+    f.condition,
+    f.blurb || null,
+    f.inStock ? 1 : 0,
+    at,
+  )
+  return rowToShopItem({
+    id,
+    shop_id: shopId,
+    name: f.name,
+    category: f.category,
+    price_usd: f.price,
+    condition: f.condition,
+    blurb: f.blurb || null,
+    in_stock: f.inStock ? 1 : 0,
+    created_at: at,
+  })
+}
+
+function ownedItemRow(viewerId: string, itemId: string): Record<string, unknown> {
+  const r = db().prepare(`SELECT * FROM shop_items WHERE id = ?`).get(itemId) as
+    | Record<string, unknown>
+    | undefined
+  if (!r) throw new WorldError('Item not found', 404)
+  if (r.is_seed) throw new WorldError('Demo catalog items cannot be changed', 403)
+  ownedShopListing(viewerId, r.shop_id as string)
+  return r
+}
+
+export function updateShopItem(
+  viewerId: string,
+  itemId: string,
+  input: Record<string, unknown>,
+): ShopItem {
+  const r = ownedItemRow(viewerId, itemId)
+  const f = buildShopItemFields(input)
+  db()
+    .prepare(
+      `UPDATE shop_items SET name = ?, category = ?, price_usd = ?, condition = ?, blurb = ?, in_stock = ? WHERE id = ?`,
+    )
+    .run(f.name, f.category, f.price, f.condition, f.blurb || null, f.inStock ? 1 : 0, itemId)
+  return rowToShopItem({
+    ...r,
+    name: f.name,
+    category: f.category,
+    price_usd: f.price,
+    condition: f.condition,
+    blurb: f.blurb || null,
+    in_stock: f.inStock ? 1 : 0,
+  })
+}
+
+export function deleteShopItem(viewerId: string, itemId: string) {
+  ownedItemRow(viewerId, itemId)
+  db().prepare(`DELETE FROM shop_items WHERE id = ?`).run(itemId)
+}
+
+/** Every shop's catalog, grouped — public data, the storefront window. */
+function allShopItems(): Record<string, ShopItem[]> {
+  const out: Record<string, ShopItem[]> = {}
+  for (const r of db()
+    .prepare(`SELECT * FROM shop_items ORDER BY created_at`)
+    .all() as Record<string, unknown>[]) {
+    const item = rowToShopItem(r)
+    ;(out[item.shopId] ??= []).push(item)
+  }
+  return out
+}
+
+// --- teachers & lessons -----------------------------------------------------
+
+function rowToTeacher(r: Record<string, unknown>): TeacherProfile {
+  return {
+    musicianId: r.musician_id as string,
+    headline: r.headline as string,
+    bio: r.bio as string,
+    instruments: JSON.parse(r.instruments as string) as Instrument[],
+    ratePerHourUsd: r.rate_per_hour_usd as number,
+    online: Boolean(r.online),
+    inPerson: Boolean(r.in_person),
+    active: Boolean(r.active),
+    createdAt: r.created_at as string,
+  }
+}
+
+export function saveTeacherProfile(
+  viewerId: string,
+  input: Record<string, unknown>,
+): TeacherProfile {
+  const d = db()
+  const owner = d
+    .prepare(`SELECT profile_complete, is_seed FROM musicians WHERE id = ?`)
+    .get(viewerId) as { profile_complete: number; is_seed: number } | undefined
+  if (!owner || owner.is_seed) throw new WorldError('Account not found', 404)
+  if (!owner.profile_complete)
+    throw new WorldError('Finish your player card before you list yourself as a teacher', 403)
+
+  const headline = String(input.headline ?? '').trim().slice(0, 80)
+  if (headline.length < 4) throw new WorldError('Give your teaching a one-line headline')
+  const bio = String(input.bio ?? '').trim().slice(0, 500)
+  const instruments = (nonEmptyStrings(input.instruments, 4) as Instrument[]).filter((i) =>
+    INSTRUMENTS.includes(i),
+  )
+  if (instruments.length === 0) throw new WorldError('Pick at least one instrument you teach')
+  const rate = Math.round(Number(input.ratePerHourUsd))
+  if (!Number.isFinite(rate) || rate < 5 || rate > 500)
+    throw new WorldError('Set an hourly rate between $5 and $500')
+  const online = Boolean(input.online)
+  const inPerson = Boolean(input.inPerson)
+  if (!online && !inPerson) throw new WorldError('Offer lessons online, in person, or both')
+
+  const existing = d
+    .prepare(`SELECT active, created_at FROM teachers WHERE musician_id = ?`)
+    .get(viewerId) as { active: number; created_at: string } | undefined
+  const active = input.active === undefined ? (existing ? Boolean(existing.active) : true) : Boolean(input.active)
+  const createdAt = existing?.created_at ?? nowIso()
+
+  d.prepare(
+    `INSERT INTO teachers VALUES (?,?,?,?,?,?,?,?,0,?)
+     ON CONFLICT(musician_id) DO UPDATE SET headline = excluded.headline, bio = excluded.bio,
+       instruments = excluded.instruments, rate_per_hour_usd = excluded.rate_per_hour_usd,
+       online = excluded.online, in_person = excluded.in_person, active = excluded.active`,
+  ).run(
+    viewerId,
+    headline,
+    bio,
+    JSON.stringify(instruments),
+    rate,
+    online ? 1 : 0,
+    inPerson ? 1 : 0,
+    active ? 1 : 0,
+    createdAt,
+  )
+  return {
+    musicianId: viewerId,
+    headline,
+    bio,
+    instruments,
+    ratePerHourUsd: rate,
+    online,
+    inPerson,
+    active,
+    createdAt,
+  }
+}
+
+export function setTeacherActive(viewerId: string, on: boolean) {
+  const changed = db()
+    .prepare(`UPDATE teachers SET active = ? WHERE musician_id = ?`)
+    .run(on ? 1 : 0, viewerId).changes
+  if (changed === 0) throw new WorldError('List yourself as a teacher first', 404)
+}
+
+function rowToLesson(r: Record<string, unknown>): LessonRequest {
+  return {
+    id: r.id as string,
+    teacherId: r.teacher_id as string,
+    studentId: r.student_id as string,
+    instrument: r.instrument as Instrument,
+    note: r.note as string,
+    status: r.status as LessonRequest['status'],
+    createdAt: r.created_at as string,
+    respondedAt: (r.responded_at as string | null) ?? undefined,
+  }
+}
+
+export function requestLesson(
+  viewerId: string,
+  teacherId: string,
+  input: { instrument: unknown; note?: unknown },
+): LessonRequest {
+  const d = db()
+  if (teacherId === viewerId) throw new WorldError("You can't book lessons with yourself")
+  const teacher = d.prepare(`SELECT * FROM teachers WHERE musician_id = ?`).get(teacherId) as
+    | Record<string, unknown>
+    | undefined
+  if (!teacher || !teacher.active)
+    throw new WorldError('This teacher is not taking students right now', 404)
+  const profile = rowToTeacher(teacher)
+  const instrument = assertEnum(input.instrument, INSTRUMENTS, 'instrument')
+  if (!profile.instruments.includes(instrument))
+    throw new WorldError(`They don't teach that — pick from what they offer`)
+  const note = String(input.note ?? '').trim().slice(0, 300)
+
+  const open = d
+    .prepare(
+      `SELECT 1 FROM lesson_requests WHERE teacher_id = ? AND student_id = ? AND status = 'pending'`,
+    )
+    .get(teacherId, viewerId)
+  if (open) throw new WorldError('You already have a request waiting with this teacher', 409)
+
+  const id = uid('lsn')
+  const at = nowIso()
+  d.prepare(`INSERT INTO lesson_requests VALUES (?,?,?,?,?,'pending',?,NULL)`).run(
+    id,
+    teacherId,
+    viewerId,
+    instrument,
+    note,
+    at,
+  )
+  notify(
+    teacherId,
+    'lesson_request',
+    `${firstName(viewerId)} wants ${instrumentNoun(instrument)} lessons`,
+    viewerId,
+  )
+  return {
+    id,
+    teacherId,
+    studentId: viewerId,
+    instrument,
+    note,
+    status: 'pending',
+    createdAt: at,
+  }
+}
+
+function instrumentNoun(i: Instrument): string {
+  return i === 'keys' ? 'piano' : i
+}
+
+/** Accept opens a direct thread — scheduling happens in conversation, like everything else. */
+function acceptLessonRow(row: Record<string, unknown>, canned?: string) {
+  const d = db()
+  const at = nowIso()
+  d.prepare(`UPDATE lesson_requests SET status = 'accepted', responded_at = ? WHERE id = ?`).run(
+    at,
+    row.id,
+  )
+  const teacherId = row.teacher_id as string
+  const studentId = row.student_id as string
+  const thread = openDirectThread(teacherId, studentId)
+  insertMessage({
+    id: uid('msg'),
+    threadId: thread.id,
+    authorId: 'system',
+    body: `Lesson request accepted — work out timing here.`,
+    sentAt: at,
+    kind: 'system',
+  })
+  if (canned) {
+    insertMessage({
+      id: uid('msg'),
+      threadId: thread.id,
+      authorId: teacherId,
+      body: canned,
+      sentAt: nowIso(),
+      kind: 'text',
+    })
+  }
+  notify(
+    studentId,
+    'lesson_response',
+    `${firstName(teacherId)} accepted your lesson request — say hi in messages`,
+    teacherId,
+    { teacherId },
+  )
+}
+
+export function respondToLesson(viewerId: string, id: string, action: 'accept' | 'decline') {
+  const d = db()
+  const row = d.prepare(`SELECT * FROM lesson_requests WHERE id = ?`).get(id) as
+    | Record<string, unknown>
+    | undefined
+  if (!row) throw new WorldError('Request not found', 404)
+  if (row.teacher_id !== viewerId) throw new WorldError('Only the teacher can answer this', 403)
+  if (row.status !== 'pending') throw new WorldError('Already answered', 409)
+
+  if (action === 'accept') {
+    acceptLessonRow(row)
+  } else if (action === 'decline') {
+    d.prepare(`UPDATE lesson_requests SET status = 'declined', responded_at = ? WHERE id = ?`).run(
+      nowIso(),
+      id,
+    )
+    notify(
+      row.student_id as string,
+      'lesson_response',
+      `${firstName(viewerId)} can't take new students right now`,
+      viewerId,
+    )
+  } else {
+    throw new WorldError('Unknown action')
+  }
+}
+
+/** Seed teachers answer after a short beat, so "waiting on the teacher" is a real state. */
+function settlePendingLessons(now: string) {
+  const d = db()
+  const due = d
+    .prepare(
+      `SELECT lr.* FROM lesson_requests lr JOIN teachers t ON t.musician_id = lr.teacher_id
+       WHERE lr.status = 'pending' AND t.is_seed = 1 AND lr.created_at <= ?`,
+    )
+    .all(new Date(Date.parse(now) - SEED_RESPONSE_MS).toISOString()) as Record<string, unknown>[]
+  for (const row of due) {
+    acceptLessonRow(row, 'Hey! Saw your request — what days usually work for you?')
+  }
+}
+
+/** Active teachers, public. The member's own profile also comes back when inactive, for editing. */
+function teachersFor(viewerId: string | null): TeacherProfile[] {
+  const rows = viewerId
+    ? db()
+        .prepare(`SELECT * FROM teachers WHERE active = 1 OR musician_id = ?`)
+        .all(viewerId)
+    : db().prepare(`SELECT * FROM teachers WHERE active = 1`).all()
+  return (rows as Record<string, unknown>[]).map(rowToTeacher)
+}
+
+function lessonRequestsFor(viewerId: string): LessonRequest[] {
+  return (
+    db()
+      .prepare(
+        `SELECT * FROM lesson_requests WHERE teacher_id = ? OR student_id = ?
+         ORDER BY created_at DESC LIMIT 100`,
+      )
+      .all(viewerId, viewerId) as Record<string, unknown>[]
+  ).map(rowToLesson)
+}
+
+// --- band bookings for shops ------------------------------------------------
+
+function rowToGig(r: Record<string, unknown>): GigOffer {
+  return {
+    id: r.id as string,
+    shopId: r.shop_id as string,
+    shopName: r.shop_name as string,
+    ownerId: r.owner_id as string,
+    bandId: r.band_id as string,
+    startsAt: r.starts_at as string,
+    feeCredits: r.fee_credits as number,
+    note: r.note as string,
+    status: r.status as GigOffer['status'],
+    createdAt: r.created_at as string,
+    respondedAt: (r.responded_at as string | null) ?? undefined,
+  }
+}
+
+export function sendGigOffer(
+  viewerId: string,
+  input: {
+    shopId: string
+    bandId: string
+    startsAt: string
+    feeCredits: number
+    note?: string
+  },
+): GigOffer {
+  const d = db()
+  const shop = ownedShopListing(viewerId, input.shopId)
+  const band = fixtureBands.find((b) => b.id === input.bandId)
+  if (!band) throw new WorldError('Band not found', 404)
+
+  const starts = Date.parse(String(input.startsAt))
+  const now = Date.parse(nowIso())
+  if (!Number.isFinite(starts) || starts <= now)
+    throw new WorldError('Pick a date in the future')
+  if (starts > now + 60 * 86_400_000) throw new WorldError('Book within the next 60 days')
+
+  const fee = Math.round(Number(input.feeCredits))
+  if (!Number.isFinite(fee) || fee < 25 || fee > 5000)
+    throw new WorldError('Offer a fee between 25 and 5,000 CR')
+  requireCredits(viewerId, fee)
+  const note = String(input.note ?? '').trim().slice(0, 300)
+
+  const open = d
+    .prepare(
+      `SELECT 1 FROM gig_offers WHERE shop_id = ? AND band_id = ? AND status = 'pending'`,
+    )
+    .get(input.shopId, input.bandId)
+  if (open) throw new WorldError('You already have an offer out to this band', 409)
+
+  const id = uid('gig')
+  const at = nowIso()
+  const tx = d.transaction(() => {
+    adjustWallet(viewerId, -fee, 'gig_fee', `Held for ${band.name} — ${shop.name}`)
+    d.prepare(`INSERT INTO gig_offers VALUES (?,?,?,?,?,?,?,?, 'pending', ?, NULL)`).run(
+      id,
+      input.shopId,
+      shop.name,
+      viewerId,
+      band.id,
+      new Date(starts).toISOString(),
+      fee,
+      note,
+      at,
+    )
+  })
+  tx()
+  return rowToGig({
+    id,
+    shop_id: input.shopId,
+    shop_name: shop.name,
+    owner_id: viewerId,
+    band_id: band.id,
+    starts_at: new Date(starts).toISOString(),
+    fee_credits: fee,
+    note,
+    status: 'pending',
+    created_at: at,
+    responded_at: null,
+  })
+}
+
+export function cancelGigOffer(viewerId: string, id: string) {
+  const d = db()
+  const row = d.prepare(`SELECT * FROM gig_offers WHERE id = ?`).get(id) as
+    | Record<string, unknown>
+    | undefined
+  if (!row) throw new WorldError('Offer not found', 404)
+  if (row.owner_id !== viewerId) throw new WorldError('That is not your offer', 403)
+  if (row.status !== 'pending') throw new WorldError('The band already answered', 409)
+  const tx = d.transaction(() => {
+    d.prepare(`UPDATE gig_offers SET status = 'cancelled', responded_at = ? WHERE id = ?`).run(
+      nowIso(),
+      id,
+    )
+    adjustWallet(
+      viewerId,
+      row.fee_credits as number,
+      'gig_refund',
+      `Offer withdrawn — ${row.shop_name}`,
+    )
+  })
+  tx()
+}
+
+/**
+ * Fixture bands answer offers after a short beat. They accept a fair fee (the payout goes to
+ * the band leader's ledger) and politely decline lowballs under 50 CR with a full refund —
+ * so both outcomes of the flow are demonstrable, and the escrow always settles.
+ */
+function settlePendingGigs(now: string) {
+  const d = db()
+  const due = d
+    .prepare(`SELECT * FROM gig_offers WHERE status = 'pending' AND created_at <= ?`)
+    .all(new Date(Date.parse(now) - SEED_RESPONSE_MS).toISOString()) as Record<string, unknown>[]
+  for (const row of due) {
+    const band = fixtureBands.find((b) => b.id === row.band_id)
+    if (!band) continue
+    const fee = row.fee_credits as number
+    const ownerId = row.owner_id as string
+    if (fee >= 50) {
+      const leader = band.members[0].musicianId
+      const tx = d.transaction(() => {
+        d.prepare(`UPDATE gig_offers SET status = 'accepted', responded_at = ? WHERE id = ?`).run(
+          nowIso(),
+          row.id,
+        )
+        ensureWallet(leader)
+        adjustWallet(leader, fee, 'gig_payout', `${row.shop_name} in-store show`)
+      })
+      tx()
+      notify(
+        ownerId,
+        'gig_response',
+        `${band.name} accepted your booking — they play ${row.shop_name}`,
+        leader,
+        { shopId: row.shop_id as string },
+      )
+    } else {
+      const tx = d.transaction(() => {
+        d.prepare(`UPDATE gig_offers SET status = 'declined', responded_at = ? WHERE id = ?`).run(
+          nowIso(),
+          row.id,
+        )
+        adjustWallet(ownerId, fee, 'gig_refund', `${band.name} passed — fee returned`)
+      })
+      tx()
+      notify(
+        ownerId,
+        'gig_response',
+        `${band.name} passed on your offer — the fee didn't work for them. It's been refunded.`,
+        undefined,
+        { shopId: row.shop_id as string },
+      )
+    }
+  }
+}
+
+function gigOffersFor(viewerId: string): GigOffer[] {
+  return (
+    db()
+      .prepare(`SELECT * FROM gig_offers WHERE owner_id = ? ORDER BY created_at DESC LIMIT 50`)
+      .all(viewerId) as Record<string, unknown>[]
+  ).map(rowToGig)
+}
+
+/** Upcoming accepted shows per shop — public, they are the point of booking a band. */
+function publicShopShows(now: string): Record<string, GigOffer[]> {
+  const out: Record<string, GigOffer[]> = {}
+  const rows = db()
+    .prepare(
+      `SELECT * FROM gig_offers WHERE status = 'accepted' AND starts_at >= ? ORDER BY starts_at`,
+    )
+    .all(new Date(Date.parse(now) - 86_400_000).toISOString()) as Record<string, unknown>[]
+  for (const r of rows) {
+    const gig = rowToGig(r)
+    ;(out[gig.shopId] ??= []).push(gig)
+  }
+  return out
 }
 
 // ---------------------------------------------------------------------------

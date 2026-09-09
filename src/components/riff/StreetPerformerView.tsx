@@ -1,28 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Clock, Heart, MapPin, Music2, Sparkles } from 'lucide-react'
+import { Clock, HandCoins, Heart, MapPin, Music2, Sparkles } from 'lucide-react'
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
+import { TipSheet } from '@/components/riff/TipSheet'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button, buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import { formatTime, relativeDayLabel } from '@/lib/datetime'
-import { genreLabel, instrumentLabel } from '@/lib/labels'
+import { formatCredits, genreLabel, instrumentLabel } from '@/lib/labels'
 import { useCurrentUser, useListingById, useRiffStore } from '@/lib/store'
 import { getMusician, getStreetPerformer } from '@/mocks'
 
 /**
  * A light profile for a busker reached from the map. Everything here is public — no home is
- * exposed, only the spot they are playing. The one gated action (tipping) is a preview stub.
+ * exposed, only the spot they are playing. Tipping moves real Riff Credits into the act's
+ * wallet; the owner sees their tip jar right on this page.
  */
 export function StreetPerformerView({ performerId }: { performerId: string }) {
   // Anchor all relative copy to the fixed scene clock, never Date.now().
   const now = useRiffStore((s) => s.now)
   const requireAccount = useRiffStore((s) => s.requireAccount)
+  const wallet = useRiffStore((s) => s.wallet)
   // Resolve seeded fixtures first, then fall back to a member-published listing (same shape).
   const seeded = getStreetPerformer(performerId)
   const listing = useListingById(performerId)
@@ -30,7 +33,17 @@ export function StreetPerformerView({ performerId }: { performerId: string }) {
   const performer = seeded ?? listing?.street
   const isMember = !seeded && Boolean(listing?.street)
   const isOwner = isMember && listing?.ownerId === me?.id
-  const [tipped, setTipped] = useState(false)
+  const [tipOpen, setTipOpen] = useState(false)
+  // The owner's tip jar: tips received, straight from their own wallet ledger.
+  const tipJar = useMemo(
+    () =>
+      isOwner
+        ? (wallet?.transactions ?? [])
+            .filter((t) => t.kind === 'tip_received')
+            .reduce((sum, t) => sum + t.amountCredits, 0)
+        : 0,
+    [isOwner, wallet],
+  )
 
   if (!performer) {
     return (
@@ -59,7 +72,7 @@ export function StreetPerformerView({ performerId }: { performerId: string }) {
 
   const handleTip = () => {
     if (!requireAccount('tip a performer')) return // guest → global signup prompt
-    setTipped(true)
+    setTipOpen(true)
   }
 
   return (
@@ -68,22 +81,19 @@ export function StreetPerformerView({ performerId }: { performerId: string }) {
       header={<SubScreenHeader title="Street performer" backHref="/map" />}
       mainClassName="pb-2"
       footer={
-        <StickyActionBar note="Preview only — Riff doesn't take a real payment yet.">
-          <Button
-            className="flex-1"
-            variant={tipped ? 'secondary' : 'primary'}
-            disabled={tipped}
-            onClick={handleTip}
-          >
-            {tipped ? (
-              <span className="flex items-center gap-1.5">
-                <Heart size={14} fill="currentColor" /> Thanks sent
-              </span>
-            ) : (
-              `Tip ${firstName}`
-            )}
-          </Button>
-        </StickyActionBar>
+        isOwner ? (
+          <StickyActionBar>
+            <Link href="/me/business" className={cn(buttonClass({ variant: 'secondary' }), 'flex-1')}>
+              Manage on your dashboard
+            </Link>
+          </StickyActionBar>
+        ) : (
+          <StickyActionBar note="Riff Credits go straight to their wallet.">
+            <Button className="flex-1" onClick={handleTip}>
+              <HandCoins size={16} /> Tip {firstName} CR
+            </Button>
+          </StickyActionBar>
+        )
       }
     >
       {/* IDENTITY — a warm, centred block; no big photo, buskers are about the sound. */}
@@ -179,28 +189,37 @@ export function StreetPerformerView({ performerId }: { performerId: string }) {
         )}
       </div>
 
-      {/* TIP CONFIRMATION — calm, honest, no real charge. */}
-      {tipped && (
+      {/* THE OWNER'S TIP JAR — their own ledger, read back to them where they busk. */}
+      {isOwner && (
         <div className="mb-6 px-4">
-          <Card
-            className={cn(
-              'flex items-center gap-3 border-map-street/30 bg-map-street/5 px-4 py-4',
-            )}
-          >
+          <Card className="flex items-center gap-3 border-map-street/30 bg-map-street/5 px-4 py-4">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-map-street/10 text-map-street">
               <Heart size={16} fill="currentColor" />
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-[14px] font-bold text-foreground">
-                Thanks for supporting live music
+                {tipJar > 0 ? `${formatCredits(tipJar)} in your tip jar` : 'Your tip jar is out'}
               </p>
               <p className="mt-0.5 text-[12px] text-foreground-dim">
-                This is a preview — no money changes hands yet.
+                {tipJar > 0
+                  ? 'Tips land in your wallet the moment they’re sent.'
+                  : 'People who find you here can tip you Riff Credits.'}
               </p>
             </div>
+            <Link href="/wallet" className="shrink-0 text-[12px] font-semibold text-map-street">
+              Wallet
+            </Link>
           </Card>
         </div>
       )}
+
+      <TipSheet
+        open={tipOpen}
+        onClose={() => setTipOpen(false)}
+        context="street"
+        targetId={performerId}
+        recipientName={firstName}
+      />
     </AppShell>
   )
 }

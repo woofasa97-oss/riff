@@ -1,4 +1,4 @@
-import type { MapEvent, MusicShop, StreetPerformer, Studio } from '@/types'
+import type { MapEvent, MusicShop, ShopItem, StreetPerformer, Studio } from '@/types'
 import { NOW } from './clock'
 
 /**
@@ -324,6 +324,62 @@ export const musicShops: MusicShop[] = [
     hoursLabel: '', // derived in the selector
     phone: '+1 718-555-0043',
   },
+]
+
+// ---------------------------------------------------------------------------
+// Shop catalogs — what the seeded shops sell. Seeded into the DB on first boot alongside the
+// shops themselves; member shops manage their own catalog through the owner dashboard, and
+// both render through the same section on the shop page.
+// ---------------------------------------------------------------------------
+
+const item = (
+  shopId: string,
+  n: number,
+  name: string,
+  category: ShopItem['category'],
+  priceUsd: number,
+  condition: ShopItem['condition'],
+  blurb: string,
+  inStock = true,
+): ShopItem => ({
+  id: `item-${shopId.replace(/^shop-/, '')}-${n}`,
+  shopId,
+  name,
+  category,
+  priceUsd,
+  condition,
+  blurb,
+  inStock,
+  createdAt: NOW,
+})
+
+export const shopCatalogSeed: ShopItem[] = [
+  // Brooklyn Guitar Works — guitars, amps, pedals, repairs.
+  item('shop-brooklyn-guitar-works', 1, "'72 Telecaster Deluxe", 'guitars', 2400, 'vintage', 'All original except the pots. Heavy, loud, honest.'),
+  item('shop-brooklyn-guitar-works', 2, 'Jazzmaster (MIJ)', 'guitars', 1150, 'used', 'Fresh setup, flat radius, stays in tune for once.'),
+  item('shop-brooklyn-guitar-works', 3, 'Tube screamer clone', 'accessories', 95, 'new', 'Built in-house. The green one, but cheaper.'),
+  item('shop-brooklyn-guitar-works', 4, 'Full setup & fretwork', 'services', 120, 'new', 'Two-day turnaround. Includes strings.'),
+  item('shop-brooklyn-guitar-works', 5, 'Princeton Reverb reissue', 'guitars', 899, 'used', 'The practice amp that ends up on stage.', false),
+  // Greenpoint Vinyl — records.
+  item('shop-greenpoint-vinyl', 1, 'Blue Train — first mono pressing', 'records', 340, 'vintage', 'VG+. Sleeve honest, vinyl better than honest.'),
+  item('shop-greenpoint-vinyl', 2, 'Voodoo — 2LP reissue', 'records', 38, 'new', 'Sealed. The rhythm section homework record.'),
+  item('shop-greenpoint-vinyl', 3, 'Mingus Ah Um', 'records', 55, 'used', 'Clean 70s repress, plays quiet.'),
+  item('shop-greenpoint-vinyl', 4, 'Ortofon 2M Red cartridge', 'accessories', 99, 'new', 'For when the crackle stops being romantic.'),
+  // Bushwick Synth Lab — synths and gear.
+  item('shop-bushwick-synth-lab', 1, 'Moog Grandmother', 'keys-synths', 899, 'used', 'One owner, home studio only. Patch cables included.'),
+  item('shop-bushwick-synth-lab', 2, 'Eurorack starter case (60hp)', 'keys-synths', 320, 'new', 'Powered, with a VCO/VCF/ADSR trio to argue with.'),
+  item('shop-bushwick-synth-lab', 3, 'RC-505 loop station', 'keys-synths', 410, 'used', 'The busker special. Minor wear, full function.'),
+  item('shop-bushwick-synth-lab', 4, 'Trade-in appraisal', 'services', 0, 'new', 'Bring your gear, leave with store credit or regret.'),
+  // Bed-Stuy Drum Shop.
+  item('shop-bed-stuy-drum-shop', 1, 'Ludwig Acrolite snare', 'drums-percussion', 380, 'vintage', "The recording snare. You've heard this drum."),
+  item('shop-bed-stuy-drum-shop', 2, 'K Custom Dark ride 22"', 'drums-percussion', 449, 'used', 'Warm, dry, no fatigue at the end of the night.'),
+  item('shop-bed-stuy-drum-shop', 3, 'Practice pad + sticks bundle', 'drums-percussion', 45, 'new', 'For the neighbours-have-spoken phase.'),
+  item('shop-bed-stuy-drum-shop', 4, 'Bearing edge recut', 'services', 90, 'new', 'Per drum. Makes cheap shells sound expensive.'),
+  // Astoria Music Repair — services.
+  item('shop-astoria-music-repair', 1, 'Guitar setup', 'services', 85, 'new', 'Action, intonation, relief. Same week.'),
+  item('shop-astoria-music-repair', 2, 'Amp service & recap', 'services', 160, 'new', 'Stop gigging with that hum. Estimate first.'),
+  item('shop-astoria-music-repair', 3, 'Horn pad replacement', 'services', 220, 'new', 'Sax and clarinet. Play-tested before pickup.'),
+  item('shop-astoria-music-repair', 4, 'Used student trumpet', 'accessories', 240, 'used', 'Serviced, sealed valves. A first horn that works.'),
 ]
 
 // ---------------------------------------------------------------------------

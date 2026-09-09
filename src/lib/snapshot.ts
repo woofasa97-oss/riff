@@ -1,8 +1,10 @@
 import type {
   CompetitionEntry,
+  GigOffer,
   Jam,
   JamRequest,
   LeaderboardEntry,
+  LessonRequest,
   LiveComment,
   MapListing,
   Message,
@@ -11,6 +13,8 @@ import type {
   OpenCallApplication,
   Season,
   SessionRecap,
+  ShopItem,
+  TeacherProfile,
   Thread,
   Venue,
   Vouch,
@@ -50,6 +54,18 @@ export interface WorldSnapshot {
   wallet: Wallet | null
   /** Member-created map listings: all published ones, plus the viewer's own (any status). */
   listings: MapListing[]
+
+  // --- owner mode: the marketplace layer ---
+  /** Every shop's catalog, keyed by shop id (seeded shops and member listings alike). */
+  shopItems: Record<string, ShopItem[]>
+  /** Musicians taking students (active), plus the viewer's own profile even when paused. */
+  teachers: TeacherProfile[]
+  /** Lesson requests the viewer is a party to — as student or as teacher. Empty for guests. */
+  lessonRequests: LessonRequest[]
+  /** Gig offers the viewer sent as a shop owner, any status. Empty for guests. */
+  gigOffers: GigOffer[]
+  /** Upcoming accepted in-store shows, keyed by shop id — public. */
+  shopShows: Record<string, GigOffer[]>
 
   // --- truth engine: every one of these is COUNTED from recorded rows, never authored ---
   /** Per-battle real tallies (seed demo base + real votes) and the viewer's own recorded vote. */

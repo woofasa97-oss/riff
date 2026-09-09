@@ -1,7 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronRight, Gift, Swords, Trophy, Undo2, Wallet as WalletIcon } from 'lucide-react'
+import {
+  CalendarClock,
+  ChevronRight,
+  Gift,
+  HandCoins,
+  Heart,
+  Music2,
+  Swords,
+  Trophy,
+  Undo2,
+  Wallet as WalletIcon,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { SubScreenHeader } from '@/components/riff/TopBar'
@@ -20,6 +31,11 @@ const KIND_ICON: Record<WalletTransaction['kind'], LucideIcon> = {
   entry_fee: Swords,
   prize_payout: Trophy,
   refund: Undo2,
+  tip_sent: HandCoins,
+  tip_received: Heart,
+  gig_fee: CalendarClock,
+  gig_payout: Music2,
+  gig_refund: Undo2,
 }
 
 export function WalletView() {

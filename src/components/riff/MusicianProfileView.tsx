@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
+  ChevronRight,
   Disc3,
   Flag,
+  GraduationCap,
   MapPin,
   Quote,
   TrendingDown,
@@ -28,7 +30,7 @@ import { StatTile } from '@/components/ui/StatTile'
 import { genreLane, playerLabel, shortNeighborhood, vouchTagLabel } from '@/lib/labels'
 import { vouchesFor } from '@/lib/reputation'
 import { hasUnanimousConsent } from '@/lib/privacy'
-import { useMusicianStats, useReputationContext, useRiffStore } from '@/lib/store'
+import { useMusicianStats, useReputationContext, useRiffStore, useTeacherProfile } from '@/lib/store'
 import { getCurrentSeason, getMusician } from '@/mocks'
 
 /**
@@ -47,6 +49,8 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
   const ctx = useReputationContext()
   const stats = useMusicianStats(musicianId)
   const musician = getMusician(musicianId)
+  // Teaching is part of who they are in the scene — surfaced here, booked on their teacher page.
+  const teacher = useTeacherProfile(musicianId)
 
   const [messageBusy, setMessageBusy] = useState(false)
   const [messageError, setMessageError] = useState<string | null>(null)
@@ -260,6 +264,25 @@ export function MusicianProfileView({ musicianId }: { musicianId: string }) {
             </div>
           </div>
         </section>
+      )}
+
+      {teacher?.active && (
+        <div className="mb-8 px-4">
+          <Link href={`/teachers/${musicianId}`} className="block transition-transform active:scale-[0.99]">
+            <Card className="flex items-center gap-3 bg-[color:var(--hero-from)] p-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
+                <GraduationCap size={18} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="font-serif text-[15px] font-bold text-foreground">
+                  Takes students · ${teacher.ratePerHourUsd}/hr
+                </div>
+                <div className="truncate text-[12px] text-foreground-dim">{teacher.headline}</div>
+              </div>
+              <ChevronRight size={16} className="shrink-0 text-foreground-dim" />
+            </Card>
+          </Link>
+        </div>
       )}
 
       <section className="mb-8 px-4">

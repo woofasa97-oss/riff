@@ -32,6 +32,8 @@ import {
   CURRENT_USER_ID as SEED_ANCHOR_USER,
   NOW as FIXTURE_NOW,
 } from '@/mocks'
+import { shopCatalogSeed } from '@/mocks/places'
+import { seedTeachers } from '@/mocks/teachers'
 
 const DB_PATH = process.env.RIFF_DB_PATH ?? path.join(process.cwd(), 'data', 'riff.db')
 
@@ -75,6 +77,7 @@ export function db(): Database.Database {
   migrate(_db)
   upgrade(_db)
   seed(_db)
+  seedMarketplace(_db)
   return _db
 }
 
@@ -319,6 +322,43 @@ function migrate(d: Database.Database) {
       event_id TEXT NOT NULL, musician_id TEXT NOT NULL, created_at TEXT NOT NULL,
       PRIMARY KEY (event_id, musician_id)
     );
+
+    -- Owner mode: shop catalogs, teachers, lesson requests, and band bookings for shops.
+    -- shop_id is either a seeded shop's fixture id or a member shop listing's id.
+    CREATE TABLE IF NOT EXISTS shop_items (
+      id TEXT PRIMARY KEY, shop_id TEXT NOT NULL, name TEXT NOT NULL, category TEXT NOT NULL,
+      price_usd INTEGER NOT NULL, condition TEXT NOT NULL, blurb TEXT,
+      in_stock INTEGER NOT NULL DEFAULT 1, is_seed INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_shop_items_shop ON shop_items(shop_id, created_at);
+
+    CREATE TABLE IF NOT EXISTS teachers (
+      musician_id TEXT PRIMARY KEY, headline TEXT NOT NULL, bio TEXT NOT NULL,
+      instruments TEXT NOT NULL,                  -- JSON Instrument[]
+      rate_per_hour_usd INTEGER NOT NULL, online INTEGER NOT NULL, in_person INTEGER NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1, is_seed INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS lesson_requests (
+      id TEXT PRIMARY KEY, teacher_id TEXT NOT NULL, student_id TEXT NOT NULL,
+      instrument TEXT NOT NULL, note TEXT NOT NULL, status TEXT NOT NULL,
+      created_at TEXT NOT NULL, responded_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_lessons_teacher ON lesson_requests(teacher_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_lessons_student ON lesson_requests(student_id, created_at);
+
+    -- A shop owner's offer to a band. The CR fee is escrowed in wallet_txns at send time;
+    -- status transitions settle it (accept → band payout, decline/cancel → refund).
+    CREATE TABLE IF NOT EXISTS gig_offers (
+      id TEXT PRIMARY KEY, shop_id TEXT NOT NULL, shop_name TEXT NOT NULL,
+      owner_id TEXT NOT NULL, band_id TEXT NOT NULL, starts_at TEXT NOT NULL,
+      fee_credits INTEGER NOT NULL, note TEXT NOT NULL, status TEXT NOT NULL,
+      created_at TEXT NOT NULL, responded_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_gigs_owner ON gig_offers(owner_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_gigs_shop ON gig_offers(shop_id, starts_at);
   `)
 }
 
@@ -562,6 +602,67 @@ function seed(d: Database.Database) {
     d.prepare(`INSERT INTO meta VALUES ('seed_shift_days', ?)`).run(String(shiftDays))
     // Bands stay fixture-served (Phase 6 flavor, no per-user state) — recorded for reference.
     d.prepare(`INSERT INTO meta VALUES ('seed_bands', ?)`).run(String(seedBands.length))
+  })
+  tx()
+}
+
+/**
+ * Owner-mode seed data: shop catalogs, seed teachers, and one demo in-store show. Guarded by
+ * its own meta key (not seeded_at) so a database seeded before owner mode existed gets this
+ * backfill on the next boot instead of shipping empty shop pages.
+ */
+function seedMarketplace(d: Database.Database) {
+  const done = d.prepare(`SELECT value FROM meta WHERE key = 'seeded_marketplace'`).get()
+  if (done) return
+  const now = new Date().toISOString()
+
+  const tx = d.transaction(() => {
+    const itemIns = d.prepare(`INSERT INTO shop_items VALUES (?,?,?,?,?,?,?,?,1,?)`)
+    for (const it of shopCatalogSeed) {
+      itemIns.run(
+        it.id,
+        it.shopId,
+        it.name,
+        it.category,
+        it.priceUsd,
+        it.condition,
+        it.blurb ?? null,
+        it.inStock ? 1 : 0,
+        now,
+      )
+    }
+
+    const tIns = d.prepare(`INSERT INTO teachers VALUES (?,?,?,?,?,?,?,1,1,?)`)
+    for (const t of seedTeachers) {
+      tIns.run(
+        t.musicianId,
+        t.headline,
+        t.bio,
+        JSON.stringify(t.instruments),
+        t.ratePerHourUsd,
+        t.online ? 1 : 0,
+        t.inPerson ? 1 : 0,
+        now,
+      )
+    }
+
+    // One accepted in-store show at a seeded shop, so the "shows" section demonstrates itself.
+    // owner_id 'seed' — no member owns a seeded shop, and owner-scoped queries never match it.
+    d.prepare(`INSERT INTO gig_offers VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(
+      'gig-seed-vinyl-velvet',
+      'shop-greenpoint-vinyl',
+      'Greenpoint Vinyl',
+      'seed',
+      'velvet-static',
+      new Date(Date.parse(now) + 2 * 86_400_000).toISOString().replace(/T.*/, 'T23:00:00.000Z'),
+      300,
+      'In-store set between the racks. Two forty-minute sets, gear provided.',
+      'accepted',
+      now,
+      now,
+    )
+
+    d.prepare(`INSERT INTO meta VALUES ('seeded_marketplace', ?)`).run(now)
   })
   tx()
 }

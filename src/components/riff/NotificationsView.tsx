@@ -4,9 +4,12 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
   Bell,
+  CalendarClock,
   Check,
   CheckCheck,
+  GraduationCap,
   Handshake,
+  HandCoins,
   Mail,
   Music,
   Play,
@@ -44,6 +47,10 @@ function KindBadge({ kind }: { kind: Notification['kind'] }) {
     open_call_application: { icon: <Mail size={8} />, tone: 'bg-accent' },
     rank_change: { icon: <Trophy size={8} />, tone: 'bg-[#facc15]' },
     band_live: { icon: <Play size={8} fill="currentColor" />, tone: 'bg-live' },
+    tip_received: { icon: <HandCoins size={8} />, tone: 'bg-success' },
+    lesson_request: { icon: <GraduationCap size={8} />, tone: 'bg-primary' },
+    lesson_response: { icon: <GraduationCap size={8} />, tone: 'bg-success' },
+    gig_response: { icon: <CalendarClock size={8} />, tone: 'bg-accent' },
   } as const
   const { icon, tone } = map[kind]
   return (
@@ -66,6 +73,10 @@ function targetHref(n: Notification): string {
   if (n.meta?.jamId) return `/jams/${n.meta.jamId}`
   if (n.kind === 'rank_change') return '/leaderboard'
   if (n.kind === 'vouch_received') return '/me'
+  if (n.kind === 'tip_received') return '/wallet'
+  if (n.kind === 'lesson_request') return '/me/business'
+  if (n.kind === 'lesson_response') return '/messages'
+  if (n.kind === 'gig_response') return '/me/business'
   return '/jams'
 }
 

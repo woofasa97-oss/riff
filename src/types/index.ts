@@ -280,6 +280,10 @@ export interface Notification {
     | 'open_call_application'
     | 'rank_change'
     | 'band_live'
+    | 'tip_received'
+    | 'lesson_request'
+    | 'lesson_response'
+    | 'gig_response'
   actorId?: string
   body: string
   meta?: Record<string, string>
@@ -379,9 +383,18 @@ export interface Wallet {
 
 export interface WalletTransaction {
   id: string
-  /** Negative for spends (entry fee), positive for grants and payouts. */
+  /** Negative for spends (entry fee, tips sent, gig fees), positive for grants and payouts. */
   amountCredits: number
-  kind: 'signup_grant' | 'entry_fee' | 'prize_payout' | 'refund'
+  kind:
+    | 'signup_grant'
+    | 'entry_fee'
+    | 'prize_payout'
+    | 'refund'
+    | 'tip_sent'
+    | 'tip_received'
+    | 'gig_fee'
+    | 'gig_payout'
+    | 'gig_refund'
   memo: string
   createdAt: string
 }
@@ -609,4 +622,89 @@ export interface MapListing {
   studio?: Studio
   street?: StreetPerformer
   shop?: MusicShop
+}
+
+// ---------------------------------------------------------------------------
+// Owner mode — the marketplace layer where a member runs a business, not just a profile:
+// a shop's catalog, paid lessons, and booking bands for in-store shows. Tips move Riff
+// Credits (the same mock currency as season entries) between real wallets.
+// ---------------------------------------------------------------------------
+
+/** Drives the item's icon — catalog items carry no photos in v1. */
+export type ShopItemCategory =
+  | 'guitars'
+  | 'keys-synths'
+  | 'drums-percussion'
+  | 'records'
+  | 'accessories'
+  | 'services'
+
+/** One item a shop sells. `shopId` is a seeded shop's id or a member shop listing's id. */
+export interface ShopItem {
+  id: string
+  shopId: string
+  name: string
+  category: ShopItemCategory
+  priceUsd: number
+  condition: 'new' | 'used' | 'vintage'
+  blurb?: string
+  inStock: boolean
+  createdAt: string
+}
+
+/**
+ * A musician taking students. Rates are USD like studio rates — Riff Credits stay a play
+ * currency for tips and the competition, never a price for real-world services.
+ */
+export interface TeacherProfile {
+  musicianId: string
+  headline: string
+  bio: string
+  instruments: Instrument[]
+  ratePerHourUsd: number
+  online: boolean
+  inPerson: boolean
+  /** Off = taking a break; the profile keeps its content but leaves the directory. */
+  active: boolean
+  createdAt: string
+}
+
+export type LessonRequestStatus = 'pending' | 'accepted' | 'declined'
+
+/**
+ * A student asking a teacher for lessons. Product rule 1 applies: nothing is scheduled until
+ * the teacher accepts — acceptance opens a direct thread where timing gets worked out.
+ */
+export interface LessonRequest {
+  id: string
+  teacherId: string
+  studentId: string
+  instrument: Instrument
+  note: string
+  status: LessonRequestStatus
+  createdAt: string
+  respondedAt?: string
+}
+
+export type GigOfferStatus = 'pending' | 'accepted' | 'declined' | 'cancelled'
+
+/**
+ * A shop owner booking a band for an in-store show. The fee (Riff Credits) is held from the
+ * owner's wallet when the offer is sent, paid to the band on accept, refunded on decline or
+ * cancel — an offer is never a confirmed show until the band says yes (product rule 1).
+ */
+export interface GigOffer {
+  id: string
+  /** The member shop listing the show is at. */
+  shopId: string
+  /** Denormalised so the offer stays legible even if the listing is later deleted. */
+  shopName: string
+  ownerId: string
+  bandId: string
+  startsAt: string
+  feeCredits: number
+  note: string
+  status: GigOfferStatus
+  createdAt: string
+  respondedAt?: string
 }

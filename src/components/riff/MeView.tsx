@@ -2,7 +2,17 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Bell, ChevronRight, LogOut, Moon, Settings, Sparkles, UserPlus, Zap } from 'lucide-react'
+import {
+  Bell,
+  Briefcase,
+  ChevronRight,
+  LogOut,
+  Moon,
+  Settings,
+  Sparkles,
+  UserPlus,
+  Zap,
+} from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { AvailabilityStrip } from '@/components/riff/AvailabilityStrip'
 import { TopBar } from '@/components/riff/TopBar'
@@ -20,6 +30,7 @@ import {
   useCurrentUser,
   useIsGuest,
   useMusicianStats,
+  useOwnerRoles,
   useRiffStore,
   useUnreadNotificationCount,
 } from '@/lib/store'
@@ -43,6 +54,38 @@ export function MeView() {
   const isGuest = useIsGuest()
   if (isGuest || !me) return <GuestMe />
   return <SignedInMe me={me} />
+}
+
+/**
+ * The card that flips a member from customer to owner. Wording follows what they run: a way
+ * in when they run nothing, a dashboard when they do — the admin side always one tap away.
+ */
+function OwnerModeCard() {
+  const roles = useOwnerRoles()
+  const parts: string[] = []
+  if (roles.shops.length > 0) parts.push(roles.shops.length === 1 ? 'your shop' : 'your shops')
+  if (roles.studios.length > 0) parts.push(roles.studios.length === 1 ? 'your studio' : 'your studios')
+  if (roles.street.length > 0) parts.push('your street act')
+  if (roles.teacher) parts.push('your lessons')
+
+  return (
+    <Link href="/me/business" className="block transition-transform active:scale-[0.99]">
+      <Card className="flex items-center gap-3 bg-[color:var(--hero-from)] p-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
+          <Briefcase size={18} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="font-serif text-[15px] font-bold text-foreground">Owner dashboard</div>
+          <div className="truncate text-[12px] text-foreground-dim">
+            {roles.isOwner
+              ? `Run ${parts.join(', ')}`
+              : 'Open a shop, rent your studio, busk, or teach'}
+          </div>
+        </div>
+        <ChevronRight size={16} className="shrink-0 text-foreground-dim" />
+      </Card>
+    </Link>
+  )
 }
 
 /** The ME tab for a guest: this is the moment the app asks them to join. */
@@ -205,6 +248,11 @@ function SignedInMe({ me }: { me: Musician }) {
         >
           Edit your player card
         </Link>
+      </div>
+
+      {/* OWNER MODE — the other hat: run a shop, studio, street act, or lessons. */}
+      <div className="mb-8 px-4">
+        <OwnerModeCard />
       </div>
 
       {/* YOUR CLIP */}

@@ -1,8 +1,20 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Globe, Phone, Share2, Sparkles, Star } from 'lucide-react'
+import {
+  CalendarClock,
+  ChevronLeft,
+  ChevronRight,
+  Globe,
+  Music2,
+  Phone,
+  Plus,
+  Share2,
+  Sparkles,
+  Star,
+} from 'lucide-react'
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
+import { CATEGORY_META } from '@/components/riff/CatalogManagerView'
 import { Button, buttonClass, iconButtonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { DemoTag } from '@/components/ui/DemoTag'
@@ -11,10 +23,11 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { StatTile } from '@/components/ui/StatTile'
 import { SubScreenHeader } from '@/components/riff/TopBar'
 import { cn } from '@/lib/cn'
+import { formatShortDateTime } from '@/lib/datetime'
 import { directionsHref } from '@/lib/labels'
-import { useCurrentUser, useListingById } from '@/lib/store'
-import { getMusicShop } from '@/mocks'
-import type { MusicShop } from '@/types'
+import { useCurrentUser, useListingById, useShopCatalog, useShopShows } from '@/lib/store'
+import { getBand, getMusicShop } from '@/mocks'
+import type { MusicShop, ShopItem } from '@/types'
 
 const KIND_LABEL: Record<MusicShop['kind'], string> = {
   instruments: 'Instruments',
@@ -23,11 +36,41 @@ const KIND_LABEL: Record<MusicShop['kind'], string> = {
   gear: 'Gear',
 }
 
+/** One catalog entry. Seed catalogs carry the demo tag; member items are the real thing. */
+function CatalogItemCard({ item, demo }: { item: ShopItem; demo: boolean }) {
+  const Icon = CATEGORY_META[item.category].icon
+  return (
+    <Card className={cn('flex items-center gap-3 p-3', !item.inStock && 'opacity-60')}>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-secondary text-map-shop">
+        <Icon size={18} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="truncate text-[13px] font-bold text-foreground">{item.name}</span>
+          {demo && <DemoTag />}
+        </div>
+        {item.blurb && (
+          <p className="mt-0.5 truncate text-[11px] text-foreground-dim">{item.blurb}</p>
+        )}
+        <div className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.05em] text-foreground-dim">
+          {item.condition}
+          {!item.inStock && ' · out of stock'}
+        </div>
+      </div>
+      <span className="shrink-0 font-serif text-[15px] font-bold text-foreground">
+        {item.priceUsd === 0 ? 'Free' : `$${item.priceUsd.toLocaleString()}`}
+      </span>
+    </Card>
+  )
+}
+
 export function ShopView({ shopId }: { shopId: string }) {
   // Resolve seeded fixtures first, then fall back to a member-published listing (same shape).
   const seeded = getMusicShop(shopId)
   const listing = useListingById(shopId)
   const me = useCurrentUser()
+  const catalog = useShopCatalog(shopId)
+  const shows = useShopShows(shopId)
   const shop = seeded ?? listing?.shop
   const isMember = !seeded && Boolean(listing?.shop)
   const isOwner = isMember && listing?.ownerId === me?.id
@@ -100,12 +143,26 @@ export function ShopView({ shopId }: { shopId: string }) {
           {KIND_LABEL[shop.kind]} · {shop.neighborhood}
         </p>
         {isOwner && (
-          <Link
-            href="/me/listings"
-            className="mt-2 inline-block text-[12px] font-medium text-map-shop underline underline-offset-2"
-          >
-            This is your listing — manage it
-          </Link>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href={`/me/business/shop/${shopId}/catalog`}
+              className={buttonClass({ variant: 'secondary', size: 'sm' })}
+            >
+              <Plus size={15} /> Manage catalog
+            </Link>
+            <Link
+              href={`/me/business/shop/${shopId}/book`}
+              className={buttonClass({ variant: 'secondary', size: 'sm' })}
+            >
+              <Music2 size={15} /> Book a band
+            </Link>
+            <Link
+              href="/me/business"
+              className={buttonClass({ variant: 'outline', size: 'sm' })}
+            >
+              Dashboard
+            </Link>
+          </div>
         )}
 
         {/* Open/closed badge + the shop's own hours copy. */}
@@ -158,6 +215,70 @@ export function ShopView({ shopId }: { shopId: string }) {
             ))}
           </div>
         </div>
+      )}
+
+      {/* IN-STORE SHOWS — bands the shop booked, once the band said yes. */}
+      {shows.length > 0 && (
+        <section className="mb-8 px-4">
+          <SectionHeader>In-store shows</SectionHeader>
+          <div className="flex flex-col gap-2">
+            {shows.map((show) => {
+              const band = getBand(show.bandId)
+              return (
+                <Link key={show.id} href={band ? `/bands/${band.id}` : '#'} className="block">
+                  <Card className="flex items-center gap-3 p-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--hero-from)] text-map-shop">
+                      <CalendarClock size={18} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate font-serif text-[14px] font-bold text-foreground">
+                          {band?.name ?? 'Live set'}
+                        </span>
+                        {show.ownerId === 'seed' && <DemoTag />}
+                      </div>
+                      <div className="mt-0.5 text-[12px] text-foreground-dim">
+                        {formatShortDateTime(show.startsAt)} · free entry
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="shrink-0 text-foreground-dim" />
+                  </Card>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* CATALOG — what the shop sells. Member shops manage this from the owner dashboard. */}
+      {(catalog.length > 0 || isOwner) && (
+        <section className="mb-8 px-4">
+          <SectionHeader
+            action={
+              isOwner ? (
+                <Link
+                  href={`/me/business/shop/${shopId}/catalog`}
+                  className="text-[12px] font-semibold text-primary"
+                >
+                  Manage
+                </Link>
+              ) : undefined
+            }
+          >
+            In the shop
+          </SectionHeader>
+          {catalog.length === 0 ? (
+            <Card className="p-4 text-center text-[13px] text-foreground-dim">
+              Nothing listed yet — add your first item and it shows here.
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {catalog.map((item) => (
+                <CatalogItemCard key={item.id} item={item} demo={!isMember} />
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {/* ADDRESS — a shop is a public storefront, so the street address is fine to show. */}

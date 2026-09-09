@@ -28,11 +28,13 @@ import type {
   Availability,
   CompetitionEntry,
   Genre,
+  GigOffer,
   Instrument,
   Intent,
   Jam,
   JamRequest,
   LeaderboardEntry,
+  LessonRequest,
   LiveComment,
   ListingKind,
   MapListing,
@@ -45,8 +47,10 @@ import type {
   RecapVouch,
   Season,
   SessionRecap,
+  ShopItem,
   StreetPerformer,
   Studio,
+  TeacherProfile,
   Thread,
   Vouch,
   Wallet,
@@ -99,6 +103,13 @@ interface RiffState {
   wallet: Wallet | null
   /** Member-created map listings: published community ones + the viewer's own (any status). */
   listings: MapListing[]
+
+  // --- owner mode: the marketplace layer (server-owned, snapshot-replaced) ---
+  shopItems: Record<string, ShopItem[]>
+  teachers: TeacherProfile[]
+  lessonRequests: LessonRequest[]
+  gigOffers: GigOffer[]
+  shopShows: Record<string, GigOffer[]>
 
   // --- truth-engine slices (server-computed; mirrors of recorded rows) ---
   followedBandIds: string[]
@@ -190,6 +201,25 @@ interface RiffState {
   setListingStatus: (id: string, status: 'published' | 'paused') => Promise<void>
   deleteListing: (id: string) => Promise<void>
 
+  // --- owner mode actions ---
+  /** Move real Riff Credits to a street act or a live stream's act. */
+  sendTip: (context: 'street' | 'live', targetId: string, amount: number) => Promise<{ amount: number; to: string }>
+  addShopItem: (shopId: string, data: Record<string, unknown>) => Promise<ShopItem>
+  updateShopItem: (itemId: string, data: Record<string, unknown>) => Promise<ShopItem>
+  deleteShopItem: (itemId: string) => Promise<void>
+  saveTeacherProfile: (data: Record<string, unknown>) => Promise<TeacherProfile>
+  setTeacherActive: (on: boolean) => Promise<void>
+  requestLesson: (teacherId: string, instrument: Instrument, note: string) => Promise<LessonRequest>
+  respondToLesson: (id: string, action: 'accept' | 'decline') => Promise<void>
+  sendGigOffer: (input: {
+    shopId: string
+    bandId: string
+    startsAt: string
+    feeCredits: number
+    note?: string
+  }) => Promise<GigOffer>
+  cancelGigOffer: (id: string) => Promise<void>
+
   // --- truth-engine actions (all persisted server-side; optimistic locally) ---
   toggleFollowBand: (bandId: string) => void
   voteInBattle: (battleId: string, side: 'A' | 'B') => void
@@ -249,6 +279,11 @@ function snapshotSlices(snapshot: WorldSnapshot) {
     competitionEntries: snapshot.competitionEntries,
     wallet: snapshot.wallet,
     listings: snapshot.listings ?? [],
+    shopItems: snapshot.shopItems ?? {},
+    teachers: snapshot.teachers ?? [],
+    lessonRequests: snapshot.lessonRequests ?? [],
+    gigOffers: snapshot.gigOffers ?? [],
+    shopShows: snapshot.shopShows ?? {},
     followedBandIds: snapshot.followedBandIds ?? [],
     battleTallies: snapshot.battleTallies ?? {},
     battleVotes: myVotes(snapshot.battleTallies),
@@ -310,6 +345,16 @@ const FEATURE_LABELS: Record<string, string> = {
   updateListing: 'edit your listing',
   setListingStatus: 'update your listing',
   deleteListing: 'remove your listing',
+  sendTip: 'tip Riff Credits',
+  addShopItem: 'manage your catalog',
+  updateShopItem: 'manage your catalog',
+  deleteShopItem: 'manage your catalog',
+  saveTeacherProfile: 'teach on Riff',
+  setTeacherActive: 'teach on Riff',
+  requestLesson: 'request a lesson',
+  respondToLesson: 'answer a lesson request',
+  sendGigOffer: 'book a band',
+  cancelGigOffer: 'withdraw an offer',
   voteInBattle: 'vote in a battle',
   sendStreamComment: 'join the chat',
   rateSession: 'rate a session',
@@ -412,6 +457,19 @@ function createRiffStore(initial: WorldSnapshot): StoreApi<RiffState> {
       updateListing: (id, data) => dispatch<MapListing>('updateListing', { id, data }),
       setListingStatus: (id, status) => dispatch<void>('setListingStatus', { id, status }),
       deleteListing: (id) => dispatch<void>('deleteListing', { id }),
+
+      sendTip: (context, targetId, amount) =>
+        dispatch<{ amount: number; to: string }>('sendTip', { context, targetId, amount }),
+      addShopItem: (shopId, data) => dispatch<ShopItem>('addShopItem', { shopId, data }),
+      updateShopItem: (itemId, data) => dispatch<ShopItem>('updateShopItem', { itemId, data }),
+      deleteShopItem: (itemId) => dispatch<void>('deleteShopItem', { itemId }),
+      saveTeacherProfile: (data) => dispatch<TeacherProfile>('saveTeacherProfile', data),
+      setTeacherActive: (on) => dispatch<void>('setTeacherActive', { on }),
+      requestLesson: (teacherId, instrument, note) =>
+        dispatch<LessonRequest>('requestLesson', { teacherId, instrument, note }),
+      respondToLesson: (id, action) => dispatch<void>('respondToLesson', { id, action }),
+      sendGigOffer: (input) => dispatch<GigOffer>('sendGigOffer', input),
+      cancelGigOffer: (id) => dispatch<void>('cancelGigOffer', { id }),
 
       toggleFollowBand: (bandId) => {
         if (!get().requireAccount('follow a band')) return
@@ -693,4 +751,58 @@ export function useMyListings(): MapListing[] {
 export function useListingById(id: string): MapListing | undefined {
   const listings = useRiffStore((s) => s.listings)
   return useMemo(() => listings.find((l) => l.id === id), [listings, id])
+}
+
+// ---------------------------------------------------------------------------
+// Owner mode — marketplace selectors.
+// ---------------------------------------------------------------------------
+
+const NO_ITEMS: ShopItem[] = []
+const NO_SHOWS: GigOffer[] = []
+
+/** A shop's catalog — seeded shops and member shops read from the same slice. */
+export function useShopCatalog(shopId: string): ShopItem[] {
+  return useRiffStore((s) => s.shopItems[shopId] ?? NO_ITEMS)
+}
+
+/** Upcoming accepted in-store shows at one shop. */
+export function useShopShows(shopId: string): GigOffer[] {
+  return useRiffStore((s) => s.shopShows[shopId] ?? NO_SHOWS)
+}
+
+/** This musician's teacher profile, if they have one (active or paused). */
+export function useTeacherProfile(musicianId: string | undefined): TeacherProfile | undefined {
+  const teachers = useRiffStore((s) => s.teachers)
+  return useMemo(
+    () => (musicianId ? teachers.find((t) => t.musicianId === musicianId) : undefined),
+    [teachers, musicianId],
+  )
+}
+
+/**
+ * The viewer's owner-mode roles, derived from what they actually run — a member is an owner
+ * because they have listings or a teacher profile, never because of a stored flag.
+ */
+export function useOwnerRoles(): {
+  studios: MapListing[]
+  shops: MapListing[]
+  street: MapListing[]
+  teacher: TeacherProfile | undefined
+  isOwner: boolean
+} {
+  const mine = useMyListings()
+  const viewerId = useRiffStore((s) => s.viewerId)
+  const teacher = useTeacherProfile(viewerId || undefined)
+  return useMemo(() => {
+    const studios = mine.filter((l) => l.kind === 'studio')
+    const shops = mine.filter((l) => l.kind === 'shop')
+    const street = mine.filter((l) => l.kind === 'street')
+    return {
+      studios,
+      shops,
+      street,
+      teacher,
+      isOwner: mine.length > 0 || Boolean(teacher),
+    }
+  }, [mine, teacher])
 }

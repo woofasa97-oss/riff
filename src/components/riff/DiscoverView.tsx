@@ -3,7 +3,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { CalendarDays, Check, ChevronRight, Compass, Eye, MapPin, Search, X } from 'lucide-react'
+import {
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Compass,
+  Eye,
+  GraduationCap,
+  MapPin,
+  Search,
+  X,
+} from 'lucide-react'
 import { AppShell } from '@/components/riff/AppShell'
 import { MusicianCard } from '@/components/riff/MusicianCard'
 import { OpenCallCard } from '@/components/riff/OpenCallCard'
@@ -14,8 +24,43 @@ import { ChipTabs } from '@/components/ui/Tabs'
 import { cn } from '@/lib/cn'
 import { genreLabel, instrumentLabel, intentLabel, playerLabel } from '@/lib/labels'
 import { useIsGuest, useRiffStore } from '@/lib/store'
-import { listNearbyMusicians } from '@/mocks'
+import { getMusician, listNearbyMusicians } from '@/mocks'
+import { Avatar } from '@/components/ui/Avatar'
 import type { Genre, Intent, Jam, Musician } from '@/types'
+
+/** A slim doorway to the teacher directory, riding in the Discover feed. */
+function TeachersRailCard() {
+  const teachers = useRiffStore((s) => s.teachers)
+  const active = teachers.filter((t) => t.active)
+  if (active.length === 0) return null
+  const faces = active
+    .map((t) => getMusician(t.musicianId))
+    .filter((m): m is Musician => Boolean(m))
+    .slice(0, 3)
+  return (
+    <Link href="/teachers" className="block transition-transform active:scale-[0.99]">
+      <div className="flex items-center gap-3 rounded-[16px] border border-border-subtle bg-card p-3.5 shadow-sm">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--hero-from)] text-primary">
+          <GraduationCap size={18} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-serif text-[14px] font-bold text-foreground">
+            Take lessons from the scene
+          </span>
+          <span className="mt-0.5 block text-[12px] text-foreground-dim">
+            {active.length} teacher{active.length === 1 ? '' : 's'} near you
+          </span>
+        </span>
+        <span className="flex shrink-0 -space-x-2">
+          {faces.map((m) => (
+            <Avatar key={m.id} src={m.avatarUrl} name={m.name} size="sm" className="border-2 border-card" ring={false} />
+          ))}
+        </span>
+        <ChevronRight size={16} className="shrink-0 text-foreground-dim" />
+      </div>
+    </Link>
+  )
+}
 
 type IntentFilter = Intent | 'all'
 type GenreFilter = Genre | 'all'
@@ -139,6 +184,8 @@ export function DiscoverView() {
 
   // One open call after every two musician cards; whatever is left trails the feed.
   const feed: React.ReactNode[] = []
+  // The teacher directory rides along early in the feed — learning is part of discovery.
+  feed.push(<TeachersRailCard key="teachers-rail" />)
   filtered.forEach((musician, i) => {
     feed.push(<MusicianCard key={musician.id} musician={musician} />)
     if (i % 2 === 1) {

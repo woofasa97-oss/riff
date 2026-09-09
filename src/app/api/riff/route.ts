@@ -114,6 +114,36 @@ export async function POST(req: Request) {
       case 'toggleEventRsvp':
         result = world.toggleEventRsvp(viewerId, payload.eventId)
         break
+      case 'sendTip':
+        result = world.sendTip(viewerId, payload)
+        break
+      case 'addShopItem':
+        result = world.addShopItem(viewerId, payload.shopId, payload.data)
+        break
+      case 'updateShopItem':
+        result = world.updateShopItem(viewerId, payload.itemId, payload.data)
+        break
+      case 'deleteShopItem':
+        world.deleteShopItem(viewerId, payload.itemId)
+        break
+      case 'saveTeacherProfile':
+        result = world.saveTeacherProfile(viewerId, payload)
+        break
+      case 'setTeacherActive':
+        world.setTeacherActive(viewerId, payload.on)
+        break
+      case 'requestLesson':
+        result = world.requestLesson(viewerId, payload.teacherId, payload)
+        break
+      case 'respondToLesson':
+        world.respondToLesson(viewerId, payload.id, payload.action)
+        break
+      case 'sendGigOffer':
+        result = world.sendGigOffer(viewerId, payload)
+        break
+      case 'cancelGigOffer':
+        world.cancelGigOffer(viewerId, payload.id)
+        break
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
     }

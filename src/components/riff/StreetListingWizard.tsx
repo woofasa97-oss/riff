@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Guitar, Loader2 } from 'lucide-react'
 import { AppShell, StickyActionBar } from '@/components/riff/AppShell'
@@ -11,7 +11,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Slider } from '@/components/ui/Slider'
 import { cn } from '@/lib/cn'
 import { genreLabel } from '@/lib/labels'
-import { AccountRequiredError, useRiffStore } from '@/lib/store'
+import { AccountRequiredError, useListingById, useRiffStore } from '@/lib/store'
 import { mapZones } from '@/mocks'
 import type { Genre, Instrument, MapListing } from '@/types'
 
@@ -25,6 +25,15 @@ type Phase = 'form' | 'reviewing' | 'done'
  * and the pin sits at the public spot you name.
  */
 export function StreetListingWizard() {
+  // Optional edit / go-out-again mode: ?id=… prefills the last set's details. Saving rebuilds
+  // the listing with a fresh window starting now — exactly what "head out again" means.
+  const [editId, setEditId] = useState<string | null>(null)
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('id')
+    if (id) setEditId(id)
+  }, [])
+  const editing = useListingById(editId ?? '')
+
   const [instruments, setInstruments] = useState<Instrument[]>([])
   const [genres, setGenres] = useState<Genre[]>([])
   const [neighborhood, setNeighborhood] = useState('')
@@ -38,6 +47,22 @@ export function StreetListingWizard() {
   const [created, setCreated] = useState<MapListing | null>(null)
 
   const create = useRiffStore((s) => s.createListing)
+  const update = useRiffStore((s) => s.updateListing)
+
+  const hydrated = useRef(false)
+  useEffect(() => {
+    if (hydrated.current || !editing?.street) return
+    hydrated.current = true
+    const s = editing.street
+    setInstruments(s.instruments)
+    setGenres(s.genres)
+    setNeighborhood(s.neighborhood)
+    setSpotLabel(s.spotLabel)
+    setActName(s.name)
+    setBlurb(s.blurb)
+    const hours = Math.round((Date.parse(s.until) - Date.parse(s.startedAt)) / 3_600_000)
+    setDurationHours(Math.min(6, Math.max(1, hours || 3)))
+  }, [editing])
 
   const toggle = <T,>(list: T[], v: T): T[] =>
     list.includes(v) ? list.filter((x) => x !== v) : [...list, v]
@@ -48,16 +73,17 @@ export function StreetListingWizard() {
     if (!canSubmit) return
     setError(null)
     setPhase('reviewing')
+    const data = {
+      instruments,
+      genres,
+      neighborhood,
+      spotLabel: spotLabel.trim(),
+      durationHours,
+      actName: actName.trim(),
+      blurb: blurb.trim(),
+    }
     try {
-      const listing = await create('street', {
-        instruments,
-        genres,
-        neighborhood,
-        spotLabel: spotLabel.trim(),
-        durationHours,
-        actName: actName.trim(),
-        blurb: blurb.trim(),
-      })
+      const listing = editId ? await update(editId, data) : await create('street', data)
       setCreated(listing)
       setPhase('done')
     } catch (err) {
@@ -81,7 +107,7 @@ export function StreetListingWizard() {
       footer={
         <StickyActionBar note="Your act goes live now and drops off the map when your set ends.">
           <Button className="flex-1" disabled={!canSubmit} onClick={submit}>
-            Go live on the map
+            {editId ? 'Go out again' : 'Go live on the map'}
           </Button>
         </StickyActionBar>
       }
